@@ -114,10 +114,7 @@ export function computeLayout(graph) {
   const topo = topoOrder(N, preds, succs);
   const layer = new Array(N).fill(0);
   for (const v of topo) for (const u of preds[v]) layer[v] = Math.max(layer[v], layer[u] + 1);
-  for (let t = topo.length - 1; t >= 0; t--) {
-    const v = topo[t];
-    if (!preds[v].length && succs[v].length) layer[v] = Math.min(...succs[v].map(s => layer[s])) - 1;
-  }
+  balanceLayers(layer, topo, preds, succs);
   const minLayer = Math.min(0, ...layer);
   for (let i = 0; i < N; i++) layer[i] -= minLayer;
 
@@ -604,6 +601,41 @@ export function computeLayout(graph) {
       groupSlots.forEach((slot, j) => { blocks[slot] = sortedGroups[j]; });
       return blocks.flatMap(b => (b.key !== null ? reorderGroups(b.items, depth + 1) : b.items));
     }
+  }
+}
+
+/**
+ * Shorten edges after longest-path layering (a lightweight stand-in for network simplex).
+ * Each node moves within the range its edges allow: toward its predecessors when it has
+ * more of them, toward its successors when it has more of those. On a tie, it moves toward
+ * whichever side's neighbors can follow (they feed or consume only this node), so side
+ * chains like `Rule Engine → Reflection → Store` end up beside the node they attach to
+ * instead of stretched across the whole diagram.
+ */
+export function balanceLayers(layer, topo, preds, succs) {
+  for (let pass = 0; pass < 12; pass++) {
+    let moved = false;
+    for (const v of pass % 2 ? [...topo].reverse() : topo) {
+      const np = preds[v].length;
+      const ns = succs[v].length;
+      if (!np && !ns) continue;
+      const lo = np ? Math.max(...preds[v].map(u => layer[u] + 1)) : -Infinity;
+      const hi = ns ? Math.min(...succs[v].map(w => layer[w] - 1)) : Infinity;
+      let target = layer[v];
+      if (np > ns) target = lo;
+      else if (ns > np) target = hi;
+      else {
+        const predsFollow = preds[v].every(u => succs[u].length === 1);
+        const succsFollow = succs[v].every(w => preds[w].length === 1);
+        if (predsFollow && !succsFollow) target = hi;
+        else if (succsFollow && !predsFollow) target = lo;
+      }
+      if (Number.isFinite(target) && target !== layer[v]) {
+        layer[v] = target;
+        moved = true;
+      }
+    }
+    if (!moved) break;
   }
 }
 

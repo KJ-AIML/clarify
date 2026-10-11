@@ -97,7 +97,7 @@ Which failover strategy?
 - Nodes: `[Box]` `[(Database)]` `{Decision?}` `(Rounded)` `((Circle))`. A `:tech` suffix adds a brand icon (`redis`, `postgres`, `kafka`, `docker`, `k8s`, `go`, `node`, `python`, `react`, `cloudflare`, …).
 - Nodes are identified by label. After the first mention, `[Checkout]` is enough.
 - Edges: `->` call, `-->` async, `=>` main flow, `<->` two-way, `--` plain. `: label` labels the edge. Keep labels to 4 words or fewer.
-- `group "Name" { … }` draws a boundary (nestable). `[Node] { desc: …; files: …; owner: …; status: ok|warn|no }` adds inspector details.
+- `group "Name" { … }` draws a boundary (nestable). A node joins the group where it is first mentioned, so put a shared hub (database, store, event bus) in its own group or outside every group, never inside one path's group. `[Node] { desc: …; files: …; owner: …; status: ok|warn|no }` adds inspector details.
 - `trace "Name" { A -> B: narration … }` is a narrated route. A line with only `[Node]: text` is a stop without movement. `trace "Name": A -> B -> C` is the short form, without narration.
 - Raw Mermaid also works: a ```` ```mermaid ```` fence, or `flowchart`/`sequenceDiagram` inside `arch`.
 

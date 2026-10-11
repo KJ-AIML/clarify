@@ -114,7 +114,8 @@ function stripYamlValue(raw) {
     const end = v.indexOf(q, 1);
     return end === -1 ? v.slice(1) : v.slice(1, end);
   }
-  const hash = v.search(/\s#/);
+  // A comment is " # text". "PR #11" or "issue #42" stays part of the value.
+  const hash = v.search(/\s#(?=\s|$)/);
   if (hash !== -1) v = v.slice(0, hash);
   return v.trim();
 }

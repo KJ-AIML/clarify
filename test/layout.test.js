@@ -105,3 +105,13 @@ test("fuzz: 150 random graphs (cycles, nested groups, labels) satisfy all invari
     }
   }
 });
+
+test("layer balancing: a side chain sits next to the node it feeds, not at the far left", () => {
+  // Main chain A→B→C→D→Hub plus a side chain Rule→Reflect→Hub (the shape that sprawled the memctrl map).
+  const g = parseArchBlock("[A] -> [B]\n[B] -> [C]\n[C] -> [D]\n[D] -> [Hub]\n[Rule] -> [Reflect]\n[Reflect] -> [Hub]");
+  const L = computeLayout(g);
+  const cx = (id) => { const n = L.nodes.find(x => x.id === id); return Math.round(n.x + n.width / 2); };
+  assert.equal(cx("Reflect"), cx("D"), "Reflect shares the column right before Hub");
+  assert.equal(cx("Rule"), cx("C"), "Rule follows Reflect");
+  assert.deepEqual(layoutViolations(g, L), []);
+});

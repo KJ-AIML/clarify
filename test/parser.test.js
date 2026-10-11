@@ -22,6 +22,13 @@ body`);
   assert.equal(d.meta.owner, "platform");
 });
 
+test("a # inside a value is content; only \" # text\" is a comment", () => {
+  const d = parseDraft("---\ntitle: PR #11 Review\neyebrow: PR review · repo #11\nsubtitle: Kept   # dropped comment\n---\nx");
+  assert.equal(d.meta.title, "PR #11 Review");
+  assert.equal(d.meta.eyebrow, "PR review · repo #11");
+  assert.equal(d.meta.subtitle, "Kept");
+});
+
 test("unknown theme falls back to auto; named presets pass through", () => {
   assert.equal(parseDraft("---\ntheme: neon\n---\nx").meta.theme, "auto");
   assert.equal(parseDraft("---\ntheme: tokyo\n---\nx").meta.theme, "tokyo-night");
