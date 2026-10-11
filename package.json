@@ -1,11 +1,29 @@
 {
   "name": "@clarify/skill",
   "version": "0.2.0",
-  "description": "High-bandwidth interactive architecture and decision visualizer for AI coding agents",
-  "main": "src/render.js",
+  "description": "Interactive architecture and decision briefs for AI coding agents. Markdown in, one zero-dependency HTML page out.",
   "type": "module",
+  "main": "src/render.js",
   "bin": {
     "clarify": "bin/clarify.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "visual": "node test/visual/run.mjs",
+    "visual:update": "node test/visual/run.mjs --update"
+  },
+  "files": [
+    "bin",
+    "src",
+    "SKILL.md",
+    "README.md",
+    "examples",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "references"
+  ],
+  "engines": {
+    "node": ">=20"
   },
   "keywords": [
     "agent-skills",
@@ -15,21 +33,14 @@
     "claude-code",
     "interactive-diagrams"
   ],
-  "author": "clarify",
+  "author": "KJ-AIML",
   "license": "MIT",
-  "scripts": {
-    "test": "node --test test/",
-    "visual": "node test/visual/run.mjs",
-    "visual:update": "node test/visual/run.mjs --update"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KJ-AIML/clarify.git"
   },
-  "engines": {
-    "node": ">=20"
-  },
-  "files": [
-    "bin",
-    "src",
-    "SKILL.md",
-    "README.md",
-    "examples"
-  ]
+  "homepage": "https://github.com/KJ-AIML/clarify#readme",
+  "bugs": {
+    "url": "https://github.com/KJ-AIML/clarify/issues"
+  }
 }

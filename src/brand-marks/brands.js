@@ -1,4 +1,6 @@
-// Curated SVG Brand Marks for Clarify
+// clarify/src/brand-marks/brands.js
+// Curated SVG brand marks. Path data: Simple Icons 16.28.0 via Archify (MIT); marks remain
+// their owners' trademarks. Provenance and licenses: THIRD_PARTY_NOTICES.md.
 export const BRAND_MARKS = [
   {
     "id": "apache-kafka",

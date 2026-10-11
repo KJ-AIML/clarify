@@ -72,3 +72,7 @@ Baselines depend on the machine's fonts. Regenerate them with `npm run visual:up
 - **Deterministic text measurement.** Node-side layout estimates text width per character class. The browser audit verifies that labels actually fit.
 - **Untrusted input.** All draft text is escaped. Links are limited to http/https/mailto/relative URLs, and embedded JSON is `<`-escaped. The live server binds to loopback and rejects foreign `Host` headers.
 - **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 65 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Typical pages are 100–150 KB.
+
+## License
+
+[MIT](LICENSE) for Clarify's own code. The bundled brand marks are third-party trademarks with their own terms. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
