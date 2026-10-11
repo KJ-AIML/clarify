@@ -1,0 +1,35 @@
+{
+  "name": "@clarify/skill",
+  "version": "0.2.0",
+  "description": "High-bandwidth interactive architecture and decision visualizer for AI coding agents",
+  "main": "src/render.js",
+  "type": "module",
+  "bin": {
+    "clarify": "bin/clarify.mjs"
+  },
+  "keywords": [
+    "agent-skills",
+    "architecture-diagrams",
+    "visualizer",
+    "ai-agent",
+    "claude-code",
+    "interactive-diagrams"
+  ],
+  "author": "clarify",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/",
+    "visual": "node test/visual/run.mjs",
+    "visual:update": "node test/visual/run.mjs --update"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "src",
+    "SKILL.md",
+    "README.md",
+    "examples"
+  ]
+}

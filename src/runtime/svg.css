@@ -1,0 +1,95 @@
+/* clarify/src/runtime/svg.css — diagram styling. Embedded in the page and copied into
+   exported SVG/PNG files together with the resolved theme tokens. */
+
+.c-svg { font-family: var(--font); display: block; overflow: visible; user-select: none; -webkit-user-select: none; }
+.c-svg-bg { fill: var(--canvas); }
+.c-svg text { font-family: var(--font); }
+
+.c-group rect { fill: var(--group-bg); stroke: var(--group-border); stroke-width: 1.2; }
+.c-group:not(.depth-0) rect { stroke-dasharray: 5 4; }
+.c-group-label { fill: var(--group-text); font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; }
+
+.c-edge-halo { fill: none; stroke: var(--canvas); stroke-width: 6; stroke-linecap: round; }
+.c-edge-line { fill: none; stroke: var(--edge); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, opacity 0.15s; }
+.c-edge.is-dashed .c-edge-line { stroke-dasharray: 6 5; }
+.c-edge.is-thick .c-edge-line { stroke-width: 3; }
+.c-edge.is-back .c-edge-line { stroke-dasharray: 2 4; }
+.c-edge-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.c-arrow-head { fill: var(--edge); }
+.c-arrow-head.is-hl { fill: var(--edge-hl); }
+.c-arrow-open { fill: none; stroke: var(--edge); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.c-elabel rect { fill: var(--label-bg); stroke: var(--border); stroke-width: 1; }
+.c-elabel text { fill: var(--label-text); font-family: var(--mono); font-size: 10.5px; }
+.c-elabel { cursor: pointer; transition: opacity 0.15s; }
+
+.c-trace-line { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 2 10; opacity: 0.9; animation: c-dash 1.1s linear infinite; }
+.c-trace-dot { stroke: var(--canvas); stroke-width: 2; }
+.tc-0 { --tc: var(--trace-0); } .tc-1 { --tc: var(--trace-1); } .tc-2 { --tc: var(--trace-2); } .tc-3 { --tc: var(--trace-3); }
+.c-trace-line { stroke: var(--tc); }
+.c-trace-dot { fill: var(--tc); }
+@keyframes c-dash { to { stroke-dashoffset: -24; } }
+
+.c-node { cursor: pointer; outline: none; transition: opacity 0.15s; }
+.c-node-bg { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1.2; filter: var(--node-shadow); transition: stroke 0.15s, stroke-width 0.15s; }
+.c-node-rim { fill: none; stroke: var(--node-border); stroke-width: 1.3; }
+.c-node-title { fill: var(--node-text); font-size: 13.5px; font-weight: 650; letter-spacing: -0.006em; }
+.c-node-caption { fill: var(--node-caption); font-family: var(--mono); font-size: 10px; letter-spacing: 0.6px; }
+.c-node-tile { fill: var(--tile-ink); }
+.c-node-tile.is-mono { fill: var(--primary-soft); }
+.c-node-mono { fill: var(--primary); font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.c-node-meta { fill: var(--muted); opacity: 0.55; }
+.c-node-status { fill: var(--muted); }
+.c-node.is-ok .c-node-status { fill: var(--ok); }
+.c-node.is-warn .c-node-status { fill: var(--warn); }
+.c-node.is-warn .c-node-bg { stroke: var(--warn); }
+.c-node.is-no .c-node-status, .c-node.is-err .c-node-status { fill: var(--no); }
+.c-node.is-no .c-node-bg, .c-node.is-err .c-node-bg { stroke: var(--no); }
+.c-node:hover .c-node-bg, .c-node:focus-visible .c-node-bg { stroke: var(--edge-hl); stroke-width: 2; }
+.c-brand { filter: var(--brand-filter); }
+.c-brand.is-ink { color: var(--node-text); }
+.c-brand.is-mono rect { fill: var(--primary-soft); stroke: var(--border-strong); stroke-width: 0.8; }
+.c-brand.is-mono text { fill: var(--primary); font-family: var(--font); }
+
+/* Focus mode: selection / hover dims everything outside the neighborhood. */
+.c-svg.is-focus .c-node, .c-svg.is-focus .c-edge, .c-svg.is-focus .c-elabel, .c-svg.is-focus .c-trace { opacity: 0.18; }
+.c-svg.is-focus .is-hl { opacity: 1; }
+.c-edge.is-hl .c-edge-line { stroke: var(--edge-hl); stroke-width: 2.2; }
+.c-edge.is-hl .c-edge-line[marker-end] { marker-end: url(#c-arrow-hl); }
+.c-edge.is-hl .c-edge-line[marker-start] { marker-start: url(#c-arrow-hl); }
+.c-node.is-selected .c-node-bg { stroke: var(--edge-hl); stroke-width: 2.4; }
+.c-node.is-annotated .c-node-meta, .c-edge.is-annotated .c-edge-line { stroke: var(--warn); }
+
+/* Route tour: the active route becomes a cased transit line; stops are ringed. */
+.c-svg.is-touring .c-traces { display: none; }
+.c-svg.is-touring .c-edge.is-route .c-edge-line { stroke: var(--rc); stroke-width: 4.5; stroke-dasharray: none; opacity: 0.3; marker-end: none; marker-start: none; }
+.c-svg.is-touring .c-edge.is-route .c-edge-halo { stroke-width: 11; }
+.c-svg.is-touring .c-edge.is-visited .c-edge-line { opacity: 1; }
+.c-svg.is-touring .c-node.is-visited .c-node-bg { stroke: var(--rc); stroke-width: 2; }
+.c-svg.is-touring .c-node.is-current .c-node-bg { stroke-width: 3; filter: drop-shadow(0 0 7px color-mix(in srgb, var(--rc) 55%, transparent)); }
+.c-svg.is-focus .is-route { opacity: 1; }
+.c-tour-dot { fill: var(--rc); stroke: var(--canvas); stroke-width: 2.5; pointer-events: none; }
+
+/* Sequence diagrams */
+.c-lifeline { stroke: var(--border-strong); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.c-msg-line { fill: none; stroke: var(--edge); stroke-width: 1.6; }
+.c-msg.is-dashed .c-msg-line { stroke-dasharray: 6 4; }
+.c-msg-label { fill: var(--label-text); font-size: 12px; font-weight: 500; }
+.c-msg { cursor: pointer; transition: opacity 0.15s; }
+.c-msg.is-hl .c-msg-line { stroke: var(--edge-hl); stroke-width: 2.2; }
+.c-svg.is-focus .c-msg { opacity: 0.2; }
+.c-svg.is-focus .c-msg.is-hl { opacity: 1; }
+.c-msg-num circle { fill: var(--primary); }
+.c-msg-num text { fill: var(--primary-ink); font-size: 9.5px; font-weight: 700; }
+.c-note rect { fill: var(--warn-bg); stroke: var(--warn); stroke-opacity: 0.45; }
+.c-note text { fill: var(--text); font-size: 12px; }
+.c-frame rect { fill: none; stroke: var(--border-strong); stroke-width: 1.2; }
+.c-frame-tag { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1.2; }
+.c-frame-kind { fill: var(--text); font-size: 11px; font-weight: 700; }
+.c-frame-label { fill: var(--muted); font-size: 11px; font-weight: 500; }
+.c-frame-sep { stroke: var(--border-strong); stroke-width: 1.2; stroke-dasharray: 5 4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .c-trace-line { animation: none; }
+  .c-trace-dot, .c-tour-dot { display: none; }
+}
