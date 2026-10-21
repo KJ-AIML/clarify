@@ -2,6 +2,8 @@
 
 Interactive architecture and decision boards for AI coding agents. The agent writes a Markdown draft. Clarify compiles it into one self-contained HTML page with zero runtime dependencies.
 
+![Clarify page for examples/ecommerce-architecture.md: hover card, narrated route tour, then answering the decision and copying the reply for the agent](docs/demo.gif)
+
 - **A real layout engine.** Layered (Sugiyama) layout with cycle breaking, crossing minimization, label lanes, and nested boundary groups that never overlap. Fuzz-tested on 300 random layouts.
 - **An interactive canvas.** Pan, cursor-anchored zoom, pinch, keyboard control, a minimap for large estates, fullscreen, and hover/selection focus that dims everything outside a node's neighborhood.
 - **Hover cards and an inspector.** Hover any component (or Tab to it) for a quick card: what it is, its status, key facts, connection counts and the routes through it. Click for the full inspector, with files, every incoming and outgoing call (click to jump), and comments.
