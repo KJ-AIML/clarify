@@ -15,6 +15,15 @@ Interactive architecture and decision boards for AI coding agents. The agent wri
 
 The visual direction is wayfinding. Chrome stays ink-and-paper and neutral, and color is reserved for meaning: routes use transit-line colors, statuses and brand marks keep theirs. Headings use system signage faces (DIN Alternate on macOS, Bahnschrift on Windows), and labels and counts use monospace.
 
+## Install
+
+```bash
+npx skills add KJ-AIML/clarify -g    # Claude Code, Codex, Cursor and other agents
+npx skills update clarify -g         # pull the latest version later
+```
+
+Then ask your agent to "clarify" or "diagram" something. No `npx`? Clone this repo into your agent's skills folder (for Claude Code, `~/.claude/skills/clarify`).
+
 ## Quick start
 
 ```bash
