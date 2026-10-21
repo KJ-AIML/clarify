@@ -2,7 +2,7 @@
 
 Interactive architecture and decision boards for AI coding agents. The agent writes a Markdown draft. Clarify compiles it into one self-contained HTML page with zero runtime dependencies.
 
-- **A real layout engine.** Layered (Sugiyama) layout with cycle breaking, crossing minimization, label lanes, and nested boundary groups that never overlap. Fuzz-tested on 1,200 random graphs.
+- **A real layout engine.** Layered (Sugiyama) layout with cycle breaking, crossing minimization, label lanes, and nested boundary groups that never overlap. Fuzz-tested on 300 random layouts.
 - **An interactive canvas.** Pan, cursor-anchored zoom, pinch, keyboard control, a minimap for large estates, fullscreen, and hover/selection focus that dims everything outside a node's neighborhood.
 - **Hover cards and an inspector.** Hover any component (or Tab to it) for a quick card: what it is, its status, key facts, connection counts and the routes through it. Click for the full inspector, with files, every incoming and outgoing call (click to jump), and comments.
 - **Narrated route tours.** `trace "Checkout" { A -> B: what happens… }` turns a request path into a guided tour. The path becomes a colored transit line, a station strip shows each stop with its narration, and the camera glides from hop to hop (←/→ to step).
@@ -57,7 +57,7 @@ clarify/
 ## Testing
 
 ```bash
-npm test                 # 73 unit tests, including the 300-layout fuzz pass
+npm test                 # 75 unit tests, including the 300-layout fuzz pass
 npm run visual           # browser audit + pixel diff against test/visual/baselines
 npm run visual:update    # accept intentional visual changes
 ```
@@ -71,7 +71,7 @@ Baselines depend on the machine's fonts. Regenerate them with `npm run visual:up
 - **Plain ESM with JSDoc types.** There's no build step. `src/types.d.ts` defines the contracts, and modules reference them via `@typedef {import("./types")…}`, so editors and `tsc --checkJs` type-check without a compile pass.
 - **Deterministic text measurement.** Node-side layout estimates text width per character class. The browser audit verifies that labels actually fit.
 - **Untrusted input.** All draft text is escaped. Links are limited to http/https/mailto/relative URLs, and embedded JSON is `<`-escaped. The live server binds to loopback and rejects foreign `Host` headers.
-- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 65 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Typical pages are 100–150 KB.
+- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 65 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Typical pages are 110–160 KB.
 
 ## License
 

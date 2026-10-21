@@ -94,13 +94,13 @@ Good automatic layout is what makes a diagram readable without anyone dragging b
 - **Spacing:** each box is placed close to its neighbors, with guaranteed gaps, and labels get their own lane so they never cover boxes.
 - **Groups:** boundary boxes such as "VPC" are pushed apart until they never overlap anything they don't contain.
 
-A test generates 1,200 random diagrams and checks these rules on every run.
+A test generates 150 random diagrams, lays each out left-to-right and top-down, and checks these rules on every run.
 
 ## F Design Decisions & Trade-offs {span=3}
 | Decision | Why | Trade-off | Status |
 | --- | --- | --- | --- |
 | Zero dependencies, no build step | Agents can run it anywhere instantly; nothing to install or break | We wrote our own layout engine and Mermaid parser instead of using libraries | ok Kept |
-| Single HTML file output | Easy to share, attach to tickets, open offline | Pages are 85–130 KB, larger than a plain doc | ok Kept |
+| Single HTML file output | Easy to share, attach to tickets, open offline | Pages are 110–160 KB, larger than a plain doc | ok Kept |
 | Markdown-like draft, not JSON | LLMs write Markdown reliably; JSON coordinates caused syntax failures in other tools | Less precise control over exact positions | ok Kept |
 | Line numbers on everything | Review comments map straight back to the source line | Parser must track offsets carefully | ok Kept |
 | Auto layout instead of manual dragging | Diagrams stay correct when the agent edits the draft | You can't hand-tune positions yet | warn Revisit |
@@ -138,8 +138,7 @@ Visual test baselines depend on this machine's fonts. On a new machine, run `npm
 ## I Your Call {span=3}
 ```ask
 What should the next iteration focus on?
-* Descriptions visible without clicking | hover cards and an auto-generated component list
 - Node dragging that writes positions back to the draft
-- A real TypeScript type-check in CI
+* A real TypeScript type-check in CI
 - More brand icons (AWS, GCP services)
 ```

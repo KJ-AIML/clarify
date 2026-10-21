@@ -8,7 +8,7 @@
     "clarify": "bin/clarify.mjs"
   },
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "visual": "node test/visual/run.mjs",
     "visual:update": "node test/visual/run.mjs --update"
   },
