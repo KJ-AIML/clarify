@@ -114,7 +114,7 @@ Use a ```` ```lesson ```` block to teach **how something moves between places ov
 
 **Writing rules:**
 - Plain words first, then the term: "a waiting tray for your next snapshot, the ==staging area==".
-- One idea per step: a title of 32 characters or fewer, one or two paragraphs of 45 words or fewer (a blank line between them), one `tip`.
+- One idea per step: a title of at most 32 characters, one or two paragraphs (a blank line between them) of at most 45 words each, and one `tip`.
 - Every step changes the machine: it moves a puck, focuses or fails a place, or sets a counter.
 - Show a failure and its fix: a `fail` puck, `fail:` on the place, `cut:` on the rail, and the fix in the text.
 - End with a `[recap]` step (takeaways as `- ` lines) and one `quiz`: one right answer marked `*`, and a reason after `|` on every option.
@@ -125,10 +125,10 @@ A lesson page needs only a `Lead:`, a short panel on why the topic matters, and 
 ```lesson How a Background Job Runs
 subtitle: Follow one welcome email from the sign-up form to the mail server.
 meta: 6 min · Beginner
-places: app = server "Web app" | queue = queue "Job queue" | worker = server "Worker" | mail = mailbox "Mail server"
-rails: app - queue - worker - mail
-counters: Waiting | Sent
-pucks: change = job | fail = no answer
+places: app = server "Web app" | queue = queue "Job queue" | worker = server "Worker" | mail = mailbox "Mail server" | db = database "Users"
+rails: app - queue - worker - mail | worker - db
+counters: Account | Waiting | Sent
+pucks: change = job | reply = address | fail = no answer
 goals: Why the app hands work off @1 | What happens when sending fails @2
 
 step Hand off: The app queues the job [how]
@@ -136,11 +136,11 @@ step Hand off: The app queues the job [how]
   tip Key idea: Slow work waits in a queue, so nobody waits for it.
   move: app -> queue
   focus: queue
-  set: Waiting = 1 job warn
+  set: Account = created good | Waiting = 1 job warn
 
 step Down: The mail server is down [case]
-  The worker takes the job, but the mail server does not answer. The job goes back in the queue to try again later.
-  move: queue -> worker, worker -> mail fail
+  The worker takes the job and looks up your address, but the mail server does not answer. The job goes back in the queue to try again later.
+  move: queue -> worker, worker <-> db, worker -> mail fail
   fail: mail
   cut: worker - mail
   set: Sent = failed bad
@@ -151,7 +151,13 @@ quiz Why does the app queue the email?
 ```
 ````
 
-Objects (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (anything else). Puck kinds: `change` (orange, the default), `reply` (green), `fail` (red, stops short), `store` (violet), `slow` (amber). Full syntax, layout rules and every warning with its fix: the Lessons section of `references/syntax.md`.
+- **Objects** (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (anything else).
+- **Pucks:** `change` (orange, the default), `reply` (green), `fail` (red, stops short), `store` (violet), `slow` (amber). `a <-> b` sends a green `reply` back.
+- **Layout** is automatic: places follow the first rail chain in a zigzag, and a place on a later chain (`| worker - db`) stands next to the place it joins. A rail runs straight along a row or column of the grid, so a place can have at most 4 rails (one per side), and a rail that closes a loop usually warns `can't be drawn straight`. Prefer one main chain plus short branches; `at=x,y` pins a place to a cell.
+- **Counters:** `set: Label = value level | Label = value`. The level word (`good`, `warn`, `bad` or `none`) is optional and goes after the value; it colours the chip and is never shown, so never use one of those words as a value or as its last word (`Status = all good` shows `all`).
+- **Lessons about code:** places are the modules, files or services a request passes through: `router` for a CLI, an entry point or a gateway, `server` for a service, `database` for a store, `queue` for a queue, `tray` for a parse or staging step, `folder` for files, `monitor` for the output page. Rails are the calls along the main path. Pucks are what moves: `change` the data or request, `reply` what a call returns, `store` output being written, `fail` an error or a rejection, `slow` a warning or a slow path.
+
+Full syntax and every warning with its fix: the Lessons section of `references/syntax.md`.
 
 ## Rules
 

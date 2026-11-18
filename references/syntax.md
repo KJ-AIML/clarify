@@ -144,7 +144,7 @@ The bench lays itself out from `rails:`. The first chain zigzags from left to ri
 
 - Make the main path one chain: `rails: you - tray - repo - origin - mate`. A chain of up to 7 places always fits.
 - Hang side places off it with more chains: `rails: you - tray - repo - origin | repo - cache`. A place has four sides, so it can join at most four others.
-- Rails can't form a loop (`a - b - c - a`), and every place needs a rail. Both raise warnings.
+- Every place needs a rail (else `has no rail`), and a rail that closes a loop, such as `c - a` in `a - b - c - a`, usually can't be drawn straight. Avoid loops.
 - `at=x,y` overrides a cell. Use it only to fix a layout warning.
 
 ### Steps
@@ -189,7 +189,7 @@ Directives are lowercase, with the colon right after the word: `move:`, not `Mov
 
 ### Counters
 
-`set: Staged = 2 files good | Edited = 1 file warn` sets chips, split on `|`. The label must match a name in `counters:` (any case). A last word of `good`, `warn` or `bad` colours the value green, amber or red; without one (or with `none`) it is plain. A value stays until a later step sets it again, and a chip is highlighted on the step that changes it.
+`set: Staged = 2 files good | Edited = 1 file warn` sets chips, split on `|`. The label must match a name in `counters:` (any case). The level word (`good`, `warn`, `bad` or `none`) is optional and goes after the value: `good`, `warn` and `bad` colour the value green, amber or red, and without one (or with `none`) it is plain. The level word is never shown, so never use one of those words as a value or as its last word: `Status = all good` shows `all`, and `Teammates = — none` shows `—`. A value stays until a later step sets it again, and a chip is highlighted on the step that changes it.
 
 ### Quiz
 
@@ -226,14 +226,14 @@ quiz Your push was refused. What do you run first?
 | `counter "…" is not declared in counters:` | Add it to `counters:` (names are split by vertical bars, not commas) or fix its spelling. Write `set: Label = value`. |
 | `quiz needs one correct option, marked with *` | Mark exactly one option with `*` and the others with `-`. |
 | `"…" has no rail` | Join the place to the machine in `rails:`. |
-| `rail … - … can't be drawn straight` | The rails form a loop, a place joins more than four others, or an `at=` cell is not in line with its neighbour. Drop a rail or reorder the chains; pin a place with `at=` only as a last resort. |
+| `rail … - … can't be drawn straight` | A rail closes a loop, a place has more than four rails, or an `at=` cell is not in line with its partner. Drop a rail or reorder the chains; pin a place with `at=` only as a last resort. |
 | `"…" overlaps "…"` | Two places want one cell: change or remove `at=`. |
 
 Some slips raise no warning, because the line is still valid paragraph text. If a step looks wrong on the page, check for a `step` or `quiz` line that is indented or capitalised (it becomes text of the step above), a directive in capitals or with a space before its colon, a `* ` line inside a step (takeaways use `- `), and an unknown `[chapter]` word (it stays in the title).
 
 ### Worked example
 
-Panel B of `examples/git-commit-lesson.md`: ten steps and a quiz, 0 warnings.
+Panel B of `examples/git-commit-lesson.md`: ten steps and a quiz, 0 warnings. In step 9, `Teammates = — none` shows a plain `—`: the level word is never shown, so never use one of those words as a value.
 
 ````markdown
 ```lesson How a Commit Travels
