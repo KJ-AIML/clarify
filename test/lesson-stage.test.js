@@ -7,6 +7,8 @@ import { layoutBench } from "../src/lesson/layout.js";
 import { createPen } from "../src/lesson/pen.js";
 import { OBJECTS } from "../src/lesson/objects/index.js";
 import { renderStage, placeTints } from "../src/lesson/stage.js";
+import { parseDraft } from "../src/parser.js";
+import { compile } from "../src/render.js";
 import { MINI } from "./fixtures/lesson-mini.js";
 
 const lesson = parseLesson(MINI).lesson;
@@ -43,25 +45,67 @@ function paintedPoints(svg) {
 
 test("objects are crafted", () => {
   const pen = createPen(k.fitProjection([[-40, -40, 0], [40, 40, 80]], 400, 400, { pad: 10, azimuth: 45 }));
-  const least = { laptop: 20, tray: 10, cabinet: 15, server: 12, box: 8 };
+  const least = {
+    laptop: 20, tray: 10, cabinet: 15, server: 12, box: 8,
+    phone: 12, monitor: 12, database: 12, queue: 12, cache: 12, gate: 12, router: 12, mailbox: 12, folder: 12, cloud: 12
+  };
   for (const [kind, min] of Object.entries(least)) {
     const solids = count(OBJECTS[kind].draw(pen), 'class="iso-solid"');
     assert.ok(solids >= min, `${kind} has ${solids} solids, want at least ${min}`);
   }
-  const tops = Object.fromEntries(Object.keys(least).map((kind) => [kind, OBJECTS[kind].top]));
-  assert.deepEqual(tops, { laptop: 46, tray: 18, cabinet: 53, server: 70, box: 30 });
+  const tops = Object.fromEntries(OBJECT_KINDS.map((kind) => [kind, OBJECTS[kind].top]));
+  assert.deepEqual(tops, {
+    laptop: 46, phone: 49, monitor: 48, server: 70, database: 50, cabinet: 53, tray: 18, queue: 28,
+    cache: 28, gate: 36, router: 37, mailbox: 44, folder: 30, cloud: 47, box: 30
+  });
 });
 
-test("every kind has a drawing; kinds not drawn yet stand as boxes", () => {
+test("a lesson of the five heaviest objects stays within the page budget", () => {
+  const pen = createPen(k.fitProjection([[-40, -40, 0], [40, 40, 80]], 400, 400, { pad: 10, azimuth: 45 }));
+  const size = Object.fromEntries(OBJECT_KINDS.map((kind) => [kind, OBJECTS[kind].draw(pen).length]));
+  const heaviest = [...OBJECT_KINDS].sort((a, b) => size[b] - size[a]).slice(0, 5);
+  const draft = [
+    "```lesson Heavy",
+    `places: ${heaviest.map((kind, i) => `p${i} = ${kind} "P${i}"`).join(" | ")}`,
+    `rails: ${heaviest.map((_, i) => `p${i}`).join(" - ")}`,
+    "",
+    "step One: The first step [how]",
+    "  Text.",
+    "  focus: p0",
+    "```"
+  ].join("\n");
+  const { stats, warnings } = compile(parseDraft(draft));
+  assert.deepEqual(warnings, []);
+  assert.ok(stats.bytes < 450 * 1024, `${heaviest.join(", ")}: ${stats.bytes} bytes`);
+});
+
+test("every kind is drawn", () => {
   assert.deepEqual(Object.keys(OBJECTS).sort(), [...OBJECT_KINDS].sort());
-  const own = ["laptop", "tray", "cabinet", "server"];
-  for (const kind of OBJECT_KINDS) {
-    if (own.includes(kind)) assert.notEqual(OBJECTS[kind], OBJECTS.box, kind);
-    else assert.equal(OBJECTS[kind], OBJECTS.box, kind);
-  }
+  for (const kind of OBJECT_KINDS) if (kind !== "box") assert.notEqual(OBJECTS[kind], OBJECTS.box, kind);
+  assert.equal(new Set(Object.values(OBJECTS)).size, OBJECT_KINDS.length); // no two kinds share a drawing
   const s = stageOf('places: a = phone "A" | b = mystery "B"', "rails: a - b");
   assert.equal(count(s.svg, '<use href="#l0-obj-phone"'), 1);
   assert.equal(count(s.svg, '<use href="#l0-obj-box"'), 1); // the parser turns an unknown kind into a box
+});
+
+test("objects stand within reach, and each top is the object's real top", () => {
+  // Drawn seen from straight above (screen = world x, y) and from straight ahead (screen y = -z).
+  const flat = (elevation) => createPen({ origin: [0, 0], scale: 1 / Math.sqrt(1.6), azimuth: 90, elevation });
+  const points = (svg) => [
+    ...[...svg.matchAll(/[ML](-?\d+(?:\.\d)?) (-?\d+(?:\.\d)?)/g)].map((m) => [Number(m[1]), Number(m[2])]),
+    ...[...svg.matchAll(/cx="(-?[\d.]+)" cy="(-?[\d.]+)"/g)].map((m) => [Number(m[1]), Number(m[2])])
+  ];
+  const reach = { cabinet: 39.4 }; // the cabinet's open drawer is pulled out in +y; nothing else passes ±30
+  for (const kind of OBJECT_KINDS) {
+    const plan = points(OBJECTS[kind].draw(flat(90)));
+    const xs = plan.map(([x]) => x);
+    const ys = plan.map(([, y]) => y);
+    assert.ok(Math.min(...xs) >= -30 && Math.max(...xs) <= 30, `${kind} spans x ${Math.min(...xs)}..${Math.max(...xs)}`);
+    assert.ok(Math.min(...ys) >= -30 && Math.max(...ys) <= (reach[kind] ?? 30), `${kind} spans y ${Math.min(...ys)}..${Math.max(...ys)}`);
+    const z = Math.max(...points(OBJECTS[kind].draw(flat(0))).map(([, y]) => -y));
+    const { top } = OBJECTS[kind];
+    assert.ok(z <= top && z >= top - 3, `${kind} reaches z ${z}, its top is ${top}`);
+  }
 });
 
 test("repeated kinds share one drawing", () => {
