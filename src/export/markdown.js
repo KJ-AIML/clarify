@@ -6,6 +6,7 @@
 import { tokenizeBlocks } from "../markdown.js";
 import { diagramFromFence } from "../diagram/index.js";
 import { graphToMermaid, sequenceToMermaid } from "../diagram/mermaid.js";
+import { lessonToMarkdown } from "../lesson/markdown.js";
 
 /** @typedef {import("../types").Draft} Draft */
 /** @typedef {import("../types").Block} Block */
@@ -60,6 +61,7 @@ function tableToMarkdown(rows, align) {
 }
 
 function fenceToMarkdown(b) {
+  if (b.lang === "lesson") return lessonToMarkdown(b);
   const diagram = diagramFromFence(b);
   if (diagram) {
     const text = diagram.kind === "sequence" ? sequenceToMermaid(diagram) : graphToMermaid(diagram);
