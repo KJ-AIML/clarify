@@ -40,6 +40,10 @@ const SCENARIOS = [
   { name: "ecommerce-hovercard", example: "ecommerce-architecture", viewport: true, act: "hovercard" },
   { name: "reply-loop", example: "ecommerce-architecture", viewport: true, act: "reply", noShot: true },
   { name: "export", example: "ecommerce-architecture", viewport: true, act: "export", noShot: true },
+  { name: "lesson-light", example: "git-commit-lesson", scheme: "light" },
+  { name: "lesson-dark", example: "git-commit-lesson", scheme: "dark" },
+  { name: "lesson-mobile", example: "git-commit-lesson", width: 390, height: 844, viewport: true, act: "lesson-top" },
+  { name: "lesson-fail", example: "git-commit-lesson", act: "lesson-step-9" },
   { name: "lesson-core", example: "git-commit-lesson", viewport: true, act: "lesson-core", noShot: true },
   { name: "lesson-motion", example: "git-commit-lesson", viewport: true, motion: true, act: "lesson-motion", noShot: true },
   { name: "lesson-still", example: "git-commit-lesson", viewport: true, act: "lesson-still", noShot: true },
@@ -172,6 +176,17 @@ async function act(page, kind) {
     if (state.count !== "Step 6 of 8") throw new Error(`unexpected step: ${state.count}`);
     if (state.current !== "Session Cache" || !state.text.startsWith("Checkout Service → Session Cache")) throw new Error(`strip out of sync: ${JSON.stringify(state)}`);
     if (state.visitedEdges < 5 || !state.touring) throw new Error(`route not drawn: ${JSON.stringify(state)}`);
+  }
+  if (kind === "lesson-step-9") {
+    // The refused push: the red badge on origin, the cut rail and the red puck stopped short.
+    await page.click('.c-lesson .l-timeline [data-step="8"]');
+    await page.sleep(200);
+  }
+  if (kind === "lesson-top") {
+    // A phone screen at the lesson's top: header, counters, stage, key and the sticky Back/Next bar.
+    // (A full-page phone capture would paint that sticky bar in the middle of the page.)
+    await page.eval(`document.querySelector(".c-lesson").scrollIntoView({ block: "start" })`);
+    await page.sleep(200);
   }
   if (kind === "lesson-core") {
     // Step switching: one article at a time, chips, places, focus ring and failure badge follow the step.

@@ -3,10 +3,13 @@ name: clarify
 argument-hint: "[render | serve | md] <draft.md>"
 description: >-
   Renders interactive visual briefs: architecture maps with pan, zoom, brand icons,
-  boundaries, an inspector and narrated route tours, plus decision cards, trade-off tables
-  and a two-way reply loop. Use proactively when structure beats prose: system
-  architecture, request flows, sequences, multi-option trade-offs, codebase tours, PR or
-  design reviews, or when the user asks to "diagram", "draw", "visualize", "clarify" or "compare".
+  boundaries, an inspector and narrated route tours, step-through lessons on a bench of
+  crafted 3D objects, plus decision cards, trade-off tables and a two-way reply loop. Use
+  proactively when structure beats prose: system architecture, request flows, sequences,
+  multi-option trade-offs, codebase tours, PR or design reviews, or when the user asks to
+  "diagram", "draw", "visualize", "clarify" or "compare". Make a lesson when the user asks
+  for a "lesson", to "teach", to "explain step by step", for a "course", or to "walk me
+  through how X works".
 ---
 
 # Clarify
@@ -102,6 +105,53 @@ Which failover strategy?
 - Raw Mermaid also works: a ```` ```mermaid ```` fence, or `flowchart`/`sequenceDiagram` inside `arch`.
 
 Other blocks: ```` ```sequence ```` (Mermaid sequence syntax), ```` ```callout ok|warn|err|info Title ````, ```` ```ask ```` (`*` = suggested option, `-` = option, `[ ]`/`[x]` = multi-select), ```` ```kv ````, ```` ```tree ````, tables with `ok`/`warn`/`no` status cells, and ordinary Markdown. Full reference: `references/syntax.md`.
+
+## Lessons
+
+Use a ```` ```lesson ```` block to teach **how something moves between places over time**: a change through Git, a request through a network, a job through a pipeline. The page draws one machine of crafted 3D objects, and each step moves pucks along its rails, lights up places and changes counters, beside a guide with Back and Next. When the reader only needs to follow one path through a map, a `trace` route tour is enough.
+
+**Story shape:** 6–12 steps, then one quiz. A `[problem]` step in plain words, `[how]` steps that add one idea each, a `[why]` step, one or two `[case]` steps that show what goes wrong, and a `[recap]` step.
+
+**Writing rules:**
+- Plain words first, then the term: "a waiting tray for your next snapshot, the ==staging area==".
+- One idea per step: a title of 32 characters or fewer, one or two paragraphs of 45 words or fewer (a blank line between them), one `tip`.
+- Every step changes the machine: it moves a puck, focuses or fails a place, or sets a counter.
+- Show a failure and its fix: a `fail` puck, `fail:` on the place, `cut:` on the rail, and the fix in the text.
+- End with a `[recap]` step (takeaways as `- ` lines) and one `quiz`: one right answer marked `*`, and a reason after `|` on every option.
+
+A lesson page needs only a `Lead:`, a short panel on why the topic matters, and the lesson in its own panel. The skeleton shows two steps of a full lesson. `step` and `quiz` lines start at column 0; indent the lines under them.
+
+````markdown
+```lesson How a Background Job Runs
+subtitle: Follow one welcome email from the sign-up form to the mail server.
+meta: 6 min · Beginner
+places: app = server "Web app" | queue = queue "Job queue" | worker = server "Worker" | mail = mailbox "Mail server"
+rails: app - queue - worker - mail
+counters: Waiting | Sent
+pucks: change = job | fail = no answer
+goals: Why the app hands work off @1 | What happens when sending fails @2
+
+step Hand off: The app queues the job [how]
+  You sign up. The app saves a ==job== to send your welcome email, and answers you at once.
+  tip Key idea: Slow work waits in a queue, so nobody waits for it.
+  move: app -> queue
+  focus: queue
+  set: Waiting = 1 job warn
+
+step Down: The mail server is down [case]
+  The worker takes the job, but the mail server does not answer. The job goes back in the queue to try again later.
+  move: queue -> worker, worker -> mail fail
+  fail: mail
+  cut: worker - mail
+  set: Sent = failed bad
+
+quiz Why does the app queue the email?
+  * To answer you at once | the slow sending happens later
+  - To send it faster | a queue adds a wait; it does not speed up sending
+```
+````
+
+Objects (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (anything else). Puck kinds: `change` (orange, the default), `reply` (green), `fail` (red, stops short), `store` (violet), `slow` (amber). Full syntax, layout rules and every warning with its fix: the Lessons section of `references/syntax.md`.
 
 ## Rules
 

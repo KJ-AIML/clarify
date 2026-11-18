@@ -8,6 +8,7 @@ Interactive architecture and decision boards for AI coding agents. The agent wri
 - **An interactive canvas.** Pan, cursor-anchored zoom, pinch, keyboard control, a minimap for large estates, fullscreen, and hover/selection focus that dims everything outside a node's neighborhood.
 - **Hover cards and an inspector.** Hover any component (or Tab to it) for a quick card: what it is, its status, key facts, connection counts and the routes through it. Click for the full inspector, with files, every incoming and outgoing call (click to jump), and comments.
 - **Narrated route tours.** `trace "Checkout" { A -> B: what happens… }` turns a request path into a guided tour. The path becomes a colored transit line, a station strip shows each stop with its narration, and the camera glides from hop to hop (←/→ to step).
+- **Step-through lessons.** A ```` ```lesson ```` block teaches how something moves between places: crafted 3D objects on a bench, pucks riding the rails between them, counters that change, and a guide that walks through each step, a failure and its fix, a recap and a quiz. Try `examples/git-commit-lesson.md`.
 - **Context built in.** The hero header has a section index and an open-questions count. Each diagram gets a map key that lists only the line styles and markers it actually uses. SKILL.md gives agents a context checklist: the answer first, how to read each map, node descriptions, a narrated main flow, and a takeaway per diagram.
 - **Mermaid in, Mermaid out.** Paste Mermaid flowcharts and sequence diagrams unchanged. Every diagram exports back to Mermaid for GitHub.
 - **A two-way agent loop.** Readers answer `ask` blocks and comment on any node, edge or panel. **Copy reply for agent** produces a structured reply with draft line numbers.
@@ -30,6 +31,7 @@ Then ask your agent to "clarify" or "diagram" something. No `npx`? Clone this re
 
 ```bash
 node clarify/bin/clarify.mjs render clarify/examples/ecommerce-architecture.md
+node clarify/bin/clarify.mjs render clarify/examples/git-commit-lesson.md     # step-through lesson
 node clarify/bin/clarify.mjs serve  clarify/examples/platform-topology.md     # live preview
 node clarify/bin/clarify.mjs md     clarify/examples/checkout-sequence.md     # GitHub Markdown
 cat draft.md | node clarify/bin/clarify.mjs render - --out page.html --no-open
