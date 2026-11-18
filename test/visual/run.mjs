@@ -40,7 +40,11 @@ const SCENARIOS = [
   { name: "ecommerce-hovercard", example: "ecommerce-architecture", viewport: true, act: "hovercard" },
   { name: "reply-loop", example: "ecommerce-architecture", viewport: true, act: "reply", noShot: true },
   { name: "export", example: "ecommerce-architecture", viewport: true, act: "export", noShot: true },
-  { name: "lesson-core", example: "git-commit-lesson", viewport: true, act: "lesson-core", noShot: true }
+  { name: "lesson-core", example: "git-commit-lesson", viewport: true, act: "lesson-core", noShot: true },
+  { name: "lesson-motion", example: "git-commit-lesson", viewport: true, motion: true, act: "lesson-motion", noShot: true },
+  { name: "lesson-still", example: "git-commit-lesson", viewport: true, act: "lesson-still", noShot: true },
+  { name: "lesson-compact", example: "git-commit-lesson", width: 390, height: 844, viewport: true, act: "lesson-compact", noShot: true },
+  { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true }
 ];
 
 // Runs inside the page; returns a list of problems.
@@ -201,6 +205,130 @@ async function act(page, kind) {
     })()`);
     if (!step9.bad || step9.step !== "8") throw new Error(`step 9: origin should show the failure badge: ${JSON.stringify(step9)}`);
     if (step9.body !== 16 || step9.title < 22) throw new Error(`step text should be 16px with a title of at least 22px: ${JSON.stringify(step9)}`);
+  }
+  if (kind === "lesson-motion") {
+    // Pucks travel on step 3, Pause holds them, Replay plays again, and ←/→ on the lesson never reach a route tour.
+    // page.click measures its target right after scrolling it into view; with motion allowed the page scrolls
+    // smoothly (page.css), so the click would land where the button used to be. Scroll instantly instead.
+    await page.eval(`document.documentElement.style.scrollBehavior = "auto"`);
+    const pucks = () => page.eval(`[...document.querySelectorAll(".c-lesson .l-pucks use")].map(u => u.getAttribute("transform")).join(" ; ")`);
+    const count = () => page.eval(`document.querySelector(".c-lesson .l-count").textContent`);
+    const pause = () => page.eval(`(() => { const root = document.querySelector(".c-lesson"); return { paused: root.classList.contains("is-paused"), pressed: root.querySelector('[data-l="pause"]').getAttribute("aria-pressed") }; })()`);
+    // A keydown (synthetic KeyboardEvent) on whatever has focus; returns whether a handler called preventDefault.
+    const press = (key) => page.eval(`(() => { const e = new KeyboardEvent("keydown", { key: ${JSON.stringify(key)}, bubbles: true, cancelable: true }); (document.activeElement || document.body).dispatchEvent(e); return e.defaultPrevented; })()`);
+    const travels = async (when) => {
+      const a = await pucks();
+      await page.sleep(300);
+      const b = await pucks();
+      if (!b) throw new Error(`${when}: no pucks in .l-pucks`);
+      if (a === b) throw new Error(`${when}: two samples 300 ms apart should differ, both were "${b}"`);
+    };
+    await page.click('.c-lesson [data-l="next"]');
+    await page.click('.c-lesson [data-l="next"]');
+    await travels("step 3");
+    await page.click('.c-lesson [data-l="pause"]');
+    const held = await pause();
+    if (!held.paused || held.pressed !== "true") throw new Error(`Pause should set is-paused on the lesson and aria-pressed="true": ${JSON.stringify(held)}`);
+    const c = await pucks();
+    await page.sleep(300);
+    const d = await pucks();
+    if (c !== d) throw new Error(`paused: pucks should hold still, got "${c}" then "${d}"`);
+    if (!(await count()).startsWith("Step 3 ")) throw new Error(`expected step 3 before the key press, got "${await count()}"`);
+    await page.eval(`document.querySelector(".c-lesson").focus()`);
+    if (!await press("ArrowRight")) throw new Error("ArrowRight on the focused lesson should be handled (preventDefault)");
+    if (!(await count()).startsWith("Step 4 ")) throw new Error(`ArrowRight on the focused lesson should go to step 4, got "${await count()}"`);
+    await page.click('.c-lesson [data-l="replay"]');
+    const played = await pause();
+    if (played.paused || played.pressed !== "false") throw new Error(`Replay should play again (no is-paused, aria-pressed="false"): ${JSON.stringify(played)}`);
+    await travels("step 4 after Replay");
+    // Start the panel C route tour and stop its autoplay on stop 2; keys pressed in the lesson must not move it.
+    await page.click(".c-route-btn");
+    await page.click('[data-tour="next"]');
+    const tour = () => page.eval(`document.querySelector(".c-route-count").textContent`);
+    const before = await tour();
+    if (!/^Step 2 of \d+$/.test(before)) throw new Error(`the panel C route tour should be on stop 2, got "${before}"`);
+    await page.eval(`document.querySelector(".c-lesson").focus()`);
+    await press("ArrowRight");
+    const after = await tour();
+    if (after !== before) throw new Error(`ArrowRight in the lesson moved the route tour: "${before}" → "${after}"`);
+    if (!(await count()).startsWith("Step 5 ")) throw new Error(`ArrowRight in the lesson should still step the lesson (step 5) while a tour runs, got "${await count()}"`);
+  }
+  if (kind === "lesson-still") {
+    // Reduced motion: no travel and no loop; each of step 3's pucks waits at the end of its rail.
+    await page.click('.c-lesson [data-l="next"]');
+    await page.click('.c-lesson [data-l="next"]');
+    const sample = () => page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const model = JSON.parse(root.querySelector(".l-model").textContent);
+      const moves = model.states[2].moves;
+      return [...root.querySelectorAll(".l-pucks use")].map(u => {
+        const rail = u.closest(".l-pucks").dataset.rail;
+        const m = u.transform.baseVal.consolidate();
+        const x = model.origin[0] + (m ? m.matrix.e : 0);
+        const y = model.origin[1] + (m ? m.matrix.f : 0);
+        const ends = moves.filter(mv => mv.rail === rail).flatMap(mv => mv.roundTrip ? [model.rails[rail].a, model.rails[rail].b] : [model.rails[rail][mv.reverse ? "a" : "b"]]);
+        const off = Math.min(...ends.map(([ex, ey]) => Math.max(Math.abs(ex - x), Math.abs(ey - y))));
+        return { rail, transform: u.getAttribute("transform"), off: Math.round(off * 100) / 100, opacity: getComputedStyle(u).opacity };
+      });
+    })()`);
+    const a = await sample();
+    await page.sleep(300);
+    const b = await sample();
+    if (!a.length) throw new Error("step 3: no pucks drawn (each move's pucks should wait at the end of its rail)");
+    if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`reduced motion: pucks should not move: ${JSON.stringify(a)} then ${JSON.stringify(b)}`);
+    const astray = a.filter(p => !(p.off <= 1) || p.opacity === "0");
+    if (astray.length) throw new Error(`reduced motion: every puck should be drawn at its rail's end point (±1): ${JSON.stringify(astray)}`);
+  }
+  if (kind === "lesson-compact") {
+    // Name tags never collide (numbered tags + the key when full ones would) and nothing is under 12px.
+    const tags = () => page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const els = [...root.querySelectorAll(".l-tag")];
+      const r = els.map(t => t.getBoundingClientRect());
+      const hits = [];
+      for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
+        if (r[i].left < r[j].right && r[j].left < r[i].right && r[i].top < r[j].bottom && r[j].top < r[i].bottom) hits.push(els[i].dataset.place + "/" + els[j].dataset.place);
+      }
+      const small = [...root.querySelectorAll(".l-tag, .l-chip-k")].map(el => el.className + " " + getComputedStyle(el).fontSize).filter(s => !(parseFloat(s.split(" ").pop()) >= 12));
+      return { compact: root.classList.contains("is-compact"), hits, small };
+    })()`);
+    const phone = await tags();
+    if (!phone.compact && phone.hits.length) throw new Error(`390px: tags overlap without is-compact: ${phone.hits.join(", ")}`);
+    if (phone.small.length) throw new Error(`390px: name tag or counter label under 12px: ${phone.small.join(", ")}`);
+    // Above 520px the CSS keeps full tags and the runtime decides (R19): stack two tags and resize the stage
+    // → numbered tags; put them back and resize again → full tags.
+    await page.eval(`(() => { const root = document.querySelector(".c-lesson"); const [a, b] = root.querySelectorAll(".l-tag"); window.__tag = [b.style.left, b.style.top]; b.style.left = a.style.left; b.style.top = a.style.top; root.style.width = "720px"; })()`);
+    await page.sleep(250);
+    const stacked = await tags();
+    if (!stacked.compact) throw new Error(`720px lesson with two stacked tags: the runtime should add is-compact: ${JSON.stringify(stacked)}`);
+    await page.eval(`(() => { const root = document.querySelector(".c-lesson"); const b = root.querySelectorAll(".l-tag")[1]; [b.style.left, b.style.top] = window.__tag; root.style.width = "740px"; })()`);
+    await page.sleep(250);
+    const apart = await tags();
+    if (apart.compact || apart.hits.length) throw new Error(`740px lesson with the tags apart: full tags should come back without overlaps: ${JSON.stringify(apart)}`);
+  }
+  if (kind === "lesson-quiz") {
+    // Picking an answer marks it right or wrong, shows every reason and tells screen readers.
+    const quiz = () => page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      return {
+        options: [...root.querySelectorAll(".l-option")].map(o => ({ correct: o.dataset.correct, cls: o.className })),
+        hidden: [...root.querySelectorAll(".l-why")].filter(w => w.hidden || getComputedStyle(w).display === "none").length,
+        live: root.querySelector(".l-live").textContent
+      };
+    })()`);
+    await page.click(".c-lesson .l-timeline li:last-child button");
+    await page.click('.c-lesson .l-option[data-correct="false"]');
+    const wrong = await quiz();
+    const first = wrong.options.find(o => o.correct === "false");
+    if (!/\bis-wrong\b/.test(first.cls) || !/\bis-picked\b/.test(first.cls)) throw new Error(`the picked wrong option should get is-picked and is-wrong: ${JSON.stringify(wrong.options)}`);
+    if (wrong.hidden) throw new Error(`${wrong.hidden} reason(s) still hidden after picking an answer`);
+    if (wrong.live !== "Not quite") throw new Error(`live text should be "Not quite", got "${wrong.live}"`);
+    await page.click('.c-lesson .l-option[data-correct="true"]');
+    const right = await quiz();
+    const correct = right.options.find(o => o.correct === "true");
+    if (!/\bis-right\b/.test(correct.cls) || !/\bis-picked\b/.test(correct.cls)) throw new Error(`the picked right option should get is-picked and is-right: ${JSON.stringify(right.options)}`);
+    if (right.options.filter(o => /\bis-picked\b/.test(o.cls)).length !== 1) throw new Error(`only the latest answer should be is-picked: ${JSON.stringify(right.options)}`);
+    if (right.live !== "Right") throw new Error(`live text should be "Right", got "${right.live}"`);
   }
 }
 

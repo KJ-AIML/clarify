@@ -245,7 +245,8 @@
 .l-bad path { fill: none; stroke: #fff; stroke-width: 2.6px; stroke-linecap: round; }
 .l-route { fill: none; stroke: var(--route); stroke-width: var(--route-w); stroke-linecap: round; stroke-dasharray: 2 6; animation: l-flow 1.3s linear infinite; }
 .l-route.is-cut { stroke: var(--l-red); stroke-dasharray: 6 5; animation: none; }
-.c-lesson.is-paused .l-route { animation-play-state: paused; }
+/* Pause holds the dash; so does a stage scrolled off screen (the runtime sets .is-offscreen) */
+.c-lesson:is(.is-paused, .is-offscreen) .l-route { animation-play-state: paused; }
 @keyframes l-flow { to { stroke-dashoffset: -16; } }
 .l-rail.is-cut { --t-top: #f6c9c6; --t-paper: #f2b3ae; --anatomy-top: color-mix(in oklab, var(--t-top) var(--l-mix), var(--l-base)); --anatomy-paper: color-mix(in oklab, var(--t-paper) var(--l-mix), var(--l-base)); --anatomy-shade-0: color-mix(in oklab, #d9827b var(--l-mix), var(--l-base)); --anatomy-shade-1: color-mix(in oklab, #e3958f var(--l-mix), var(--l-base)); --anatomy-shade-2: color-mix(in oklab, #eba8a2 var(--l-mix), var(--l-base)); --anatomy-shade-3: var(--anatomy-paper); }
 /* pucks (cloned <use> elements): the colour goes on the <use> and inherits into the copy */
