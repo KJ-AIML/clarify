@@ -174,6 +174,44 @@ export interface ParseOptions {
   lineOffset?: number;
 }
 
+// ── Lesson model (lesson fence) ───────────────────────────────────────────────
+
+export type PuckKind = "change" | "reply" | "fail" | "store" | "slow";
+export type Level = "good" | "warn" | "bad" | "none";
+
+export interface LessonPlace { id: string; kind: string; label: string; tint: string | null; at: [number, number] | null; line: number }
+export interface LessonRail { a: string; b: string; line: number }
+export interface LessonMove { from: string; to: string; kind: PuckKind; count: number; together: boolean; roundTrip: boolean }
+export interface LessonStep {
+  short: string;
+  title: string;
+  chapter: "problem" | "how" | "why" | "case" | "recap";
+  paras: string[];
+  tip: { kind: "idea" | "try" | "warn"; title: string; text: string } | null;
+  takeaways: string[];
+  show: string[];
+  focus: string[];
+  fail: string[];
+  cut: Array<[string, string]>;
+  moves: LessonMove[];
+  set: Array<{ label: string; value: string; level: Level }>;
+  line: number;
+}
+export interface LessonQuiz { question: string; options: Array<{ text: string; correct: boolean; why: string }>; line: number }
+export interface Lesson {
+  title: string;
+  subtitle: string;
+  meta: string[];
+  places: LessonPlace[];
+  rails: LessonRail[];
+  counters: string[];
+  pucks: Partial<Record<PuckKind, string>>;
+  goals: Array<{ text: string; at: number }>;
+  steps: LessonStep[];
+  quiz: LessonQuiz | null;
+  line: number;
+}
+
 // ── Layout output ─────────────────────────────────────────────────────────────
 
 export interface Point { x: number; y: number }

@@ -1,0 +1,32 @@
+// A small lesson fence, shaped like tokenizeBlocks output (the fence opens at draft line 10).
+// Shared by the lesson parser, state, layout, stage and markdown-export tests.
+export const MINI = { type: "fence", lang: "lesson", info: "How a Commit Travels", line: 10, body: [
+  "subtitle: Follow one saved change.",
+  "meta: 10 min · Beginner",
+  'places: you = laptop "Your folder" | tray = tray "Staging" | repo = cabinet "Local repo" | origin = server "Origin" | mate = laptop "Teammate"',
+  "rails: you - tray - repo - origin - mate",
+  "counters: Staged | Pushed",
+  "pucks: change = your change | reply = teammate's change | fail = refused",
+  "goals: Why staging lets you choose @2",
+  "",
+  "step Save: Your work lives on one laptop [problem]",
+  "  You pressed Save. Only your laptop knows.",
+  "  tip Key idea: Git moves changes one step at a time.",
+  "  show: you",
+  "",
+  "step Stage: Pick what goes in the snapshot [how]",
+  "  `git add` copies the changes you choose.",
+  "  move: you -> tray x2",
+  "  set: Staged = 2 files good",
+  "  focus: tray",
+  "",
+  "step Rejected: The push is refused [case]",
+  "  Your teammate pushed first.",
+  "  move: mate -> origin reply & repo -> origin fail",
+  "  fail: origin",
+  "  set: Pushed = rejected bad",
+  "",
+  "quiz Your push was refused. What do you run first?",
+  "  * git pull | brings their commit down",
+  "  - git push --force | erases their commit"
+].join("\n") };
