@@ -44,7 +44,8 @@ const SCENARIOS = [
   { name: "lesson-motion", example: "git-commit-lesson", viewport: true, motion: true, act: "lesson-motion", noShot: true },
   { name: "lesson-still", example: "git-commit-lesson", viewport: true, act: "lesson-still", noShot: true },
   { name: "lesson-compact", example: "git-commit-lesson", width: 390, height: 844, viewport: true, act: "lesson-compact", noShot: true },
-  { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true }
+  { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true },
+  { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true }
 ];
 
 // Runs inside the page; returns a list of problems.
@@ -392,6 +393,33 @@ async function act(page, kind) {
     if (!/\bis-right\b/.test(correct.cls) || !/\bis-picked\b/.test(correct.cls)) throw new Error(`the picked right option should get is-picked and is-right: ${JSON.stringify(right.options)}`);
     if (right.options.filter(o => /\bis-picked\b/.test(o.cls)).length !== 1) throw new Error(`only the latest answer should be is-picked: ${JSON.stringify(right.options)}`);
     if (right.live !== "Right") throw new Error(`live text should be "Right", got "${right.live}"`);
+  }
+  if (kind === "lesson-comment") {
+    // The guide header's comment button opens the inspector sheet on the current step; a note joins the reply.
+    await page.eval(`navigator.clipboard.writeText = (t) => { window.__copied = t; return Promise.resolve(); }`);
+    await page.click('.c-lesson [data-l="next"]');
+    const title = await page.eval(`document.querySelector('.c-lesson .l-step[data-step="1"] .l-step-title').textContent`);
+    await page.click('.c-lesson [data-l="comment"]');
+    await page.sleep(300);
+    const sheet = await page.eval(`(() => { const s = document.querySelector(".c-sheet"); return { open: s.classList.contains("is-open"), title: s.querySelector(".c-sheet-title h2").textContent, kind: s.querySelector(".c-sheet-kind").textContent }; })()`);
+    if (!sheet.open || sheet.title !== title || sheet.kind !== "Lesson step") throw new Error(`the sheet should open on "${title}" as a Lesson step: ${JSON.stringify(sheet)}`);
+    await page.eval(`document.querySelector("#c-note-input").value = "Say what the snapshot keeps"`);
+    await page.click("[data-add-note]");
+    await page.sleep(100);
+    const after = await page.eval(`(() => { const s = document.querySelector(".c-sheet"); return { open: s.classList.contains("is-open"), title: s.querySelector(".c-sheet-title h2").textContent, comments: s.querySelectorAll(".c-comment").length, dock: document.querySelector(".c-dock-count").textContent, shown: document.querySelector(".c-dock").hidden === false }; })()`);
+    if (!after.open || after.title !== title || after.comments !== 1) throw new Error(`adding a note should keep the same sheet open with the note listed: ${JSON.stringify(after)}`);
+    if (!after.shown || !/1\s*comment/.test(after.dock)) throw new Error(`the dock should show 1 comment: ${JSON.stringify(after)}`);
+    await page.click(".c-dock [data-reply]");
+    await page.sleep(100);
+    const reply = await page.eval("window.__copied || ''");
+    for (const needle of ["## Review comments", "[B · step] Step 2 · " + title, "(line ", "Say what the snapshot keeps"]) {
+      if (!reply.includes(needle)) throw new Error(`reply missing "${needle}":\n${reply}`);
+    }
+    // Deleting the note re-renders the same sheet, now without it.
+    await page.click("[data-del-note]");
+    await page.sleep(100);
+    const gone = await page.eval(`(() => { const s = document.querySelector(".c-sheet"); return { open: s.classList.contains("is-open"), comments: s.querySelectorAll(".c-comment").length, title: s.querySelector(".c-sheet-title h2").textContent }; })()`);
+    if (!gone.open || gone.comments !== 0 || gone.title !== title) throw new Error(`deleting the note should re-render the same sheet without it: ${JSON.stringify(gone)}`);
   }
 }
 

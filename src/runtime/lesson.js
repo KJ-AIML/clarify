@@ -121,6 +121,26 @@
     timeline.forEach((button) => button.addEventListener("click", () => show(Number(button.dataset.step), true)));
     root.querySelector('[data-l="replay"]').addEventListener("click", () => pucks.replay());
     pause.addEventListener("click", () => pucks.pause(!pucks.paused));
+    // Comment: hand the current step to clarify's review sheet (client.js listens for this event).
+    root.querySelector('[data-l="comment"]').addEventListener("click", () => {
+      const article = articles[now];
+      const title = article.querySelector(".l-step-title").textContent;
+      document.dispatchEvent(new CustomEvent("clarify:comment", {
+        detail: {
+          kind: "Lesson step",
+          title,
+          subtitle: "Leave review comments on this step",
+          target: {
+            type: "step",
+            diagram: "lesson-" + root.dataset.lesson,
+            index: now,
+            panel: root.closest(".c-card")?.dataset.panel,
+            label: "Step " + (now + 1) + " · " + title,
+            line: Number(article.dataset.line)
+          }
+        }
+      }));
+    });
 
     // Keys act on this lesson only, while focus is inside it: ← → step, R replays, Space pauses
     // (a focused button keeps Space for itself). Alt, Ctrl and Cmd shortcuts stay the browser's.

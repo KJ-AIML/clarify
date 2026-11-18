@@ -844,6 +844,12 @@
     });
   }
 
+  // Other scripts (the lesson player) open the sheet for their own targets with a detail like renderSheet's.
+  document.addEventListener("clarify:comment", (e) => {
+    current = { kind: "external", detail: e.detail };
+    renderSheet(e.detail);
+  });
+
   function section(title, html) {
     return `<section class="c-sheet-section"><h3>${esc(title)}</h3>${html}</section>`;
   }
@@ -852,7 +858,7 @@
     return `<span class="c-badge ${cls}">${esc(status)}</span>`;
   }
 
-  function renderSheet({ kind, title, subtitle, icon, sections, target }) {
+  function renderSheet({ kind, title, subtitle, icon, sections = [], target }) {
     const key = targetKey(target);
     const mine = notes.filter(n => targetKey(n.target) === key);
     const source = pageMeta.source ? pageMeta.source.split("/").pop() : "draft";
@@ -903,7 +909,8 @@
 
   function refreshSheet() {
     if (!current) return;
-    if (current.kind === "panel") {
+    if (current.kind === "external") renderSheet(current.detail);
+    else if (current.kind === "panel") {
       const card = $(`.c-card[data-panel="${current.panel}"]`);
       if (card) openPanelInspector(card);
     } else openInspector(current.canvas, { kind: current.kind, index: current.index });
