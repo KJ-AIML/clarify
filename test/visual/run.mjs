@@ -323,6 +323,33 @@ async function act(page, kind) {
       if (p.inTray) throw new Error(`step 3: puck ${i + 1} sits inside the tray's box (hidden by the destination): ${JSON.stringify(p)}`);
       if (!p.onTop) throw new Error(`step 3: puck ${i + 1} is covered at its centre: ${JSON.stringify(p)}`);
     });
+    // Every step (ruling R24): no resting puck is more than 25% under any name tag, and none sits inside the box
+    // of the place it heads for (the R21 check).
+    const resting = await page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const model = JSON.parse(root.querySelector(".l-model").textContent);
+      const ends = (rail) => { for (const a of model.places) for (const b of model.places) if (a + "--" + b === rail) return [a, b]; return []; };
+      const share = (p, t) => Math.max(0, Math.min(p.right, t.right) - Math.max(p.left, t.left)) * Math.max(0, Math.min(p.bottom, t.bottom) - Math.max(p.top, t.top)) / (p.width * p.height);
+      const out = [];
+      model.states.forEach((state, s) => {
+        root.querySelector('.l-timeline [data-step="' + s + '"]').click();
+        root.querySelector(".l-stage").scrollIntoView({ block: "center" });
+        const tags = [...root.querySelectorAll(".l-tag")];
+        root.querySelectorAll(".l-pucks use").forEach(u => {
+          const rail = u.parentNode.dataset.rail;
+          const [a, b] = ends(rail);
+          const heads = state.moves.filter(m => m.rail === rail).flatMap(m => m.roundTrip ? [a, b] : [m.reverse ? a : b]);
+          const box = u.getBoundingClientRect();
+          const tag = tags.map(t => [t.dataset.place, Math.round(100 * share(box, t.getBoundingClientRect()))]).sort((p, q) => q[1] - p[1])[0] || ["", 0];
+          const inside = heads.filter(id => { const o = root.querySelector('.l-obj[data-place="' + id + '"]').getBoundingClientRect(); return box.left >= o.left && box.right <= o.right && box.top >= o.top && box.bottom <= o.bottom; });
+          out.push({ step: s + 1, rail, kind: u.getAttribute("class"), tag, inside });
+        });
+      });
+      return out;
+    })()`);
+    if (!resting.length) throw new Error("no resting pucks on any step");
+    const hidden = resting.filter(p => p.tag[1] > 25 || p.inside.length);
+    if (hidden.length) throw new Error(`resting pucks hidden (over 25% under a tag, or inside the place they head for): ${JSON.stringify(hidden)}`);
   }
   if (kind === "lesson-compact") {
     // Name tags never collide (numbered tags + the key when full ones would) and nothing is under 12px.

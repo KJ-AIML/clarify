@@ -146,13 +146,19 @@ test("screen geometry comes from one fitted projection", () => {
     "repo--origin": { a: at([156, 0, 0]), b: at([204, 0, 0]) },
     "origin--mate": { a: at([240, 36, 0]), b: at([240, 84, 0]) }
   });
+  // Tags hang from each pad's front corner, [x + 36, y + 36, 3]. Rails meet a pad only at its edge centres, so
+  // every rail end stays clear of every tag anchor (a tag at the front-edge centre sat on a rail's end).
   assert.deepEqual(stage.tags, {
-    you: pct([0, 156, 3]),
-    tray: pct([120, 156, 3]),
-    repo: pct([120, 36, 3]),
-    origin: pct([240, 36, 3]),
-    mate: pct([240, 156, 3])
+    you: pct([36, 156, 3]),
+    tray: pct([156, 156, 3]),
+    repo: pct([156, 36, 3]),
+    origin: pct([276, 36, 3]),
+    mate: pct([276, 156, 3])
   });
+  const anchors = Object.values(stage.tags).map(([left, top]) => [(left / 100) * 1120, (top / 100) * 620]);
+  for (const end of Object.values(stage.rails).flatMap((r) => [r.a, r.b])) {
+    for (const anchor of anchors) assert.ok(Math.hypot(end[0] - anchor[0], end[1] - anchor[1]) > 30, `rail end ${end} lies under the tag at ${anchor}`);
+  }
 
   // An object is its drawing at the world origin, moved by screen(cell) - screen(origin).
   const [ox, oy] = k.iso([0, 0, 0], P);

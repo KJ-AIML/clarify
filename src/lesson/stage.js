@@ -31,7 +31,9 @@ import { OBJECTS } from "./objects/index.js";
  * @property {Record<string, { a: [number, number], b: [number, number] }>} rails each rail's ends where it meets
  *   the two pads (floor level), in viewBox units, from the rail's `a` place to its `b` place
  * @property {[number, number]} origin screen point of world [0, 0, 0], where the <defs> drawings stand
- * @property {Record<string, [number, number]>} tags [left %, top %] of each place's tag anchor, world [x, y + 36, 3]
+ * @property {Record<string, [number, number]>} tags [left %, top %] of each place's tag anchor: its pad's front
+ *   corner, world [x + 36, y + 36, 3], straight below the object and out of every rail's way (rails meet a pad
+ *   only at its edge centres, so a tag there would hide the pucks resting near that end)
  * @property {Record<string, string>} tints each place's tint, as placeTints gives it
  */
 
@@ -187,7 +189,7 @@ export function renderStage(lesson, layout, n) {
     tags: Object.fromEntries(
       places.map((place) => {
         const [x, y] = centre(place.id);
-        const [sx, sy] = pen.at([x, y + PAD.d / 2, PAD_H]);
+        const [sx, sy] = pen.at([x + PAD.w / 2, y + PAD.d / 2, PAD_H]);
         return [place.id, [round((sx / W) * 100), round((sy / H) * 100)]];
       })
     ),

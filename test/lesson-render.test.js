@@ -138,7 +138,7 @@ test("the lesson HTML follows the contract", () => {
   assert.match(html, /<div class="l-stage"><svg class="l-svg"/);
   const tags = [...html.matchAll(/<span class="l-tag" data-place="([^"]+)" data-n="(\d)" style="left:([\d.]+)%;top:([\d.]+)%">/g)];
   assert.deepEqual(tags.map((m) => [m[1], m[2]]), [["you", "1"], ["tray", "2"], ["repo", "3"], ["origin", "4"], ["mate", "5"]]);
-  assert.deepEqual(tags[0].slice(3).map(Number), [13.8, 41.7]);
+  assert.deepEqual(tags[0].slice(3).map(Number), [19.9, 47.2]); // you's pad front corner, world [36, 156, 3]
   assert.match(html, /<ol class="l-key" hidden aria-label="Places">/);
   assert.equal(count(html, /<li data-place="[^"]+"><b>\d<\/b><i class="l-swatch" data-tint="\w+"><\/i>/g), 5);
   assert.match(html, /<ul class="l-legend" aria-label="Legend"><li><i class="l-dot" data-kind="change"><\/i>your change<\/li><li><i class="l-dot" data-kind="reply"><\/i>teammate&#39;s change<\/li><li><i class="l-dot" data-kind="fail"><\/i>refused<\/li><\/ul>/);
