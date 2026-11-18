@@ -55,11 +55,11 @@ export function createPen(P) {
   /** Round rubber feet standing at z, one near each corner of a plan, back to front. */
   const feet = (plan, inset, radius, z, height) =>
     byDepth(k.corners(plan, inset)).map(([x, y]) => solid(cylinder(x, y, radius, z, height, 14), { tone: "lo" })).join("");
+  /** A screw or bolt head (a ring of `radius` and a dot) at each floor point, on a top at z. */
+  const bolts = (points, z, size = 0.5, radius = 1.9) =>
+    line(points.map(([x, y]) => ring(x, y, radius, z, 14)).join(""), { tone: "lo" }) + dots(points.map(([x, y]) => [x, y, z]), { size, tone: "mid" });
   /** A screw head (ring and dot) near each corner of a plan, on its top at z. */
-  const screws = (plan, inset, z, size = 0.5) => {
-    const c = k.corners(plan, inset);
-    return line(c.map(([x, y]) => ring(x, y, 1.9, z, 14)).join(""), { tone: "lo" }) + dots(c.map(([x, y]) => [x, y, z]), { size, tone: "mid" });
-  };
+  const screws = (plan, inset, z, size = 0.5) => bolts(k.corners(plan, inset), z, size);
   /** A label plate on a front face, with ruled lines. */
   const plateOnY = (y, x1, x2, z1, z2, rules = 1) => {
     const face = faceY(y, x1, x2, z1, z2);
@@ -91,7 +91,7 @@ export function createPen(P) {
   const lying = (section, y0, y1) => lyingSolid(section, y0, y1, P);
   return {
     P, at, solid, line, slab, cylinder, pathAt, outline, lineOnTop, ring, sideRing,
-    faceY, faceX, segY, segX, halo, dot, dots, feet, screws, plateOnY, plateOnX, byDepth, byDepthPlans,
+    faceY, faceX, segY, segX, halo, dot, dots, feet, bolts, screws, plateOnY, plateOnX, byDepth, byDepthPlans,
     prism, arc, lying, inset: k.insetPlan, corners: k.corners
   };
 }

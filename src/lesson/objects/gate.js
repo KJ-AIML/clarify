@@ -5,19 +5,21 @@
 // LED. The lane runs along y. Centred on the world origin, standing on the pad.
 
 const Z0 = 3; // the pad's top
+const BOLT = 1.3; // an anchor bolt's washer radius; each stands clear of the body on its plate and of the plate's edge
 
 export default {
   top: 36,
   /** @param {import("../pen.js").Pen} pen */
   draw(pen) {
-    const { solid, line, slab, cylinder, faceY, sideRing, halo, dot, dots, outline, screws, byDepthPlans, inset } = pen;
+    const { solid, line, slab, cylinder, faceY, sideRing, halo, dot, dots, outline, bolts, byDepthPlans, inset } = pen;
     const out = [];
 
-    // The pedestal: plinth, body, cap.
-    const plinth = { x: -27, y: -12, w: 14, d: 26, r: 1.2 };
+    // The pedestal: a plinth bolted down in front of it and beside the lane (the fourth bolt is
+    // hidden behind it), the body, the cap.
+    const plinth = { x: -27, y: -12, w: 16.2, d: 28.2, r: 1.2 };
     out.push(halo(inset(plinth, 1), Z0, 0.1));
     out.push(solid(slab(plinth, Z0, 1.4, 4, 0.3), { tone: "lo" }));
-    out.push(screws(plinth, 2.2, Z0 + 1.4, 0.4));
+    out.push(bolts([[-23, 14.6], [-12.4, 14.6], [-12.4, -10.4]], Z0 + 1.4, 0.4, BOLT));
     const zb = Z0 + 1.4;
     const zt = zb + 28;
     out.push(solid(slab({ x: -26, y: -11, w: 12, d: 24, r: 1.5 }, zb, 28, 4, 0.5), { tone: "mid" }));
@@ -55,11 +57,12 @@ export default {
     out.push(solid(cylinder(xh, 0, 3, za2, 3, 24, 0.3), { tone: "mid" }));
     out.push(solid(cylinder(xh, 0, 1.4, za2 + 3, 1.2, 16), { tone: "mid", crease: "none" }));
 
-    // The post on the far side of the lane takes the arm's end.
-    const foot = { x: 16.8, y: -4, w: 6.4, d: 8, r: 1 };
+    // The post on the far side of the lane takes the arm's end; its foot plate is bolted down at
+    // three corners in view (the fourth is hidden behind the post).
+    const foot = { x: 15, y: -5.6, w: 10, d: 11.2, r: 1 };
     out.push(halo(inset(foot, 0.5), Z0, 0.1));
     out.push(solid(slab(foot, Z0, 1.2, 3, 0.2), { tone: "lo" }));
-    out.push(screws(foot, 1.6, Z0 + 1.2, 0.35));
+    out.push(bolts([[16.6, 4], [23.4, 4], [23.4, -4]], Z0 + 1.2, 0.4, BOLT));
     out.push(solid(slab({ x: 18, y: -2.6, w: 4, d: 5.2, r: 1 }, Z0 + 1.2, 23.8, 3, 0.3), { tone: "mid" }));
     out.push(solid(slab({ x: 17.6, y: -3, w: 4.8, d: 6, r: 1.4 }, Z0 + 25, 1.4, 3, 0.3), { tone: "mid" }));
     out.push(dot([20, 2.6, Z0 + 21], "l-led is-ok", 0.9));

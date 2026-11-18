@@ -11,16 +11,18 @@ export default {
   top: 44,
   /** @param {import("../pen.js").Pen} pen */
   draw(pen) {
-    const { solid, line, slab, prism, lying, arc, faceX, segX, segY, halo, lineOnTop, outline, pathAt, screws } = pen;
+    const { solid, line, slab, prism, lying, arc, faceX, segX, segY, halo, lineOnTop, outline, pathAt, bolts } = pen;
     const out = [];
     const { azimuth = 45, elevation = 30 } = pen.P;
     const rad = Math.PI / 180;
     // Where the roof's curve turns away from the reader: ribs end there, on its outline.
     const limb = Math.PI - Math.atan2(Math.cos(azimuth * rad) * Math.cos(elevation * rad), Math.sin(elevation * rad));
 
-    // The flange, the post (with its grain running its full height) and the board on top.
-    const flange = { x: -5, y: -5, w: 10, d: 10, r: 1.2 };
-    out.push(halo(flange, Z0, 0.1), solid(slab(flange, Z0, 1.2, 3, 0.3), { tone: "lo" }), screws(flange, 1.8, Z0 + 1.2, 0.4));
+    // The flange, bolted down at the three corners in view (the fourth is hidden behind the post),
+    // the post (with its grain running its full height) and the board on top. Each bolt's washer
+    // stands clear of the post and of the flange's edge.
+    const flange = { x: -5.5, y: -5.5, w: 11, d: 11, r: 1.2 };
+    out.push(halo(flange, Z0, 0.1), solid(slab(flange, Z0, 1.2, 3, 0.3), { tone: "lo" }), bolts([[-3.9, 3.9], [3.9, 3.9], [3.9, -3.9]], Z0 + 1.2, 0.4, 1.3));
     const [zp, zboard] = [Z0 + 1.2, 23];
     out.push(solid(slab({ x: -2.6, y: -2.6, w: 5.2, d: 5.2, r: 0.5 }, zp, zboard - zp, 2), { tone: "mid" }));
     out.push(line(segY(2.6, -0.8, zp, -0.8, zboard) + segY(2.6, 1.1, zp, 1.1, zboard) + segX(2.6, -1, zp, -1, zboard) + segX(2.6, 0.9, zp, 0.9, zboard), { tone: "faint" }));
