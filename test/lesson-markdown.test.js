@@ -146,6 +146,38 @@ test("keeps the ids as parsed", () => {
   assert.ok(md.includes('my-id["The \'dev\' box"] --- b["B"]'));
 });
 
+test("renames ids Mermaid cannot take (keywords, brackets, non-ASCII) to n{index}, on every line they appear", () => {
+  const md = lessonToMarkdown(fence("T",
+    'places: end = laptop "Start (A) [x]" | a(b) = server "B" | Graph = tray "C" | สวัสดี = cabinet "D" | my-id = laptop "E" | a--b = laptop "F" | n1 = server "H"',
+    "rails: end - a(b) - Graph | a(b) - สวัสดี | my-id - end | a--b - my-id",
+    "",
+    "step One: First",
+    "  Text."
+  ));
+  const map = md.split("```mermaid\n")[1].split("\n```")[0];
+  // a(b) is place 1, so it would be n1, but the place really named n1 keeps that name: the rename gets a suffix.
+  assert.equal(map, [
+    "flowchart LR",
+    '  n0["Start (A) [x]"] --- n1_["B"]',
+    '  n1_["B"] --- n2["C"]',
+    '  n1_["B"] --- n3["D"]',
+    '  my-id["E"] --- n0["Start (A) [x]"]',
+    '  n5["F"] --- my-id["E"]',
+    '  n1["H"]'
+  ].join("\n"));
+});
+
+test("passes safe ids through and renames only the unsafe ones", () => {
+  const md = lessonToMarkdown(fence("T",
+    'places: end = laptop "A" | you = server "B" | End = tray "C" | _x1 = cabinet "D"',
+    "rails: end - you | you - End | you - _x1",
+    "",
+    "step One: First",
+    "  Text."
+  ));
+  assert.ok(md.includes('  n0["A"] --- you["B"]\n  you["B"] --- n2["C"]\n  you["B"] --- _x1["D"]\n'));
+});
+
 test("escapes a double quote in a label as #quot;", () => {
   // The parser never produces a quote in a label, so build the model by hand.
   const md = lessonModelToMarkdown({
