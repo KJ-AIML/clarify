@@ -8,38 +8,71 @@ import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
 
-/** Locate a Chromium binary: $CHROME_PATH, Playwright's cache, then system installs. */
-export function findChrome() {
-  if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) return process.env.CHROME_PATH;
-  const cache = process.platform === "darwin"
-    ? path.join(os.homedir(), "Library/Caches/ms-playwright")
-    : process.platform === "win32" ? path.join(os.homedir(), "AppData/Local/ms-playwright")
-    : path.join(os.homedir(), ".cache/ms-playwright");
+/**
+ * Every place a Chromium binary may live, best first: Playwright's cache, then system installs.
+ * Pure: the file system is only reached through `list(dir)` (directory entries), so tests can
+ * hand it a fake cache. Paths use the target platform's separators.
+ */
+export function chromeCandidates({ platform = process.platform, env = process.env, home = os.homedir(), list = safeList } = {}) {
+  const win = platform === "win32";
+  const p = win ? path.win32 : path.posix;
+  const cache = platform === "darwin" ? p.join(home, "Library/Caches/ms-playwright")
+    : win ? p.join(env.LOCALAPPDATA || p.join(home, "AppData", "Local"), "ms-playwright")
+    : p.join(home, ".cache/ms-playwright");
   const candidates = [];
-  if (fs.existsSync(cache)) {
-    for (const dir of fs.readdirSync(cache).sort().reverse()) {
+  for (const dir of list(cache).sort().reverse()) {
+    if (win) {
       if (dir.startsWith("chromium_headless_shell-")) {
-        for (const sub of safeList(path.join(cache, dir))) {
-          candidates.push(path.join(cache, dir, sub, "chrome-headless-shell"), path.join(cache, dir, sub, "headless_shell"));
-        }
+        candidates.push(
+          p.join(cache, dir, "chrome-win", "headless_shell.exe"),
+          p.join(cache, dir, "chrome-headless-shell-win64", "chrome-headless-shell.exe")
+        );
       }
       if (dir.startsWith("chromium-")) {
-        for (const sub of safeList(path.join(cache, dir))) {
-          candidates.push(
-            path.join(cache, dir, sub, "Chromium.app/Contents/MacOS/Chromium"),
-            path.join(cache, dir, sub, "Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"),
-            path.join(cache, dir, sub, "chrome")
-          );
-        }
+        candidates.push(p.join(cache, dir, "chrome-win", "chrome.exe"), p.join(cache, dir, "chrome-win64", "chrome.exe"));
+      }
+      continue;
+    }
+    if (dir.startsWith("chromium_headless_shell-")) {
+      for (const sub of list(p.join(cache, dir))) {
+        candidates.push(p.join(cache, dir, sub, "chrome-headless-shell"), p.join(cache, dir, sub, "headless_shell"));
+      }
+    }
+    if (dir.startsWith("chromium-")) {
+      for (const sub of list(p.join(cache, dir))) {
+        candidates.push(
+          p.join(cache, dir, sub, "Chromium.app/Contents/MacOS/Chromium"),
+          p.join(cache, dir, sub, "Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"),
+          p.join(cache, dir, sub, "chrome")
+        );
       }
     }
   }
-  candidates.push(
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-    "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"
-  );
-  return candidates.find(c => fs.existsSync(c)) || null;
+  if (win) {
+    const programFiles = env.PROGRAMFILES || "C:\\Program Files";
+    const programFilesX86 = env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)";
+    const localAppData = env.LOCALAPPDATA || p.join(home, "AppData", "Local");
+    candidates.push(
+      p.join(programFiles, "Google/Chrome/Application/chrome.exe"),
+      p.join(localAppData, "Google/Chrome/Application/chrome.exe"),
+      p.join(programFilesX86, "Google/Chrome/Application/chrome.exe"),
+      p.join(programFilesX86, "Microsoft/Edge/Application/msedge.exe"),
+      p.join(programFiles, "Microsoft/Edge/Application/msedge.exe")
+    );
+  } else {
+    candidates.push(
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Chromium.app/Contents/MacOS/Chromium",
+      "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"
+    );
+  }
+  return candidates;
+}
+
+/** Locate a Chromium binary: $CHROME_PATH first, then the first candidate that exists. */
+export function findChrome() {
+  if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) return process.env.CHROME_PATH;
+  return chromeCandidates().find(c => fs.existsSync(c)) || null;
 }
 
 function safeList(dir) {
@@ -53,8 +86,9 @@ export async function launchBrowser(executable = findChrome()) {
     "--headless=new", "--remote-debugging-pipe", "--no-first-run", "--no-default-browser-check",
     "--disable-gpu", "--hide-scrollbars", "--force-color-profile=srgb", "--font-render-hinting=none",
     "--disable-background-timer-throttling", "--disable-renderer-backgrounding",
+    ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []),
     `--user-data-dir=${userDir}`, "about:blank"
-  ], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  ],{ stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
 
   const writer = /** @type {import("node:stream").Writable} */ (proc.stdio[3]);
   const reader = /** @type {import("node:stream").Readable} */ (proc.stdio[4]);

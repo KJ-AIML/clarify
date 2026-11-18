@@ -4,25 +4,26 @@
 // Chromium (driven over CDP, no Playwright dependency), then:
 //   1. asserts DOM invariants: no console errors, labels fit their boxes, no page overflow
 //   2. compares a screenshot against test/visual/baselines/<name>.png
-// Usage: node test/visual/run.mjs [--update] [--only name]
+// Usage: node test/visual/run.mjs [--update] [--only name] [--baselines dir] [--output dir]
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseDraft } from "../../src/parser.js";
 import { compile } from "../../src/render.js";
 import { launchBrowser, findChrome, decodePng, encodePng, diffImages } from "./cdp.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
-const baselines = path.join(here, "baselines");
-const output = path.join(here, "output");
 const args = process.argv.slice(2);
+const flag = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
+const baselines = flag("--baselines") ? path.resolve(flag("--baselines")) : path.join(here, "baselines");
+const output = flag("--output") ? path.resolve(flag("--output")) : path.join(here, "output");
 const update = args.includes("--update");
-const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
+const only = flag("--only");
 const MAX_DIFF = 0.002;
 
-/** @type {Array<{ name: string, example: string, width?: number, height?: number, scheme?: "light"|"dark", theme?: string, viewport?: boolean, act?: string, noShot?: boolean }>} */
+/** @type {Array<{ name: string, example: string, width?: number, height?: number, scheme?: "light"|"dark", theme?: string, viewport?: boolean, motion?: boolean, act?: string, noShot?: boolean }>} */
 const SCENARIOS = [
   { name: "ecommerce-light", example: "ecommerce-architecture", scheme: "light" },
   { name: "ecommerce-dark", example: "ecommerce-architecture", scheme: "dark" },
@@ -140,7 +141,7 @@ async function act(page, kind) {
     const png = decodePng(fs.readFileSync(await waitForFile(dir, /\.png$/)));
     if (png.width < model.width * 2) throw new Error(`PNG is ${png.width}px wide, expected ≥ ${model.width * 2}`);
     // The exported SVG must render standalone (no page CSS): screenshot it as its own document.
-    await page.goto(`file://${svgFile}`);
+    await page.goto(pathToFileURL(svgFile).href);
     fs.writeFileSync(path.join(output, "export-standalone.png"), await page.screenshot({ fullPage: true }));
   }
   if (kind === "inspect") {
@@ -189,10 +190,10 @@ async function main() {
   try {
     for (const s of SCENARIOS) {
       if (only && s.name !== only) continue;
-      const page = await browser.newPage({ width: s.width || 1440, height: s.height || 1000, colorScheme: s.scheme || "light" });
+      const page = await browser.newPage({ width: s.width || 1440, height: s.height || 1000, colorScheme: s.scheme || "light", reducedMotion: !s.motion });
       const problems = [];
       try {
-        await page.goto(`file://${pages.get(s.example)}`);
+        await page.goto(pathToFileURL(pages.get(s.example)).href);
         if (s.theme) {
           await page.eval(`document.documentElement.dataset.theme = ${JSON.stringify(s.theme)}`);
           await page.sleep(80);

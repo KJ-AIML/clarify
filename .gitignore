@@ -1,2 +1,3 @@
 test/visual/output/
 node_modules/
+.tmp/
