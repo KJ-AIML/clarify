@@ -252,8 +252,8 @@ async function act(page, kind) {
     const after = await tour();
     if (after !== before) throw new Error(`ArrowRight in the lesson moved the route tour: "${before}" → "${after}"`);
     if (!(await count()).startsWith("Step 5 ")) throw new Error(`ArrowRight in the lesson should still step the lesson (step 5) while a tour runs, got "${await count()}"`);
-    // A refused push stops short (ruling R23): sampled every 100 ms from Replay on step 9, the fail puck is seen
-    // travelling and waiting at 70% of its trip, and never past it (±1 unit).
+    // A refused push stops short (rulings R23, R26): sampled every 100 ms from Replay on step 9, the fail puck is
+    // seen travelling and waiting at 55% of its trip, and never past it (±1 unit).
     await page.click('.c-lesson .l-timeline [data-step="8"]');
     await page.click('.c-lesson [data-l="replay"]');
     const failAt = () => page.eval(`(() => {
@@ -266,7 +266,7 @@ async function act(page, kind) {
       const m = u.transform.baseVal.consolidate().matrix;
       const len = Math.hypot(to[0] - from[0], to[1] - from[1]);
       const along = ((model.origin[0] + m.e - from[0]) * (to[0] - from[0]) + (model.origin[1] + m.f - from[1]) * (to[1] - from[1])) / len;
-      return { beyond: Math.round((along - 0.7 * len) * 100) / 100, shown: parseFloat(getComputedStyle(u).opacity) > 0 };
+      return { beyond: Math.round((along - 0.55 * len) * 100) / 100, shown: parseFloat(getComputedStyle(u).opacity) > 0 };
     })()`);
     const trail = [];
     for (let i = 0; i < 25; i++) {
@@ -274,13 +274,13 @@ async function act(page, kind) {
       await page.sleep(100);
     }
     const shown = trail.filter(s => s.shown);
-    if (shown.some(s => s.beyond > 1)) throw new Error(`step 9: the fail puck went past 70% of its trip: ${JSON.stringify(trail)}`);
+    if (shown.some(s => s.beyond > 1)) throw new Error(`step 9: the fail puck went past 55% of its trip: ${JSON.stringify(trail)}`);
     if (!shown.some(s => s.beyond < -5)) throw new Error(`step 9: the fail puck was never seen travelling: ${JSON.stringify(trail)}`);
-    if (!shown.some(s => Math.abs(s.beyond) <= 1)) throw new Error(`step 9: the fail puck was never seen waiting at 70%: ${JSON.stringify(trail)}`);
+    if (!shown.some(s => Math.abs(s.beyond) <= 1)) throw new Error(`step 9: the fail puck was never seen waiting at 55%: ${JSON.stringify(trail)}`);
   }
   if (kind === "lesson-still") {
-    // Reduced motion: no travel and no loop. Step 3 moves you -> tray x2, so its two pucks rest at 70% and 58%
-    // of the trip (rulings R21, R22), on show: not inside the tray's box, and on top at their centres.
+    // Reduced motion: no travel and no loop. Step 3 moves you -> tray x2, so its two pucks rest at 55% and 43%
+    // of the trip (rulings R21, R22, R26), each on top at its centre.
     await page.click('.c-lesson [data-l="next"]');
     await page.click('.c-lesson [data-l="next"]');
     await page.eval(`document.querySelector(".c-lesson .l-stage").scrollIntoView({ block: "center" })`);
@@ -290,7 +290,6 @@ async function act(page, kind) {
       const [move] = model.states[2].moves;
       const rail = model.rails[move.rail];
       const [from, to] = move.reverse ? [rail.b, rail.a] : [rail.a, rail.b];
-      const tray = root.querySelector('.l-obj[data-place="tray"]').getBoundingClientRect();
       const pucks = [...root.querySelectorAll(".l-pucks use")].map(u => {
         const m = u.transform.baseVal.consolidate();
         const at = [model.origin[0] + (m ? m.matrix.e : 0), model.origin[1] + (m ? m.matrix.f : 0)];
@@ -302,11 +301,10 @@ async function act(page, kind) {
           at: at.map(v => Math.round(v * 100) / 100),
           share: Math.round(share * 1000) / 1000,
           opacity: getComputedStyle(u).opacity,
-          inTray: b.left >= tray.left && b.right <= tray.right && b.top >= tray.top && b.bottom <= tray.bottom,
           onTop: Boolean(hit && hit.closest(".l-pucks"))
         };
       });
-      return { pucks, expected: [0.7, 0.58].map(f => [from[0] + (to[0] - from[0]) * f, from[1] + (to[1] - from[1]) * f]) };
+      return { pucks, expected: [0.55, 0.43].map(f => [from[0] + (to[0] - from[0]) * f, from[1] + (to[1] - from[1]) * f]) };
     })()`);
     const a = await sample();
     await page.sleep(300);
@@ -318,38 +316,31 @@ async function act(page, kind) {
     [first, second].forEach((p, i) => {
       const [ex, ey] = a.expected[i];
       const off = Math.max(Math.abs(p.at[0] - ex), Math.abs(p.at[1] - ey));
-      if (!(off <= 1)) throw new Error(`step 3: puck ${i + 1} should rest at ${[70, 58][i]}% of its trip (±1), it is ${off.toFixed(2)} away: ${JSON.stringify(p)}`);
+      if (!(off <= 1)) throw new Error(`step 3: puck ${i + 1} should rest at ${[55, 43][i]}% of its trip (±1), it is ${off.toFixed(2)} away: ${JSON.stringify(p)}`);
       if (p.opacity === "0") throw new Error(`step 3: puck ${i + 1} is not drawn: ${JSON.stringify(p)}`);
-      if (p.inTray) throw new Error(`step 3: puck ${i + 1} sits inside the tray's box (hidden by the destination): ${JSON.stringify(p)}`);
       if (!p.onTop) throw new Error(`step 3: puck ${i + 1} is covered at its centre: ${JSON.stringify(p)}`);
     });
-    // Every step (ruling R24): no resting puck is more than 25% under any name tag, and none sits inside the box
-    // of the place it heads for (the R21 check).
+    // Every step (rulings R24, R26): no resting puck's box is more than 25% covered by any object's box (.l-obj)
+    // or any name tag's box (.l-tag).
     const resting = await page.eval(`(() => {
       const root = document.querySelector(".c-lesson");
       const model = JSON.parse(root.querySelector(".l-model").textContent);
-      const ends = (rail) => { for (const a of model.places) for (const b of model.places) if (a + "--" + b === rail) return [a, b]; return []; };
       const share = (p, t) => Math.max(0, Math.min(p.right, t.right) - Math.max(p.left, t.left)) * Math.max(0, Math.min(p.bottom, t.bottom) - Math.max(p.top, t.top)) / (p.width * p.height);
+      const worst = (box, sel) => [...root.querySelectorAll(sel)].map(el => [el.dataset.place, Math.round(100 * share(box, el.getBoundingClientRect()))]).sort((p, q) => q[1] - p[1])[0] || ["", 0];
       const out = [];
       model.states.forEach((state, s) => {
         root.querySelector('.l-timeline [data-step="' + s + '"]').click();
         root.querySelector(".l-stage").scrollIntoView({ block: "center" });
-        const tags = [...root.querySelectorAll(".l-tag")];
         root.querySelectorAll(".l-pucks use").forEach(u => {
-          const rail = u.parentNode.dataset.rail;
-          const [a, b] = ends(rail);
-          const heads = state.moves.filter(m => m.rail === rail).flatMap(m => m.roundTrip ? [a, b] : [m.reverse ? a : b]);
           const box = u.getBoundingClientRect();
-          const tag = tags.map(t => [t.dataset.place, Math.round(100 * share(box, t.getBoundingClientRect()))]).sort((p, q) => q[1] - p[1])[0] || ["", 0];
-          const inside = heads.filter(id => { const o = root.querySelector('.l-obj[data-place="' + id + '"]').getBoundingClientRect(); return box.left >= o.left && box.right <= o.right && box.top >= o.top && box.bottom <= o.bottom; });
-          out.push({ step: s + 1, rail, kind: u.getAttribute("class"), tag, inside });
+          out.push({ step: s + 1, rail: u.parentNode.dataset.rail, kind: u.getAttribute("class"), obj: worst(box, ".l-obj"), tag: worst(box, ".l-tag") });
         });
       });
       return out;
     })()`);
     if (!resting.length) throw new Error("no resting pucks on any step");
-    const hidden = resting.filter(p => p.tag[1] > 25 || p.inside.length);
-    if (hidden.length) throw new Error(`resting pucks hidden (over 25% under a tag, or inside the place they head for): ${JSON.stringify(hidden)}`);
+    const hidden = resting.filter(p => p.obj[1] > 25 || p.tag[1] > 25);
+    if (hidden.length) throw new Error(`resting pucks covered over 25% by an object's or a tag's box: ${JSON.stringify(hidden)}`);
   }
   if (kind === "lesson-compact") {
     // Name tags never collide (numbered tags + the key when full ones would) and nothing is under 12px.

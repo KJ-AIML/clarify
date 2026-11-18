@@ -23,9 +23,10 @@
   const MAX_PUCKS = 5; // per move and leg: a longer xN still sends 5
   const FADE = 0.06; // the share of a trip spent fading in, and fading out
   // A resting puck (reduced motion, or a step shown while paused) and a refused (fail) puck stop
-  // 70% of the way along their trip, clear of the place they head for (a rail ends at that
-  // place's pad, behind the object); each later puck of the same move stops 12% further back.
-  const REST = 0.7;
+  // 55% of the way along their trip, clear of the place they head for (a rail ends at that
+  // place's pad, where a tall object drawn in front can hide it); each later puck of the same
+  // move stops 12% further back.
+  const REST = 0.55;
   const QUEUE = 0.12;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
 
