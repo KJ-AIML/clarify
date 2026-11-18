@@ -13,7 +13,8 @@ test("every example compiles without warnings and within the size budget", () =>
   for (const f of examples) {
     const { html, warnings, stats } = compile(parseDraft(read(f)));
     assert.deepEqual(warnings, [], f);
-    assert.ok(stats.bytes < 160 * 1024, `${f}: ${stats.bytes} bytes`);
+    const budget = /class="c-lesson"/.test(html) ? 450 * 1024 : 160 * 1024;
+    assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
     assert.ok(!/\{\{|undefined|NaN/.test(html.replace(/<script>[\s\S]*?<\/script>/g, "")), `${f}: template leak`);
   }

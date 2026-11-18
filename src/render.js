@@ -8,6 +8,7 @@ import { DIAGRAM_LANGS, diagramFromFence, renderDiagram } from "./diagram/index.
 import { SVG_DEFS } from "./diagram/svg.js";
 import { draftToMarkdown } from "./export/markdown.js";
 import { renderBrandSprite } from "./brand-marks/brands.js";
+import { renderLesson } from "./lesson/render.js";
 
 /** @typedef {import("./types").Draft} Draft */
 /** @typedef {import("./types").Block} Block */
@@ -29,6 +30,9 @@ const minifyJs = (js) => js
 const CSS = minifyCss(asset("./runtime/themes.css") + asset("./runtime/page.css"));
 const SVG_CSS = minifyCss(asset("./runtime/svg.css"));
 const CLIENT_JS = minifyJs(asset("./runtime/client.js"));
+// Only pages that contain a lesson carry these (the anatomy kit's shading CSS + the lesson player).
+const LESSON_CSS = minifyCss(asset("./iso/kit.css") + asset("./runtime/lesson.css"));
+const LESSON_JS = minifyJs(asset("./runtime/lesson.js"));
 
 export const THEMES = [
   ["auto", "Auto (system)"], ["light", "Light"], ["dark", "Dark"], ["tokyo-night", "Tokyo Night"],
@@ -62,13 +66,14 @@ const WIDE_DIAGRAM = 1100;
  */
 export function compile(draft, opts = {}) {
   const { meta, lead } = draft;
-  const ctx = { diagrams: 0, asks: 0, callouts: 0, warnings: /** @type {string[]} */ ([]), sprite: new Map(), cols: meta.cols, heroUsed: false };
+  const ctx = { diagrams: 0, lessons: 0, asks: 0, callouts: 0, warnings: /** @type {string[]} */ ([]), sprite: new Map(), cols: meta.cols, heroUsed: false };
 
   const rendered = draft.panels.map(panel => {
     const pctx = { ...ctx, panel, wide: false, roomy: false };
     const blocks = tokenizeBlocks(panel.body, panel.line - 1);
     const body = blocks.map(b => renderBlock(b, pctx)).join("\n");
     ctx.diagrams = pctx.diagrams;
+    ctx.lessons = pctx.lessons;
     ctx.asks = pctx.asks;
     ctx.callouts = pctx.callouts;
     ctx.heroUsed = pctx.heroUsed;
@@ -98,7 +103,7 @@ export function compile(draft, opts = {}) {
 <title>${escapeHtml(plainInline(meta.title))}</title>
 <script>(()=>{try{const t=JSON.parse(localStorage.getItem("clarify:theme")||"null");if(t)document.documentElement.dataset.theme=t}catch{}})()</script>
 <style>${CSS}</style>
-<style id="c-svg-css">${SVG_CSS}</style>
+<style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}
 </head>
 <body>
 ${SVG_DEFS}
@@ -135,7 +140,7 @@ ${cards.join("\n")}
 <div class="c-toast" role="status" aria-live="polite"></div>
 <script type="application/json" id="c-page-meta">${jsonForScript(pageMeta)}</script>
 <script type="application/json" id="c-markdown">${jsonForScript(markdown)}</script>
-<script>${CLIENT_JS}</script>
+<script>${CLIENT_JS}</script>${ctx.lessons ? `\n<script id="c-lesson-js">${LESSON_JS}</script>` : ""}
 </body>
 </html>
 `;
@@ -229,6 +234,12 @@ function renderTable(rows, align, ctx) {
 
 function renderFence(b, ctx) {
   if (DIAGRAM_LANGS.has(b.lang)) return renderDiagramFigure(b, ctx);
+  if (b.lang === "lesson") {
+    const lesson = renderLesson(b, ctx.lessons++);
+    lesson.warnings.forEach(w => ctx.warnings.push(`panel ${ctx.panel.id}: ${w}`));
+    ctx.wide = ctx.roomy = true;
+    return lesson.html;
+  }
   if (b.lang === "callout") {
     ctx.callouts++;
     const [rawType = "info", ...title] = b.info.split(/\s+/);

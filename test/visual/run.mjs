@@ -39,7 +39,8 @@ const SCENARIOS = [
   { name: "codebase-tour-mobile", example: "codebase-tour", width: 390, height: 844, viewport: true, act: "trace-mobile" },
   { name: "ecommerce-hovercard", example: "ecommerce-architecture", viewport: true, act: "hovercard" },
   { name: "reply-loop", example: "ecommerce-architecture", viewport: true, act: "reply", noShot: true },
-  { name: "export", example: "ecommerce-architecture", viewport: true, act: "export", noShot: true }
+  { name: "export", example: "ecommerce-architecture", viewport: true, act: "export", noShot: true },
+  { name: "lesson-core", example: "git-commit-lesson", viewport: true, act: "lesson-core", noShot: true }
 ];
 
 // Runs inside the page; returns a list of problems.
@@ -166,6 +167,40 @@ async function act(page, kind) {
     if (state.count !== "Step 6 of 8") throw new Error(`unexpected step: ${state.count}`);
     if (state.current !== "Session Cache" || !state.text.startsWith("Checkout Service → Session Cache")) throw new Error(`strip out of sync: ${JSON.stringify(state)}`);
     if (state.visitedEdges < 5 || !state.touring) throw new Error(`route not drawn: ${JSON.stringify(state)}`);
+  }
+  if (kind === "lesson-core") {
+    // Step switching: one article at a time, chips, places, focus ring and failure badge follow the step.
+    const shown = () => page.eval(`[...document.querySelectorAll(".c-lesson .l-step")].filter(a => getComputedStyle(a).display !== "none").map(a => a.dataset.step).join(",")`);
+    if (await shown() !== "0") throw new Error(`only article 0 should be visible at first, got [${await shown()}]`);
+    await page.click('.c-lesson [data-l="next"]');
+    await page.click('.c-lesson [data-l="next"]');
+    if (await shown() !== "2") throw new Error(`after two Next clicks only article 2 should be visible, got [${await shown()}]`);
+    const step3 = await page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const chip = [...root.querySelectorAll(".l-chip")].find(c => c.querySelector(".l-chip-k").textContent.trim() === "Staged");
+      return {
+        value: chip && chip.querySelector(".l-chip-v").textContent.trim(),
+        level: chip && chip.dataset.level,
+        changed: Boolean(chip && chip.hasAttribute("data-changed")),
+        trayDim: root.querySelector('.l-obj[data-place="tray"]').classList.contains("is-dim"),
+        focusOn: root.querySelector('.l-focus[data-place="tray"]').classList.contains("is-on")
+      };
+    })()`);
+    if (step3.value !== "2 files" || step3.level !== "good" || !step3.changed) throw new Error(`step 3: Staged chip should read "2 files", good, changed: ${JSON.stringify(step3)}`);
+    if (step3.trayDim || !step3.focusOn) throw new Error(`step 3: the tray should be live and focused: ${JSON.stringify(step3)}`);
+    await page.click('.c-lesson .l-timeline [data-step="8"]');
+    const step9 = await page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const article = [...root.querySelectorAll(".l-step")].find(a => getComputedStyle(a).display !== "none");
+      return {
+        bad: root.querySelector('.l-bad[data-place="origin"]').classList.contains("is-on"),
+        step: article && article.dataset.step,
+        body: parseFloat(getComputedStyle(article.querySelector("p")).fontSize),
+        title: parseFloat(getComputedStyle(article.querySelector(".l-step-title")).fontSize)
+      };
+    })()`);
+    if (!step9.bad || step9.step !== "8") throw new Error(`step 9: origin should show the failure badge: ${JSON.stringify(step9)}`);
+    if (step9.body !== 16 || step9.title < 22) throw new Error(`step text should be 16px with a title of at least 22px: ${JSON.stringify(step9)}`);
   }
 }
 
