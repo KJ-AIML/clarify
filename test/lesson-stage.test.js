@@ -6,13 +6,18 @@ import { parseLesson } from "../src/lesson/parse.js";
 import { layoutBench } from "../src/lesson/layout.js";
 import { createPen } from "../src/lesson/pen.js";
 import { OBJECTS } from "../src/lesson/objects/index.js";
-import { renderStage } from "../src/lesson/stage.js";
+import { renderStage, placeTints } from "../src/lesson/stage.js";
 import { MINI } from "./fixtures/lesson-mini.js";
 
 const lesson = parseLesson(MINI).lesson;
 const stage = renderStage(lesson, layoutBench(lesson), 0);
 
 const count = (text, needle) => text.split(needle).length - 1;
+/** The tint each pad and each object carries in the SVG, by place id. */
+const paintedTints = (svg) => {
+  const read = (cls) => Object.fromEntries([...svg.matchAll(new RegExp(`<g class="${cls}" data-place="([^"]+)" data-tint="([^"]+)"`, "g"))].map((m) => [m[1], m[2]]));
+  return { pad: read("l-pad"), obj: read("l-obj") };
+};
 const tenth = (value) => Math.round(value * 10) / 10;
 /** A small lesson fence; its opening line is draft line 1. */
 const fence = (...body) => ({ type: "fence", lang: "lesson", info: "Bench", line: 1, body: body.join("\n") });
@@ -171,10 +176,25 @@ test("a rail declared twice is drawn once", () => {
   assert.deepEqual(Object.keys(s.rails), ["a--b"]);
 });
 
-test("a tint the draft sets wins; the others follow place order", () => {
-  const s = stageOf('places: a = box "A" | b = box "B" tint=rose | c = box "C"', "rails: a - b - c");
-  const tints = [...s.svg.matchAll(/<g class="l-obj" data-place="(\w)" data-tint="(\w+)"/g)].map((m) => `${m[1]}=${m[2]}`).sort();
-  assert.deepEqual(tints, ["a=neutral", "b=rose", "c=violet"]);
+test("tints follow the rail chain, not the declaration order", () => {
+  const parsed = parseLesson(fence('places: db = server "DB" | api = server "API" | client = laptop "Client"', "rails: client - api - db")).lesson;
+  const want = { client: "neutral", api: "amber", db: "violet" };
+  assert.deepEqual(placeTints(parsed), want);
+  const s = renderStage(parsed, layoutBench(parsed), 0);
+  assert.deepEqual(s.tints, want);
+  assert.deepEqual(paintedTints(s.svg), { pad: want, obj: want });
+  assert.deepEqual(stage.tints, { you: "neutral", tray: "amber", repo: "violet", origin: "blue", mate: "green" });
+});
+
+test("a tint the draft sets wins for that place and still uses its turn", () => {
+  const s = stageOf(
+    'places: db = server "DB" | api = server "API" tint=rose | client = laptop "Client" | lone = box "Lone"',
+    "rails: client - api - db"
+  );
+  // Turns: client, api, db along the rails, then lone (in no rail). api's turn (amber) goes unused.
+  const want = { client: "neutral", api: "rose", db: "violet", lone: "blue" };
+  assert.deepEqual(s.tints, want);
+  assert.deepEqual(paintedTints(s.svg), { pad: want, obj: want });
 });
 
 test("any layout fits the stage", () => {

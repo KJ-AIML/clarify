@@ -32,6 +32,7 @@ import { OBJECTS } from "./objects/index.js";
  *   the two pads (floor level), in viewBox units, from the rail's `a` place to its `b` place
  * @property {[number, number]} origin screen point of world [0, 0, 0], where the <defs> drawings stand
  * @property {Record<string, [number, number]>} tags [left %, top %] of each place's tag anchor, world [x, y + 36, 3]
+ * @property {Record<string, string>} tints each place's tint, as placeTints gives it
  */
 
 const W = 1120;
@@ -51,13 +52,32 @@ const BADGE_RISE = 21; // the failure badge's disc reaches about this far above 
 const BADGE = '<circle r="12"/><path d="M-4.5,-4.5L4.5,4.5M4.5,-4.5L-4.5,4.5"/>';
 
 /**
+ * Each place's tint (spec §5.6: chain order unless the draft sets one). Places take turns in the
+ * order they first appear along the rails (rails in declaration order, each rail's a then its b),
+ * then the places in no rail, in declaration order; turn i gets TINTS[i % 7], starting at neutral.
+ * A tint the draft sets wins for that place only; its turn is still used up.
+ * @param {Lesson} lesson
+ * @returns {Record<string, string>} tint by place id
+ */
+export function placeTints(lesson) {
+  const declared = new Set(lesson.places.map((place) => place.id));
+  const turns = new Set();
+  for (const { a, b } of lesson.rails) {
+    for (const id of [a, b]) if (declared.has(id)) turns.add(id);
+  }
+  for (const id of declared) turns.add(id);
+  const turnTint = new Map([...turns].map((id, i) => [id, TINTS[i % TINTS.length]]));
+  return Object.fromEntries(lesson.places.map((place) => [place.id, place.tint || turnTint.get(place.id)]));
+}
+
+/**
  * @param {Lesson} lesson
  * @param {{ cells: Record<string, [number, number]>, drawn: string[] }} layout from layoutBench
  * @param {number} n the lesson's index on its page, so two lessons never share an id
  * @returns {Stage}
  */
 export function renderStage(lesson, layout, n) {
-  const tints = new Map(lesson.places.map((place, i) => [place.id, place.tint || TINTS[i % TINTS.length]]));
+  const tints = placeTints(lesson);
   const places = lesson.places.filter((place) => layout.cells[place.id]);
   const kindOf = (place) => (Object.hasOwn(OBJECTS, place.kind) ? place.kind : "box");
 
@@ -125,7 +145,7 @@ export function renderStage(lesson, layout, n) {
       const id = escapeHtml(place.id);
       return (
         `<path class="l-focus" data-place="${id}" d="${pen.outline(pen.inset(plan, -4.5), 0.2)}"/>` +
-        `<g class="l-pad" data-place="${id}" data-tint="${escapeHtml(tints.get(place.id))}">${padSvg(pen, plan)}</g>`
+        `<g class="l-pad" data-place="${id}" data-tint="${escapeHtml(tints[place.id])}">${padSvg(pen, plan)}</g>`
       );
     })
     .join("");
@@ -138,7 +158,7 @@ export function renderStage(lesson, layout, n) {
     const [bx, by] = pen.at([x + 10, y - 6, OBJECTS[kind].top + 9]);
     const id = escapeHtml(place.id);
     return (
-      `<g class="l-obj" data-place="${id}" data-tint="${escapeHtml(tints.get(place.id))}">` +
+      `<g class="l-obj" data-place="${id}" data-tint="${escapeHtml(tints[place.id])}">` +
       `<use href="#l${n}-obj-${kind}" transform="translate(${tenth(sx - origin[0])} ${tenth(sy - origin[1])})"/>` +
       `<g class="l-bad" data-place="${id}" transform="translate(${tenth(bx)} ${tenth(by)})">${BADGE}</g></g>`
     );
@@ -170,7 +190,8 @@ export function renderStage(lesson, layout, n) {
         const [sx, sy] = pen.at([x, y + PAD.d / 2, PAD_H]);
         return [place.id, [round((sx / W) * 100), round((sy / H) * 100)]];
       })
-    )
+    ),
+    tints
   };
 }
 
