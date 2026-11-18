@@ -7,9 +7,9 @@
 //
 // It also plays each step's moves: pucks (copies of the stage's #l{n}-puck drawing) ride the
 // rails, moved with transforms only, on a schedule that loops while the stage is on screen and
-// not paused; with reduced motion each puck is drawn once where its trip ends. Plus Replay and
-// Pause, keys on the focused lesson (← → step, R replay, Space pause), numbered name tags when
-// full ones would collide, and the quiz.
+// not paused; a refused (fail) puck stops short. With reduced motion each puck is drawn once,
+// resting near the end of its trip. Plus Replay and Pause, keys on the focused lesson (← → step,
+// R replay, Space pause), numbered name tags when full ones would collide, and the quiz.
 (() => {
   "use strict";
 
@@ -22,6 +22,11 @@
   const TIME = { start: 300, travel: 1150, repeat: 200, back: 120, gap: 160, rest: 900 };
   const MAX_PUCKS = 5; // per move and leg: a longer xN still sends 5
   const FADE = 0.06; // the share of a trip spent fading in, and fading out
+  // A resting puck (reduced motion, or a step shown while paused) and a refused (fail) puck stop
+  // 70% of the way along their trip, clear of the place they head for (a rail ends at that
+  // place's pad, behind the object); each later puck of the same move stops 12% further back.
+  const REST = 0.7;
+  const QUEUE = 0.12;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
 
   document.querySelectorAll(".c-lesson").forEach((root) => {
@@ -141,8 +146,9 @@
     const layers = new Map($$(".l-pucks", root).map((layer) => [layer.dataset.rail, layer]));
     const href = "#l" + model.n + "-puck";
     const [ox, oy] = model.origin;
-    let items = []; // one per puck: { el, from, to, start, o }
+    let items = []; // one per puck: { el, from, to, start, rest, fail, o }
     let loop = 0; // ms in one round of the schedule, rest included (0: nothing moves)
+    let settle = 0; // loop time when every trip is over and the rest begins
     let paused = false;
     let seen = !("IntersectionObserver" in window); // whether the stage is on screen
     let held = 0; // where the clock stopped, in ms into the loop
@@ -164,51 +170,58 @@
         const trips = [[a, b, m.kind, at]];
         if (m.roundTrip) trips.push([b, a, "reply", at + (n - 1) * TIME.repeat + TIME.travel + TIME.back]);
         for (const [from, to, kind, start] of trips) {
-          for (let i = 0; i < n; i++) items.push(add(layer, from, to, kind, start + i * TIME.repeat));
+          const group = [];
+          for (let i = 0; i < n; i++) group.push(add(from, to, kind, start + i * TIME.repeat, REST - QUEUE * i));
+          // Painted back to front: a trip heading down the screen comes toward the viewer, so its first puck
+          // (always the furthest along) goes on last.
+          const order = to[1] > from[1] ? [...group].reverse() : group;
+          order.forEach((p) => layer.appendChild(p.el));
+          items.push(...group);
           end = Math.max(end, start + (n - 1) * TIME.repeat + TIME.travel);
         }
       });
+      settle = end;
       loop = items.length ? end + TIME.rest : 0;
       restart();
     }
 
-    function add(layer, from, to, kind, start) {
+    function add(from, to, kind, start, rest) {
       const el = document.createElementNS(SVG_NS, "use");
       el.setAttribute("href", href);
       el.setAttribute("class", "is-" + kind);
       el.setAttribute("transform", spot(from, to, 0));
       el.style.opacity = "0";
-      layer.appendChild(el);
-      return { el, from, to, start, o: 0 };
+      return { el, from, to, start, rest, fail: kind === "fail", o: 0 };
     }
 
-    // The transform that puts the puck drawing (made at the world origin) k of the way along a trip.
-    function spot(from, to, k) {
-      const e = 0.85 * k + 0.15 * k * k * (3 - 2 * k); // mostly steady, eased a little at both ends
-      const x = from[0] + (to[0] - from[0]) * e - ox;
-      const y = from[1] + (to[1] - from[1]) * e - oy;
+    // The transform that puts the puck drawing (made at the world origin) a share f of the way along a trip.
+    function spot(from, to, f) {
+      const x = from[0] + (to[0] - from[0]) * f - ox;
+      const y = from[1] + (to[1] - from[1]) * f - oy;
       return "translate(" + x.toFixed(2) + " " + y.toFixed(2) + ")";
     }
 
-    function draw(p, k, o) {
+    function draw(p, f, o) {
       if (o !== p.o) {
         p.el.style.opacity = String(o);
         p.o = o;
       }
-      if (o > 0) p.el.setAttribute("transform", spot(p.from, p.to, k));
+      if (o > 0) p.el.setAttribute("transform", spot(p.from, p.to, f));
     }
 
-    // The schedule at loop time t: a puck shows only during its trip.
+    // The schedule at loop time t: a puck shows during its trip; a refused one stops short at its
+    // resting point and waits there until every trip is over.
     function frame(t) {
       for (const p of items) {
         const k = (t - p.start) / TIME.travel;
-        draw(p, k, k < 0 || k > 1 ? 0 : Math.min(1, k / FADE, (1 - k) / FADE));
+        if (p.fail) draw(p, Math.min(ease(k), p.rest), k < 0 || t > settle ? 0 : Math.min(1, k / FADE, (settle - t) / (FADE * TIME.travel)));
+        else draw(p, ease(k), k < 0 || k > 1 ? 0 : Math.min(1, k / FADE, (1 - k) / FADE));
       }
     }
 
-    // Every puck where its trip ends (reduced motion, or a step shown while paused).
+    // Every puck at its resting point (reduced motion, or a step shown while paused).
     function still() {
-      for (const p of items) draw(p, 1, 1);
+      for (const p of items) draw(p, p.rest, 1);
     }
 
     function tick(time) {
@@ -229,7 +242,7 @@
       }
     }
 
-    // Back to loop time 0. Paused or with reduced motion the pucks wait where their trips end.
+    // Back to loop time 0. Paused or with reduced motion the pucks wait at their resting points.
     function restart() {
       held = 0;
       t0 = performance.now();
@@ -262,6 +275,12 @@
     reduce.addEventListener("change", restart);
 
     return { load, pause, replay, get paused() { return paused; } };
+  }
+
+  // Mostly steady, eased a little at both ends: the share of a trip's time → the share of its distance.
+  function ease(k) {
+    k = Math.max(0, Math.min(1, k));
+    return 0.85 * k + 0.15 * k * k * (3 - 2 * k);
   }
 
   // Full name tags, or numbers plus the place key (.is-compact) when two full tags would overlap.
