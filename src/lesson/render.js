@@ -51,9 +51,7 @@ export function renderLesson(block, n) {
   const chips = chipValues
     .map((c, i) => `<div class="l-chip" data-counter="${i}" data-level="${escapeHtml(c.level)}"><span class="l-chip-k">${escapeHtml(c.label)}</span><span class="l-chip-v">${escapeHtml(c.value)}</span></div>`)
     .join("");
-  const tools =
-    `<div class="l-tools"><button type="button" class="l-btn" data-l="replay"><span class="l-btn-t">Replay</span></button>` +
-    `<button type="button" class="l-btn" data-l="pause" aria-pressed="false"><span class="l-btn-t">Pause</span></button></div>`;
+  const tools = `<div class="l-tools"><button type="button" class="l-btn" data-l="replay">Replay</button><button type="button" class="l-btn" data-l="pause" aria-pressed="false">Pause</button></div>`;
 
   const name = (place) => inline(place.label || place.id);
   const tags = places

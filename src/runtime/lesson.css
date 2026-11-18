@@ -255,18 +255,19 @@
 .l-pucks use.is-slow { --route: #d4951c; --route-dark: #a06c0b; }
 
 /* ── a narrow lesson (a phone, or a narrow card): one column ─────────────────
-   header, counters scrolling sideways, stage, key, legend, guide, then a compact timeline;
+   header, counters (wrapping), stage, key, legend, guide, then a compact timeline;
    Back/Next stick to the bottom of the screen while the guide is in view. */
 @container (max-width: 760px) {
   .c-lesson .l-title { font-size: 28px; }
   .c-lesson .l-sub { font-size: 16px; }
   .c-lesson .l-body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
   .c-lesson .l-main { display: contents; }
-  .c-lesson .l-counters { order: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 3px; }
-  .c-lesson .l-chip { flex: none; min-width: 96px; }
-  .c-lesson .l-tools { position: sticky; right: 0; padding-left: 8px; background: var(--l-page); }
-  .c-lesson .l-tools .l-btn { padding: 10px 12px; }
-  .c-lesson .l-btn-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* icon only; the word stays the button's name */
+  /* every chip stays in view: they wrap into equal columns (a long value wraps inside its chip),
+     and Replay/Pause take their own row under them */
+  .c-lesson .l-counters { order: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); }
+  .c-lesson .l-chip { min-width: 0; padding: 7px 8px; }
+  .c-lesson .l-chip-v { font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+  .c-lesson .l-tools { grid-column: 1 / -1; }
   .c-lesson .l-stage { order: 2; margin: 0; background: var(--l-panel); border: 1.5px solid var(--l-ink); border-radius: 12px; }
   .c-lesson .l-key { order: 3; }
   .c-lesson .l-legend { order: 4; padding-top: 0; }

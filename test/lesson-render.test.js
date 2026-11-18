@@ -133,7 +133,7 @@ test("the lesson HTML follows the contract", () => {
   // counters with the first step's values, and the two tools
   assert.match(html, /<div class="l-chip" data-counter="0" data-level="none"><span class="l-chip-k">Staged<\/span><span class="l-chip-v">—<\/span><\/div>/);
   assert.match(html, /<div class="l-chip" data-counter="1" data-level="none"><span class="l-chip-k">Pushed<\/span>/);
-  assert.match(html, /<div class="l-tools"><button type="button" class="l-btn" data-l="replay"><span class="l-btn-t">Replay<\/span><\/button><button type="button" class="l-btn" data-l="pause" aria-pressed="false"><span class="l-btn-t">Pause<\/span><\/button><\/div>/);
+  assert.match(html, /<div class="l-tools"><button type="button" class="l-btn" data-l="replay">Replay<\/button><button type="button" class="l-btn" data-l="pause" aria-pressed="false">Pause<\/button><\/div>/);
   // stage: the SVG, one tag per place in place order, the hidden key, the legend of used kinds
   assert.match(html, /<div class="l-stage"><svg class="l-svg"/);
   const tags = [...html.matchAll(/<span class="l-tag" data-place="([^"]+)" data-n="(\d)" style="left:([\d.]+)%;top:([\d.]+)%">/g)];
