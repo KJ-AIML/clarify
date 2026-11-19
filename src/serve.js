@@ -24,22 +24,28 @@ export function serve({ file, port = 4777, host = "127.0.0.1", log = () => {} })
   // Watch folders, not files: editors often save via rename, which ends file watches. There is one watcher
   // per folder, kept across builds: the draft's folder, then the folder of each `file=` section.
   // `watched` holds the paths whose change rebuilds the page: the draft and every `file=` of the last good build.
+  // Windows and macOS ignore case in a path, and a draft may write a `file=` in another case than the disk name
+  // the watcher reports, so paths and folders are compared in lower case there.
+  const foldCase = process.platform === "win32" || process.platform === "darwin";
+  const fold = (p) => (foldCase ? p.toLowerCase() : p);
+  let closed = false;
   let timer;
   const watchers = new Map();
-  let watched = new Set([abs]);
+  let watched = new Set([fold(abs)]);
 
   function watchFolder(dir) {
-    if (watchers.has(dir)) return;
+    const key = fold(dir);
+    if (closed || watchers.has(key)) return;
     const watcher = fs.watch(dir, (event, name) => {
       if (event === "rename" && !fs.existsSync(dir)) {
         // The folder itself is gone (Windows then floods the watcher with events): drop it; the next build adds it again.
         watcher.close();
-        watchers.delete(dir);
-      } else if (name && !watched.has(path.join(dir, name))) return;
+        watchers.delete(key);
+      } else if (name && !watched.has(fold(path.join(dir, name)))) return;
       clearTimeout(timer);
       timer = setTimeout(rebuild, 60);
     });
-    watchers.set(dir, watcher);
+    watchers.set(key, watcher);
   }
 
   watchFolder(path.dirname(abs));
@@ -52,7 +58,7 @@ export function serve({ file, port = 4777, host = "127.0.0.1", log = () => {} })
       const changed = result.html !== html;
       html = result.html;
       lastError = "";
-      watched = new Set([abs, ...result.files]);
+      watched = new Set([abs, ...result.files].map(fold));
       for (const dir of new Set(result.files.map(f => path.dirname(f)))) {
         try { watchFolder(dir); } catch { /* the folder is not there yet: the next build tries again */ }
       }
@@ -95,7 +101,7 @@ export function serve({ file, port = 4777, host = "127.0.0.1", log = () => {} })
   });
 
   function rebuild() {
-    if (!fs.existsSync(abs)) return;
+    if (closed || !fs.existsSync(abs)) return;
     const r = build();
     if (!r.ok) {
       log(`✗ ${r.error}`);
@@ -124,7 +130,10 @@ export function serve({ file, port = 4777, host = "127.0.0.1", log = () => {} })
           port: actual,
           rebuild,
           close: () => new Promise(done => {
+            closed = true;
+            clearTimeout(timer);
             for (const w of watchers.values()) w.close();
+            watchers.clear();
             clearInterval(heartbeat);
             for (const res of clients) res.end();
             server.close(() => done());

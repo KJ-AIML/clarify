@@ -134,6 +134,65 @@ test("serve: a file= folder that is deleted and made again is watched again", as
   }
 });
 
+const watcherCount = () => process.getActiveResourcesInfo().filter(r => r === "FSEventWrap").length;
+
+test("serve: close() leaves no watcher behind, even with a rebuild pending", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
+  const file = path.join(dir, "draft.md");
+  const draft = (extra) => `---\ntitle: Close\n---\n## A Parts\nhello\n\n${extra}`;
+  fs.mkdirSync(path.join(dir, "sections"));
+  fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>part</p>");
+  fs.writeFileSync(file, draft(""));
+  await new Promise(r => setTimeout(r, 100)); // a watcher closed by an earlier test still counts for a moment
+  const before = watcherCount();
+  const server = await serve({ file, port: 0 });
+  try {
+    // A save adds a file= in a folder that is not watched yet; close() comes before the 60 ms debounce ends.
+    fs.writeFileSync(file, draft("```free part file=sections/part.html\n```\n"));
+    await new Promise(r => setTimeout(r, 15));
+    await server.close();
+    // A rebuild after close() (the public one, or the pending debounce) must not open a watcher.
+    server.rebuild();
+    await new Promise(r => setTimeout(r, 300));
+    assert.equal(watcherCount(), before, "every watcher is closed and none was opened after close()");
+  } finally {
+    await server.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// Windows and default macOS file systems ignore case in a path; a draft can still write it differently from the disk.
+const caseBlind = (() => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-case-"));
+  try {
+    fs.writeFileSync(path.join(dir, "a"), "");
+    return fs.existsSync(path.join(dir, "A"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+})();
+
+test("serve: a file= written in another case than the disk name still reloads", { skip: !caseBlind && "the file system is case-sensitive" }, async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
+  const file = path.join(dir, "draft.md");
+  fs.mkdirSync(path.join(dir, "sections"));
+  fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>first</p>");
+  fs.writeFileSync(file, "---\ntitle: Case\n---\n## A Parts\n```free part file=Sections/Part.html\n```\n");
+  const server = await serve({ file, port: 0 });
+  let events;
+  try {
+    assert.match(await (await fetch(server.url)).text(), /<p>first<\/p>/, "the page finds the file in spite of the case");
+    events = await openEvents(server);
+    fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>second</p>");
+    await events.reload();
+    assert.match(await (await fetch(server.url)).text(), /<p>second<\/p>/);
+  } finally {
+    events?.close();
+    await server.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("serve: a free page keeps live reload under its policy", inBrowser, async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
   const file = path.join(dir, "draft.md");
