@@ -1,0 +1,84 @@
+/* clarify/src/runtime/fx.css — the kit for free sections. It ships only on pages with a free section
+   (a `free` fence), the same way lesson.css ships only with a lesson. It starts as a copy of the spike's
+   fx-base.css (docs/superpowers/specs/content-driven-spike/fx-base.css). Built only on clarify tokens
+   (src/runtime/themes.css) and the sizes page.css uses, so a section looks like it belongs to the page,
+   in light and dark. */
+
+/* ── the section itself ─────────────────────────────────────────────────────── */
+.fx { display: flex; flex-direction: column; gap: 14px; min-width: 0; container-type: inline-size; }
+.fx > * { margin: 0; }
+.fx svg { display: block; width: 100%; height: auto; }
+.fx-missing { padding: 18px 16px; border: 1.3px dashed var(--group-border); border-radius: 10px; background: var(--group-bg); color: var(--muted); font: 500 12.5px/1.5 var(--mono); }
+
+/* ── text ───────────────────────────────────────────────────────────────────── */
+/* "How to read this": one line at the top. */
+.fx-how { margin: 0; font-size: 13px; line-height: 1.6; max-width: 80ch; text-wrap: pretty; }
+.fx-how b { font-weight: 800; color: var(--title); }
+/* Takeaway: a compact green callout (same look as .c-callout.is-ok) with its own label. */
+.fx-take { margin: 0; padding: 10px 14px 11px; border: 1px solid color-mix(in srgb, var(--ok) 26%, var(--ok-bg)); border-radius: 10px; background: var(--ok-bg); font-size: 13px; line-height: 1.6; color: var(--text); text-wrap: pretty; }
+.fx-take::before { content: "Takeaway"; display: block; margin-bottom: 2px; font: 800 10.5px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ok); }
+.fx-cap { margin: 0; max-width: 72ch; font-size: 12.5px; line-height: 1.55; color: var(--muted); text-wrap: pretty; }
+/* Small-caps label (same as .c-index-title). */
+.fx-eyebrow { margin: 0; font: 800 10.5px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+/* A named term: bold, with the amber highlight the lesson gives ==term==. */
+.fx-term { font-weight: 700; color: inherit; background: color-mix(in srgb, var(--trace-3) 28%, transparent); padding: 0 3px; border-radius: 3px; }
+
+/* ── pieces ─────────────────────────────────────────────────────────────────── */
+/* Chip: a pill like .c-badge. */
+.fx-chip { display: inline-flex; align-items: center; gap: 6px; height: 23px; padding: 0 10px; border: 1.3px solid var(--ink-2); border-radius: 12px; background: var(--ctl-bg); color: var(--ink); font-size: 11.5px; font-weight: 700; white-space: nowrap; box-shadow: inset 0 1px 0 var(--hi), 0 1.5px 0 var(--drop-2); }
+.fx-chip.is-ok { background: var(--ok-bg); }
+.fx-chip.is-warn { background: var(--warn-bg); }
+.fx-chip.is-no { background: var(--no-bg); }
+.fx-chip.is-info { background: var(--info-bg); }
+.fx-chip.is-accent { background: var(--accent); }
+.fx-chip.is-hot { background: color-mix(in srgb, var(--trace-0) 24%, var(--surface)); }
+/* Tile: an inner card with the hard shadow. */
+.fx-tile { padding: 12px 14px; border: 1.3px solid var(--ink-2); border-radius: 10px; background: var(--node-bg); box-shadow: var(--pop); min-width: 0; }
+/* Big number and its unit. */
+.fx-num { font-size: clamp(34px, 9cqi, 64px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--title); }
+.fx-unit { font-size: 13px; font-weight: 700; color: var(--muted); }
+/* Button: looks like .c-btn; the pressed one turns green with an ink border and the hard shadow. */
+.fx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px; border: 1.3px solid var(--ink-2); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 12.5px; font-weight: 600; white-space: nowrap; box-shadow: var(--tool-shadow); transition: background 0.15s; }
+.fx-btn:hover { background: var(--node-bg); }
+.fx-btn:active { box-shadow: 0 0.5px 0 var(--drop-2); transform: translateY(1px); }
+.fx-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--ink); color: var(--ink); font-weight: 700; box-shadow: inset 0 1px 0 var(--hi), var(--pop); }
+.fx-btn[aria-pressed="true"]:hover { background: color-mix(in srgb, var(--accent-2) 45%, var(--accent)); }
+.fx-btn[aria-pressed="true"]:active { box-shadow: none; transform: translate(1px, 1.5px); }
+/* Grids: drop to one column when the section is narrower than 560px. */
+.fx-grid-2, .fx-grid-3 { display: grid; gap: 14px; min-width: 0; }
+.fx-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fx-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (width < 560px) {
+  .fx-grid-2, .fx-grid-3 { grid-template-columns: minmax(0, 1fr); }
+}
+/* A wide drawing: put it inside and give the drawing a min-width (or set --fx-min on this element). */
+.fx-scroll { max-width: 100%; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.fx-scroll > * { min-width: var(--fx-min, 0); }
+
+/* ── svg ────────────────────────────────────────────────────────────────────── */
+/* Outline: 1.4px in --node-border. Combine with a fill class: class="fx-ink fx-fill". */
+.fx-ink { stroke: var(--node-border); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; fill: none; }
+.fx-fill { fill: var(--node-bg); }
+.fx-fill-2 { fill: var(--surface-2); }
+/* Colour means: hot = the thing that moves (a report), good = an answer, bad = lost, slow = waiting, cool = other traffic.
+   -fill is a soft tint to fill a shape; -line is the stroke (also for arrows and bars). */
+.fx-hot-fill { fill: color-mix(in srgb, var(--trace-0) 26%, var(--node-bg)); }
+.fx-hot-line { stroke: var(--trace-0); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-good-fill { fill: color-mix(in srgb, var(--ok-line) 26%, var(--node-bg)); }
+.fx-good-line { stroke: var(--ok-line); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-bad-fill { fill: color-mix(in srgb, var(--no-line) 26%, var(--node-bg)); }
+.fx-bad-line { stroke: var(--no-line); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-slow-fill { fill: color-mix(in srgb, var(--warn-line) 26%, var(--node-bg)); }
+.fx-slow-line { stroke: var(--warn-line); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-cool-fill { fill: color-mix(in srgb, var(--trace-1) 26%, var(--node-bg)); }
+.fx-cool-line { stroke: var(--trace-1); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-leader { stroke: var(--edge); stroke-width: 1; fill: none; }
+.fx-axis { stroke: var(--line-ctl); stroke-width: 1; fill: none; }
+/* SVG text: values and names, notes, small-caps heads. Sizes are in drawing units: they shrink with the drawing. */
+.fx-t { font: 600 12px var(--mono); fill: var(--text); }
+.fx-t-m { font: 500 11px var(--mono); fill: var(--muted); }
+.fx-t-h { font: 800 10.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-btn { transition: none; }
+}

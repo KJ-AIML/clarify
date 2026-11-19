@@ -1,0 +1,80 @@
+/* key-matrix: the grid of wires under the keys, with the chip that scans it. */
+
+/* two drawings of the same matrix: wide for the two-column panel, narrow for phones */
+.fx-key-matrix .km-art { position: relative; }
+.fx-key-matrix .km-narrow { display: none; }
+@container (width < 600px) {
+  .fx-key-matrix .km-wide { display: none; }
+  .fx-key-matrix .km-narrow { display: block; }
+}
+
+/* wires, pins and their labels */
+.fx-key-matrix .km-w { fill: none; stroke: var(--node-border); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.fx-key-matrix .km-pin { fill: var(--node-border); }
+.fx-key-matrix .km-row.is-on .km-w { stroke: var(--trace-0); stroke-width: 2.6; }
+.fx-key-matrix .km-row.is-on .km-pin { fill: var(--trace-0); }
+.fx-key-matrix .km-col.is-ans .km-w { stroke: var(--ok-line); stroke-width: 2.6; }
+.fx-key-matrix .km-col.is-ans .km-pin { fill: var(--ok-line); }
+.fx-key-matrix .km-lab { font: 600 11px var(--mono); fill: var(--muted); }
+.fx-key-matrix .km-row.is-on .km-lab,
+.fx-key-matrix .km-col.is-ans .km-lab { font-weight: 800; fill: var(--title); }
+.fx-key-matrix .km-head { font: 800 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); }
+.fx-key-matrix .km-note { font: 500 11px var(--mono); fill: var(--muted); }
+.fx-key-matrix .km-t { font: 600 11px var(--mono); fill: var(--text); }
+.fx-key-matrix .km-say { font: 500 12px var(--mono); fill: var(--text); }
+
+/* a key: drawn once in <defs> with inline paint; each <use> passes its state in through these custom properties */
+.fx-key-matrix .km-key.is-pressed { --km-rot: 0deg; --km-face: var(--accent); --km-edge: var(--ink-2); --km-sh: 0; --km-dx: 1px; --km-dy: 1.5px; --km-bl: var(--ink-2); --km-ctl: var(--ink-2); }
+.fx-key-matrix .km-key.is-live { --km-rl: var(--trace-0); --km-rlw: 2.2; --km-bl: var(--trace-0); }
+.fx-key-matrix .km-key.is-ans { --km-cl: var(--ok-line); --km-clw: 2.2; }
+
+/* the chip, the answer trace and the readout */
+.fx-key-matrix .km-chip-sh { fill: var(--drop); }
+.fx-key-matrix .km-chip-body { fill: var(--surface-2); stroke: var(--node-border); stroke-width: 1.4; }
+.fx-key-matrix .km-chip-dot { fill: var(--node-border); }
+.fx-key-matrix .km-trace { fill: none; stroke: var(--ok-line); stroke-width: 2.2; stroke-dasharray: 4 3; }
+.fx-key-matrix .km-trace.is-off { visibility: hidden; }
+.fx-key-matrix .km-read-box { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1.3; }
+.fx-key-matrix .km-read.is-ans .km-read-box { fill: color-mix(in srgb, var(--ok-line) 24%, var(--node-bg)); stroke: var(--ink-2); }
+.fx-key-matrix .km-read-t { font: 700 12px var(--mono); fill: var(--muted); }
+.fx-key-matrix .km-read.is-ans .km-read-t { fill: var(--title); }
+
+/* numbered markers: 1 the powered row, 2 the pressed key, 3 the answering column */
+.fx-key-matrix .km-badge circle { stroke: var(--ink-2); stroke-width: 1.3; }
+.fx-key-matrix .km-badge text { font: 800 11px var(--mono); fill: var(--ink); }
+.fx-key-matrix .km-b1 circle { fill: color-mix(in srgb, var(--trace-0) 50%, var(--node-bg)); }
+.fx-key-matrix .km-b2 circle { fill: var(--accent); }
+.fx-key-matrix .km-b3 circle { fill: color-mix(in srgb, var(--ok-line) 50%, var(--node-bg)); }
+.fx-key-matrix .km-b3.is-dim { opacity: 0.35; }
+
+/* click areas over the keys (made by the JS) */
+.fx-key-matrix .km-hit { position: absolute; margin: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.fx-key-matrix .km-hit:hover { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+.fx-key-matrix .km-hit:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.fx-key-matrix .km-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.fx-key-matrix .km-pause[hidden] { display: none; }
+
+/* the two tiles under the drawing */
+.fx-key-matrix .km-pair > .fx-tile { display: flex; flex-direction: column; gap: 10px; }
+.fx-key-matrix .km-pair p { margin: 0; }
+.fx-key-matrix .km-eqs { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); align-items: baseline; gap: 8px 10px; }
+.fx-key-matrix .km-op { font-size: 13px; font-weight: 700; color: var(--muted); }
+.fx-key-matrix .km-eqs .fx-num { justify-self: end; font-size: clamp(32px, 5cqi, 42px); }
+.fx-key-matrix .km-line { font-size: 13px; line-height: 1.55; text-wrap: pretty; }
+.fx-key-matrix .km-line b { font-weight: 800; color: var(--title); }
+.fx-key-matrix .km-sig { max-width: 360px; }
+.fx-key-matrix .km-sig-line { fill: none; stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; }
+.fx-key-matrix .km-sig-dot { fill: var(--ok-line); stroke: var(--ink-2); stroke-width: 1.3; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .fx-key-matrix .km-w,
+  .fx-key-matrix .km-pin { transition: stroke 0.4s, fill 0.4s; }
+  .fx-key-matrix .km-mark { transition: transform 0.5s ease, opacity 0.4s; }
+  .fx-key-matrix .km-sig-draw { animation: fx-key-matrix-draw 6s linear infinite; }
+}
+@keyframes fx-key-matrix-draw {
+  0% { clip-path: inset(0 100% 0 0); opacity: 1; }
+  45%, 90% { clip-path: inset(0 0 0 0); opacity: 1; }
+  100% { clip-path: inset(0 0 0 0); opacity: 0.25; }
+}

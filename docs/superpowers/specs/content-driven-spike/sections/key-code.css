@@ -1,0 +1,54 @@
+/* key-code: the keyboard sends a position; the computer's layout picks the letter. */
+.fx-key-code { --kc-side: 80px; --kc-gap: 6px; --kc-in: 11.3px; }
+
+/* where the four keys are */
+.fx-key-code .kc-where { display: flex; flex-direction: column; gap: 6px; }
+.fx-key-code .kc-where svg { max-width: 300px; }
+.fx-key-code .kc-kb rect { fill: var(--surface-2); stroke: var(--line-ctl); stroke-width: 1.2; }
+.fx-key-code .kc-kb-on rect { fill: var(--accent); stroke: var(--ink-2); stroke-width: 1.4; }
+
+/* the three bands share one grid, so a code, its lookup and its letter sit in one column */
+.fx-key-code .kc-band { display: flex; flex-direction: column; gap: 8px; }
+.fx-key-code .kc-head { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; font-weight: 700; color: var(--title); }
+.fx-key-code .kc-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border: 1.3px solid var(--ink-2); border-radius: 6px; background: var(--node-bg); font-size: 11px; font-weight: 800; }
+.fx-key-code .kc-grid { display: grid; grid-template-columns: var(--kc-side) repeat(4, minmax(0, 1fr)); gap: var(--kc-gap); align-items: center; padding: 0 var(--kc-in); }
+.fx-key-code .kc-side { font-size: 11px; font-weight: 600; line-height: 1.35; color: var(--muted); }
+.fx-key-code .kc-side b { font-weight: 800; color: var(--text); }
+
+/* band 1: keycaps that carry only a number */
+.fx-key-code .kc-cap { justify-self: center; width: 100%; max-width: 62px; height: 52px; padding: 3px 4px 7px; border: 1.3px solid var(--ink-2); border-radius: 10px; background: var(--surface-2); box-shadow: var(--pop); }
+.fx-key-code .kc-face { display: grid; place-items: center; height: 100%; border: 1px solid var(--line-ctl); border-radius: 7px; background: var(--node-bg); font-size: 18px; font-weight: 800; color: var(--title); font-variant-numeric: tabular-nums; }
+
+/* arrows between the bands: orange is the code on its way, green is the answer */
+.fx-key-code .kc-arrows { height: 18px; }
+.fx-key-code .kc-arrows .kc-side { font-size: 11px; }
+.fx-key-code .kc-arrows i { justify-self: center; position: relative; width: 2px; height: 16px; background: var(--kc-ar); }
+.fx-key-code .kc-arrows i::after { content: ""; position: absolute; left: -4px; bottom: -2px; border: 5px solid transparent; border-top: 6px solid var(--kc-ar); border-bottom: 0; }
+.fx-key-code .kc-arrows.is-hot { --kc-ar: var(--trace-0); }
+.fx-key-code .kc-arrows.is-ok { --kc-ar: var(--ok-line); }
+
+/* band 2: the lookup card; the layout in use is the solid row */
+.fx-key-code .kc-card { display: flex; flex-direction: column; gap: 4px; padding: 8px 0 9px; border: 1.3px solid var(--ink-2); border-radius: 10px; background: var(--surface-2); box-shadow: var(--pop); }
+.fx-key-code .kc-card .kc-grid { padding: 0 calc(var(--kc-in) - 1.3px); }
+.fx-key-code .kc-card .kc-codes { padding-bottom: 4px; border-bottom: 1px dashed var(--line-ctl); }
+.fx-key-code .kc-codes > span:not(.kc-side) { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fx-key-code .kc-card .kc-lay { margin: 0 4px; padding: 4px calc(var(--kc-in) - 6.6px); border: 1.3px dashed var(--line-ctl); border-radius: 8px; }
+.fx-key-code .kc-lay > span:not(.kc-side) { text-align: center; font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--muted); }
+.fx-key-code .kc-lay.is-on { border-style: solid; border-color: var(--ink-2); background: var(--node-bg); }
+.fx-key-code .kc-lay.is-on > span:not(.kc-side) { color: var(--title); font-weight: 800; }
+.fx-key-code .kc-lay .fx-btn { width: 100%; padding: 0 8px; }
+
+/* band 3: what you get */
+.fx-key-code .kc-letter { display: grid; place-items: center; height: 56px; border: 1.3px solid var(--ink-2); border-radius: 10px; background: color-mix(in srgb, var(--ok-line) 22%, var(--node-bg)); font-size: 30px; font-weight: 800; line-height: 1; color: var(--title); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .fx-key-code .kc-letter.is-new { animation: fx-key-code-flip 0.5s ease both; }
+  .fx-key-code .kc-letter.is-new:nth-of-type(3) { animation-delay: 0.05s; }
+  .fx-key-code .kc-letter.is-new:nth-of-type(4) { animation-delay: 0.1s; }
+  .fx-key-code .kc-letter.is-new:nth-of-type(5) { animation-delay: 0.15s; }
+  .fx-key-code .kc-lay { transition: background 0.2s, border-color 0.2s; }
+}
+@keyframes fx-key-code-flip {
+  from { transform: perspective(240px) rotateX(80deg); opacity: 0.2; }
+  to { transform: none; opacity: 1; }
+}

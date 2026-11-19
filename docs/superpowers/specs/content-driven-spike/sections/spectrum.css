@@ -1,0 +1,65 @@
+/* spectrum: the 2.4 GHz band as a map, with a waterfall of reports under it */
+.fx-spectrum .key { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--text); }
+.fx-spectrum .key li { display: inline-flex; align-items: center; gap: 7px; }
+.fx-spectrum .key svg { width: 15px; height: 15px; flex: none; }
+
+/* one drawing per width: the wide map scrolls if it must; the narrow one is redrawn for a phone */
+.fx-spectrum .big { padding-bottom: 2px; }
+.fx-spectrum .small { display: none; }
+@container (width < 640px) {
+  .fx-spectrum .big { display: none; }
+  .fx-spectrum .small { display: block; }
+}
+
+/* the band */
+.fx-spectrum .col { fill: color-mix(in srgb, var(--trace-1) 8%, var(--node-bg)); }
+.fx-spectrum .dim { stroke: var(--edge); stroke-width: 1; fill: none; }
+.fx-spectrum .mw { stroke: var(--edge); stroke-width: 1.2; stroke-dasharray: 3 4; fill: none; }
+.fx-spectrum .bt { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1; }
+.fx-spectrum .bt-n { fill: var(--node-border); }
+.fx-spectrum .ax { stroke: var(--node-border); stroke-width: 1.4; fill: none; }
+.fx-spectrum .tick { stroke: var(--node-border); stroke-width: 1.2; fill: none; }
+.fx-spectrum .time { stroke: var(--line-ctl); stroke-width: 1.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* the reports */
+.fx-spectrum .track { stroke: var(--border); stroke-width: 1; stroke-dasharray: 1 5; stroke-linecap: round; fill: none; }
+.fx-spectrum .burst { fill: color-mix(in srgb, var(--trace-1) 30%, var(--node-bg)); stroke: var(--trace-1); stroke-width: 1.3; }
+.fx-spectrum .on-burst { fill: var(--text); }
+.fx-spectrum .strong { font-weight: 800; }
+.fx-spectrum .dot { fill: var(--trace-0); stroke: var(--node-border); stroke-width: 1.4; }
+.fx-spectrum .dot-no { fill: var(--no-line); stroke: var(--node-border); stroke-width: 1.4; }
+.fx-spectrum .x { stroke: var(--node-bg); stroke-width: 1.8; stroke-linecap: round; fill: none; }
+.fx-spectrum .ok-l { stroke: var(--ok-line); stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.fx-spectrum .ok-c { fill: color-mix(in srgb, var(--ok-line) 26%, var(--node-bg)); stroke: var(--ok-line); stroke-width: 1.4; }
+.fx-spectrum .ok-k { stroke: var(--ok); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.fx-spectrum .ok-t { font: 700 12px var(--mono); fill: var(--ok); }
+.fx-spectrum .lostline { stroke: var(--no-line); stroke-width: 1.6; stroke-dasharray: 2 4; stroke-linecap: round; fill: none; }
+.fx-spectrum .lost-t { font: 700 12px var(--mono); fill: var(--no); }
+.fx-spectrum .again { stroke: var(--trace-0); stroke-width: 1.6; stroke-dasharray: 4 4; stroke-linecap: round; fill: none; }
+.fx-spectrum .again-h { stroke: var(--trace-0); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.fx-spectrum .again-t { font: 700 12px var(--mono); fill: var(--text); }
+
+/* the neighbours */
+.fx-spectrum .who { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.fx-spectrum .who-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 22px; }
+.fx-spectrum .who-list li { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.fx-spectrum .who-list svg { width: 28px; height: 18px; flex: none; margin-top: 1px; }
+.fx-spectrum .who-list p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+.fx-spectrum .who-list b { display: block; font-weight: 700; color: var(--text); }
+@container (width < 900px) {
+  .fx-spectrum .who-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (width < 480px) {
+  .fx-spectrum .who-list { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* motion: the rows arrive one by one, slowly, once the section is on screen */
+@media (prefers-reduced-motion: no-preference) {
+  .fx-spectrum.is-armed .row { opacity: 0; }
+  .fx-spectrum.is-live .row { animation: fx-spectrum-in 0.9s ease-out both; animation-delay: calc(var(--i) * 0.75s + 0.2s); }
+}
+@keyframes fx-spectrum-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.fx-spectrum .narrow .fx-t-h { font-size: 11px; }

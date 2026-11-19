@@ -212,6 +212,32 @@ export interface Lesson {
   line: number;
 }
 
+// ── Free sections (free fence) ────────────────────────────────────────────────
+
+/** One `free` fence, read: its own body, or the file named by `file=`. */
+export interface FreeSection {
+  /** The first word of the fence's info. A good name matches `FREE_NAME`. */
+  name: string;
+  /** Absolute path of the `file=` file, or null for a section written in the fence. */
+  file: string | null;
+  /** The HTML fragment; "" when the file is missing. */
+  fragment: string;
+  /** True when `file=` names a file that cannot be read. */
+  missing: boolean;
+  /** 1-based draft line of the fence. */
+  line: number;
+}
+
+// ── Compile output ────────────────────────────────────────────────────────────
+
+export interface CompileResult {
+  html: string;
+  warnings: string[];
+  stats: { panels: number; diagrams: number; asks: number; callouts: number; bytes: number };
+  /** Absolute path of every `file=` in a free section, found or not (`clarify serve` watches them). */
+  files: string[];
+}
+
 // ── Layout output ─────────────────────────────────────────────────────────────
 
 export interface Point { x: number; y: number }

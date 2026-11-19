@@ -1,0 +1,44 @@
+/* trouble-path: the path from hand to screen, with each problem pinned under the stop where it lives. */
+.fx-trouble-path .path { --gap: 18px; --icon: 56px; list-style: none; margin: 0; padding: 4px 0 2px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 var(--gap); }
+.fx-trouble-path .stop { position: relative; display: flex; flex-direction: column; min-width: 0; }
+
+/* the line that joins the stops, with a chevron halfway */
+.fx-trouble-path .stop:not(:last-child)::before { content: ""; position: absolute; z-index: 0; top: calc(var(--icon) / 2); left: 50%; width: calc(100% + var(--gap)); border-top: 1.4px solid var(--node-border); }
+.fx-trouble-path .stop:not(:last-child)::after { content: ""; position: absolute; z-index: 0; top: calc(var(--icon) / 2); left: calc(100% + var(--gap) / 2); width: 7px; height: 7px; border-top: 1.4px solid var(--node-border); border-right: 1.4px solid var(--node-border); background: var(--surface); transform: translate(-50%, -50%) rotate(45deg); }
+
+/* the stop: icon tile and its name */
+.fx-trouble-path .head { display: flex; flex-direction: column; align-items: center; gap: 9px; text-align: center; }
+.fx-trouble-path .icon { position: relative; z-index: 1; display: grid; place-items: center; flex: none; width: var(--icon); height: var(--icon); border: 1.3px solid var(--ink-2); border-radius: 12px; background: var(--node-bg); box-shadow: var(--pop); }
+.fx-trouble-path .icon svg { width: 42px; height: 42px; }
+.fx-trouble-path .label { display: flex; flex-direction: column; gap: 2px; }
+.fx-trouble-path .name { font-size: 13px; font-weight: 800; color: var(--title); line-height: 1.35; }
+.fx-trouble-path .role { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.fx-trouble-path .is-quiet .icon { border-color: var(--line-ctl); background: var(--surface-2); box-shadow: none; }
+.fx-trouble-path .is-quiet .icon .fx-ink { stroke: var(--line-ctl); }
+.fx-trouble-path .is-quiet .icon .fx-fill { fill: var(--surface-2); }
+.fx-trouble-path .is-quiet .name { color: var(--muted); }
+
+/* the cards, pinned under their stop */
+.fx-trouble-path .cards { display: flex; flex-direction: column; gap: 18px; margin-top: 18px; }
+.fx-trouble-path .card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; }
+.fx-trouble-path .card::before { content: ""; position: absolute; left: 50%; top: -19px; height: 17px; border-left: 1.4px solid var(--node-border); }
+.fx-trouble-path .card::after { content: ""; position: absolute; left: 50%; top: -21px; width: 7px; height: 7px; border: 1.4px solid var(--node-border); border-radius: 50%; background: var(--node-bg); transform: translateX(-50%) translateX(0.7px); }
+.fx-trouble-path .card > p { margin: 0; text-wrap: pretty; }
+.fx-trouble-path .say { font-size: 13px; font-weight: 800; line-height: 1.45; color: var(--title); }
+.fx-trouble-path .why, .fx-trouble-path .try { font-size: 12.5px; line-height: 1.5; color: var(--text); }
+.fx-trouble-path .why > b:first-child, .fx-trouble-path .try > b:first-child { display: block; margin-bottom: 1px; font: 800 11px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.fx-trouble-path .try > b:first-child { color: var(--ok); }
+.fx-trouble-path .try { padding-top: 8px; border-top: 1px dashed var(--border-strong); align-self: stretch; }
+
+/* narrow: the path turns vertical, cards sit beside their stop */
+@container (width < 760px) {
+  .fx-trouble-path .path { --gap: 22px; grid-template-columns: minmax(0, 1fr); gap: var(--gap) 0; }
+  .fx-trouble-path .stop { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  .fx-trouble-path .head { display: contents; }
+  .fx-trouble-path .icon { grid-column: 1; grid-row: 1 / span 2; }
+  .fx-trouble-path .label { grid-column: 2; grid-row: 1; min-height: var(--icon); justify-content: center; text-align: left; }
+  .fx-trouble-path .cards { grid-column: 2; grid-row: 2; margin-top: 8px; gap: 14px; }
+  .fx-trouble-path .card::before, .fx-trouble-path .card::after { display: none; }
+  .fx-trouble-path .stop:not(:last-child)::before { top: calc(var(--icon) / 2); left: calc(var(--icon) / 2); width: 0; height: calc(100% + var(--gap)); border-top: 0; border-left: 1.4px solid var(--node-border); }
+  .fx-trouble-path .stop:not(:last-child)::after { top: calc(100% + var(--gap) / 2); left: calc(var(--icon) / 2 + 0.7px); transform: translate(-50%, -50%) rotate(135deg); }
+}

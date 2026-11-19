@@ -1,0 +1,89 @@
+<p class="fx-how"><b>How to read this:</b> two ways for a wireless mouse or keyboard to reach the computer, side by side. Read each row across: one question, two answers. A green chip is the easy answer, amber is a cost, red is the catch.</p>
+<div class="cmp" role="table" aria-label="USB receiver compared with Bluetooth">
+  <div class="row head" role="row">
+    <div class="lab" role="columnheader"><span class="fx-eyebrow">Read each row across</span></div>
+    <div class="cell rec" role="columnheader">
+      <svg viewBox="0 0 280 84" role="img" aria-label="The mouse sends by radio to a small receiver plugged into a USB port on the computer.">
+        <path class="fx-ink fx-fill" d="M32 12C44 12 50 22 50 36V54C50 65 42 72 32 72C22 72 14 65 14 54V36C14 22 20 12 32 12Z"/>
+        <path class="fx-ink" d="M14 36H50M32 12V36"/>
+        <rect class="fx-ink fx-fill-2" x="29.5" y="19" width="5" height="10" rx="2.5"/>
+        <path class="fx-hot-line" d="M61 37.5A7 7 0 0 1 61 46.5M66 33.6A13 13 0 0 1 66 50.4M70.6 29.8A19 19 0 0 1 70.6 54.2"/>
+        <path class="fx-hot-line dash" d="M80 42C104 42 112 58 120 66"/>
+        <rect class="fx-ink fx-hot-fill" x="120" y="62" width="22" height="14" rx="3"/>
+        <rect class="fx-ink fx-fill" x="142" y="65" width="9" height="8" rx="1"/>
+        <rect class="fx-ink fx-fill" x="164" y="8" width="96" height="58" rx="5"/>
+        <rect class="fx-ink fx-fill-2" x="171" y="15" width="82" height="44" rx="2"/>
+        <path class="fx-ink fx-fill" d="M151 66H272L266 76H157Z"/>
+      </svg>
+      <p class="name">USB receiver</p>
+      <p class="path">mouse → receiver in a USB port → computer</p>
+    </div>
+    <div class="cell bt" role="columnheader">
+      <svg viewBox="0 0 280 84" role="img" aria-label="The mouse sends by radio straight to the computer's own built-in radio.">
+        <path class="fx-ink fx-fill" d="M32 12C44 12 50 22 50 36V54C50 65 42 72 32 72C22 72 14 65 14 54V36C14 22 20 12 32 12Z"/>
+        <path class="fx-ink" d="M14 36H50M32 12V36"/>
+        <rect class="fx-ink fx-fill-2" x="29.5" y="19" width="5" height="10" rx="2.5"/>
+        <path class="fx-hot-line" d="M61 37.5A7 7 0 0 1 61 46.5M66 33.6A13 13 0 0 1 66 50.4M70.6 29.8A19 19 0 0 1 70.6 54.2"/>
+        <path class="fx-hot-line dash" d="M80 42C118 42 150 29 177 29"/>
+        <rect class="fx-ink fx-fill" x="164" y="8" width="96" height="58" rx="5"/>
+        <rect class="fx-ink fx-fill-2" x="171" y="15" width="82" height="44" rx="2"/>
+        <path class="fx-ink fx-fill" d="M151 66H272L266 76H157Z"/>
+        <circle class="fx-ink fx-hot-fill" cx="190" cy="29" r="11"/>
+        <path class="fx-ink" d="M190 36V25M193.5 21.5A5 5 0 0 1 193.5 28.5M186.5 21.5A5 5 0 0 0 186.5 28.5"/>
+      </svg>
+      <p class="name">Bluetooth</p>
+      <p class="path">mouse → the computer's own radio</p>
+    </div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">Set-up</div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><span class="fx-chip is-ok">Nothing to pair</span><p>Plug it in. It introduces itself as a wired mouse and keyboard, so no driver either.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><span class="fx-chip is-warn">Pair once</span><p>Pair it with the computer one time.</p></div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">Needs a USB port?</div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><span class="fx-chip is-warn">Yes, one</span><p>The receiver takes a USB port.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><span class="fx-chip is-ok">No</span><p>It uses the computer's own radio.</p></div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">Works before the system starts?<small>the BIOS or boot menu</small></div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><span class="fx-chip is-ok">Yes</span><p>It acts like a wired keyboard, so it works from the very start.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><span class="fx-chip is-warn">Often not</span><p>It often waits until the operating system has loaded.</p></div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">Reports a second<small>both bars on one scale, 0 to 1,000</small></div>
+    <div class="cell rec rate" role="cell"><span class="tag">Receiver</span>
+      <p class="v"><b>125 or 1,000</b> checks a second</p>
+      <div class="bar" role="img" aria-label="125 on a basic receiver, 1,000 on a fast one, on a scale of 0 to 1,000"><span class="fill"></span><span class="more"></span></div>
+      <div class="scale" aria-hidden="true"><span class="at">125</span><span class="end">1,000</span></div>
+    </div>
+    <div class="cell bt rate" role="cell"><span class="tag">Bluetooth</span>
+      <p class="v"><b>about 125</b> a second</p>
+      <div class="bar" role="img" aria-label="about 125, on a scale of 0 to 1,000"><span class="fill"></span></div>
+      <div class="scale" aria-hidden="true"><span class="at">125</span><span class="end">1,000</span></div>
+    </div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">What else it can reach</div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><span class="fx-chip is-warn">One computer</span><p>Only the computer its receiver is plugged into.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><span class="fx-chip is-ok">Phone, tablet too</span><p>It can also pair with a phone or tablet.</p></div>
+  </div>
+
+  <div class="row" role="row">
+    <div class="lab" role="rowheader">The catch</div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><span class="fx-chip is-no">Easy to lose</span><p>A tiny plug that goes missing.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><span class="fx-chip is-no">Late start</span><p>Often not working until the system has loaded.</p></div>
+  </div>
+
+  <div class="row pick" role="row">
+    <div class="lab" role="rowheader">Pick this when</div>
+    <div class="cell rec" role="cell"><span class="tag">Receiver</span><p>you need the keyboard in the BIOS or boot menu, want 1,000 checks a second, or don't want to pair.</p></div>
+    <div class="cell bt" role="cell"><span class="tag">Bluetooth</span><p>your USB ports are few or taken, or you want the same mouse or keyboard on a phone or tablet.</p></div>
+  </div>
+</div>
+<p class="fx-take">Both send the same tiny reports by radio. The receiver is plug-in-and-go and works from the moment the computer starts; Bluetooth saves a USB port and can reach a phone or tablet too.</p>

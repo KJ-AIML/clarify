@@ -1,0 +1,17 @@
+.fx-numbers .stats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.fx-numbers .stat { padding: 14px 0 15px; border-top: 1px solid var(--border); }
+.fx-numbers .stat:first-child { padding-top: 2px; border-top: 0; }
+.fx-numbers .stat:last-child { padding-bottom: 0; }
+.fx-numbers .big { display: flex; align-items: baseline; gap: 8px; }
+.fx-numbers .line { margin: 8px 0 0; max-width: 40ch; font-size: 13px; line-height: 1.55; color: var(--text); text-wrap: pretty; }
+
+/* Wide section (a three-column panel, or two): one row of four equal columns, a vertical hairline between them. */
+@container (width >= 700px) {
+  .fx-numbers .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fx-numbers .stat,
+  .fx-numbers .stat:first-child,
+  .fx-numbers .stat:last-child { padding: 2px 18px 0; border-top: 0; border-left: 1px solid var(--border); }
+  .fx-numbers .stat:first-child { padding-left: 0; border-left: 0; }
+  .fx-numbers .fx-num { font-size: clamp(26px, 3.7cqi, 52px); }
+  .fx-numbers .line { max-width: none; }
+}

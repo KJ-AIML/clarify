@@ -9,9 +9,11 @@ import { SVG_DEFS } from "./diagram/svg.js";
 import { draftToMarkdown } from "./export/markdown.js";
 import { renderBrandSprite } from "./brand-marks/brands.js";
 import { renderLesson } from "./lesson/render.js";
+import { FREE_NAME, parseFreeInfo, loadFreeSection, splitFragment, wrapScript } from "./free/section.js";
 
 /** @typedef {import("./types").Draft} Draft */
 /** @typedef {import("./types").Block} Block */
+/** @typedef {import("./types").CompileResult} CompileResult */
 
 const asset = (rel) => fs.readFileSync(new URL(rel, import.meta.url), "utf8");
 const minifyCss = (css) => css
@@ -43,6 +45,8 @@ const CLIENT_JS = minifyJs(asset("./runtime/client.js"));
 // Only pages that contain a lesson carry these (the anatomy kit's shading CSS + the lesson player).
 const LESSON_CSS = minifyCss(asset("./iso/kit.css") + asset("./runtime/lesson.css"));
 const LESSON_JS = minifyJs(asset("./runtime/lesson.js"));
+// Only pages that contain a free section carry the kit; each section's own CSS follows it as written.
+const FX_CSS = minifyCss(asset("./runtime/fx.css"));
 
 export const THEMES = [
   ["auto", "Auto (system)"], ["light", "Light"], ["dark", "Dark"], ["tokyo-night", "Tokyo Night"],
@@ -72,11 +76,18 @@ const WIDE_DIAGRAM = 1100;
  * Compile a parsed draft.
  * @param {Draft} draft
  * @param {{ live?: boolean, source?: string }} [opts]
- * @returns {{ html: string, warnings: string[], stats: { panels: number, diagrams: number, asks: number, callouts: number, bytes: number } }}
+ * @returns {CompileResult}
  */
 export function compile(draft, opts = {}) {
   const { meta, lead } = draft;
-  const ctx = { diagrams: 0, lessons: 0, asks: 0, callouts: 0, warnings: /** @type {string[]} */ ([]), sprite: new Map(), cols: meta.cols, heroUsed: false };
+  const ctx = {
+    diagrams: 0, lessons: 0, asks: 0, callouts: 0, warnings: /** @type {string[]} */ ([]), sprite: new Map(), cols: meta.cols, heroUsed: false,
+    // Free sections, shared by reference across panels like `warnings`: every section (a missing or badly
+    // named one too) and the absolute path of every `file=`. `source` is "" for a draft read from stdin.
+    free: /** @type {Array<{ name: string, panel: string, line: number, html: string, styles: string[], scripts: string[], bytes: number }>} */ ([]),
+    files: /** @type {string[]} */ ([]),
+    source: opts.source || draft.source || ""
+  };
 
   const rendered = draft.panels.map(panel => {
     const pctx = { ...ctx, panel, wide: false, roomy: false };
@@ -101,7 +112,7 @@ export function compile(draft, opts = {}) {
   });
 
   const slug = slugify(meta.title);
-  const pageMeta = { title: meta.title, slug, source: opts.source || draft.source || "", live: Boolean(opts.live) };
+  const pageMeta = { title: meta.title, slug, source: ctx.source, live: Boolean(opts.live) };
   const markdown = draftToMarkdown(draft);
 
   const html = `<!DOCTYPE html>
@@ -114,7 +125,7 @@ export function compile(draft, opts = {}) {
 <script>(()=>{try{const t=JSON.parse(localStorage.getItem("clarify:theme")||"null");if(t)document.documentElement.dataset.theme=t}catch{}})()</script>
 <style id="c-font">${FONT_CSS}</style>
 <style>${CSS}</style>
-<style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}
+<style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}${ctx.free.length ? `\n<style id="c-fx-css">${FX_CSS}</style>\n<style id="c-fx-sections">${freeStyles(ctx.free)}</style>` : ""}
 </head>
 <body>
 ${SVG_DEFS}
@@ -151,15 +162,29 @@ ${cards.join("\n")}
 <div class="c-toast" role="status" aria-live="polite"></div>
 <script type="application/json" id="c-page-meta">${jsonForScript(pageMeta)}</script>
 <script type="application/json" id="c-markdown">${jsonForScript(markdown)}</script>
-<script>${CLIENT_JS}</script>${ctx.lessons ? `\n<script id="c-lesson-js">${LESSON_JS}</script>` : ""}
+<script>${CLIENT_JS}</script>${ctx.lessons ? `\n<script id="c-lesson-js">${LESSON_JS}</script>` : ""}${freeScripts(ctx.free)}
 </body>
 </html>
 `;
   return {
     html,
     warnings: ctx.warnings,
-    stats: { panels: draft.panels.length, diagrams: ctx.diagrams, asks: ctx.asks, callouts: ctx.callouts, bytes: Buffer.byteLength(html) }
+    stats: { panels: draft.panels.length, diagrams: ctx.diagrams, asks: ctx.asks, callouts: ctx.callouts, bytes: Buffer.byteLength(html) },
+    files: ctx.files
   };
+}
+
+/** Each free section's own CSS, as written, after a comment line with its name (`fx NAME`). */
+function freeStyles(free) {
+  return free.filter(f => f.styles.length).map(f => `/* fx ${f.name} */\n${f.styles.join("\n")}`).join("\n");
+}
+
+/**
+ * One bare `<script>` per section script, so a script that throws or does not parse stops only itself
+ * (and the template-leak test, which skips bare scripts, ignores them).
+ */
+function freeScripts(free) {
+  return free.flatMap(f => f.scripts.filter(js => js.trim()).map(js => `\n<script>${wrapScript(f.name, js)}</script>`)).join("");
 }
 
 /** "On this page" index: the panel letters double as reply references ([C] …). */
@@ -272,7 +297,31 @@ function renderFence(b, ctx) {
     });
     return `<div class="c-tree">${rows.join("")}</div>`;
   }
+  if (b.lang === "free") return renderFree(b, ctx);
   return `<div class="c-code"><pre><code${b.lang ? ` class="language-${escapeHtml(b.lang)}"` : ""}>${escapeHtml(b.body)}</code></pre><button type="button" class="c-tool c-copy" aria-label="Copy code">${ICON.copy}</button></div>`;
+}
+
+/**
+ * A `free` fence: the one place raw HTML enters a page. The fragment is wrapped in its own element; its
+ * styles and scripts are collected in `ctx.free` for the head and the end of the body. A missing file or a
+ * bad name warns and shows the kit's dashed box instead.
+ */
+function renderFree(b, ctx) {
+  const s = loadFreeSection(b, ctx.source);
+  const written = parseFreeInfo(b.info).file;
+  const warn = (text) => ctx.warnings.push(`panel ${ctx.panel.id}: line ${b.line}: ${text}`);
+  const named = FREE_NAME.test(s.name);
+  if (!named) warn(`free section needs a name of lowercase letters, digits and dashes ("${b.info}")`);
+  else if (ctx.free.some(f => f.name === s.name)) warn(`free section "${s.name}" is used twice on this page; give each one its own name`);
+  if (s.missing) warn(`free section file not found: ${written}`);
+  if (s.file) ctx.files.push(s.file);
+  const entry = { name: s.name, panel: ctx.panel.id, line: b.line, html: "", styles: [], scripts: [], bytes: 0 };
+  ctx.free.push(entry);
+  if (!named) return `<div class="fx fx-missing">This free section needs a name.</div>`;
+  if (s.missing) return `<div class="fx fx-missing" data-fx="${s.name}">${escapeHtml(`Missing section "${s.name}": ${written} was not found.`)}</div>`;
+  const { html, styles, scripts } = splitFragment(s.fragment);
+  Object.assign(entry, { html: html.trim(), styles, scripts, bytes: Buffer.byteLength(s.fragment) });
+  return `<div class="fx fx-${s.name}" data-fx="${s.name}">${entry.html}</div>`;
 }
 
 function renderDiagramFigure(b, ctx) {

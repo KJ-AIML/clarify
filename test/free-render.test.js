@@ -1,0 +1,123 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { parseDraft } from "../src/parser.js";
+import { compile } from "../src/render.js";
+import { parseFreeInfo } from "../src/free/section.js";
+
+const examples = fs.readdirSync(new URL("../examples/", import.meta.url)).filter((f) => f.endsWith(".md"));
+const read = (f) => fs.readFileSync(new URL(`../examples/${f}`, import.meta.url), "utf8");
+const count = (text, re) => (text.match(re) || []).length;
+/** A free fence as it appears in a draft. */
+const fence = (info, ...body) => [`\`\`\`free ${info}`.trimEnd(), ...body, "```"].join("\n");
+/** The bare scripts at the end of the page (the embedded Markdown before them quotes every fence as text). */
+const endScripts = (html) => html.slice(html.indexOf('id="c-markdown"')).match(/<script>[\s\S]*?<\/script>/g) || [];
+
+/** Runs `fn` with a fresh temp folder holding `sections/part.html`, and removes the folder after. */
+function withPart(fn) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-free-"));
+  try {
+    fs.mkdirSync(path.join(tmp, "sections"));
+    fs.writeFileSync(path.join(tmp, "sections", "part.html"), "<p>from file</p>");
+    fn(tmp);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+test("an inline free section is wrapped and its style and script are moved", () => {
+  const draft = ["## A Keys", fence("key-code", '<p class="fx-how">How</p><style>.fx-key-code p{font-weight:700}</style><script>root.dataset.ran = "yes"</script>')].join("\n");
+  const { html, warnings } = compile(parseDraft(draft));
+  assert.deepEqual(warnings, []);
+  assert.match(html, /<div class="fx fx-key-code" data-fx="key-code">\s*<p class="fx-how">How<\/p>\s*<\/div>/);
+  const kit = html.indexOf('<style id="c-fx-css">');
+  const own = html.indexOf('<style id="c-fx-sections">');
+  const head = html.indexOf("</head>");
+  assert.ok(kit > 0 && kit < own && own < head, "the kit, then the section styles, in the head");
+  assert.match(html.slice(kit, own), /\.fx-how\{/);
+  assert.match(html.slice(own, head), /\.fx-key-code p\{font-weight:700\}/);
+  const script = endScripts(html).find((s) => s.includes('[data-fx="key-code"]'));
+  assert.ok(script, "a script after the embedded Markdown runs the section");
+  assert.ok(script.includes('root.dataset.ran = "yes"'));
+  assert.ok(script.includes('console.error("fx key-code: "'));
+  assert.equal(script, `<script>(() => { const root = document.querySelector('[data-fx="key-code"]'); if (!root) return; try {
+root.dataset.ran = "yes"
+} catch (e) { console.error("fx key-code: " + (e && e.stack || e)); } })();</script>`);
+});
+
+test("each section script is its own script element", () => {
+  const draft = ["## A Two", fence("a", "<p>a</p><script>root.dataset.ran = 'a'</script>"), "", fence("b", "<p>b</p><script>root.dataset.ran = 'b'</script>")].join("\n");
+  const scripts = endScripts(compile(parseDraft(draft)).html).filter((s) => s.includes("data-fx="));
+  assert.equal(scripts.length, 2);
+  assert.match(scripts[0], /\[data-fx="a"\][\s\S]*ran = 'a'/);
+  assert.match(scripts[1], /\[data-fx="b"\][\s\S]*ran = 'b'/);
+});
+
+test("pages without a free section carry no kit", () => {
+  const plain = examples.filter((f) => !/^\s*```free\b/m.test(read(f)));
+  assert.ok(plain.length > 0);
+  for (const f of plain) {
+    const { html } = compile(parseDraft(read(f)));
+    assert.doesNotMatch(html, /c-fx-css|c-fx-sections|data-fx=/, f);
+  }
+});
+
+test("file= reads the fragment relative to the draft", () => {
+  withPart((tmp) => {
+    const draft = ["## A Part", fence("part file=sections/part.html")].join("\n");
+    const { html, files, warnings } = compile(parseDraft(draft), { source: path.join(tmp, "draft.md") });
+    assert.match(html, /<div class="fx fx-part" data-fx="part">\s*<p>from file<\/p>/);
+    assert.deepEqual(files, [path.join(tmp, "sections", "part.html")]);
+    assert.deepEqual(warnings, []);
+  });
+});
+
+test("file= from stdin resolves against the working directory", () => {
+  withPart((tmp) => {
+    const cwd = process.cwd();
+    process.chdir(tmp);
+    try {
+      const { html, warnings } = compile(parseDraft(["## A Part", fence("part file=sections/part.html")].join("\n")));
+      assert.match(html, /<p>from file<\/p>/);
+      assert.deepEqual(warnings, []);
+    } finally {
+      process.chdir(cwd);
+    }
+  });
+});
+
+test("file= takes a quoted path with spaces", () => {
+  assert.deepEqual(parseFreeInfo('part file="sections/my part.html"'), { name: "part", file: "sections/my part.html" });
+  assert.deepEqual(parseFreeInfo("part file=sections/part.html"), { name: "part", file: "sections/part.html" });
+  assert.deepEqual(parseFreeInfo("part"), { name: "part", file: null });
+});
+
+test("a missing file warns and shows the dashed box", () => {
+  withPart((tmp) => {
+    const draft = ["## A One", fence("nope file=sections/nope.html")].join("\n");
+    const { html, files, warnings } = compile(parseDraft(draft), { source: path.join(tmp, "draft.md") });
+    assert.deepEqual(warnings, ["panel A: line 2: free section file not found: sections/nope.html"]);
+    assert.match(html, /<div class="fx fx-missing" data-fx="nope">Missing section &quot;nope&quot;: sections\/nope\.html was not found\.<\/div>/);
+    assert.match(html, /<style id="c-fx-css">/, "the kit styles the box");
+    assert.deepEqual(files, [path.join(tmp, "sections", "nope.html")]);
+  });
+});
+
+test("a name used twice warns", () => {
+  const draft = ["## A One", fence("same", "<p>one</p>"), "", "## B Two", fence("same", "<p>two</p>")].join("\n");
+  const { warnings } = compile(parseDraft(draft));
+  assert.deepEqual(warnings, ['panel B: line 7: free section "same" is used twice on this page; give each one its own name']);
+});
+
+test("a bad name warns", () => {
+  const draft = ["## A Bad", fence("Key", "<p>key</p>"), "", fence("", "<p>bare</p>")].join("\n");
+  const { html, warnings } = compile(parseDraft(draft));
+  assert.deepEqual(warnings, [
+    'panel A: line 2: free section needs a name of lowercase letters, digits and dashes ("Key")',
+    'panel A: line 6: free section needs a name of lowercase letters, digits and dashes ("")'
+  ]);
+  assert.equal(count(html, /<div class="fx fx-missing">This free section needs a name\.<\/div>/g), 2);
+  assert.doesNotMatch(html, /<p>key<\/p>|<p>bare<\/p>/);
+});

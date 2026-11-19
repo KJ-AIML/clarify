@@ -1,0 +1,67 @@
+/* radio-choice: two columns with matched rows; on a phone each row keeps both answers side by side */
+.fx-radio-choice .cmp { display: flex; flex-direction: column; }
+.fx-radio-choice .row { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; }
+
+/* row labels: like the page's key/value tables */
+.fx-radio-choice .lab { padding: 14px 0 12px; border-top: 1px solid var(--border); font-size: 13px; font-weight: 700; line-height: 1.45; color: var(--text); }
+.fx-radio-choice .lab small { display: block; margin-top: 3px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.fx-radio-choice .head .lab { border-top: 0; align-self: end; padding-bottom: 14px; }
+
+/* the two columns: cells that join into one tall card each */
+.fx-radio-choice .cell { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; padding: 13px 18px 14px; background: var(--node-bg); border-inline: 1.3px solid var(--ink-2); border-top: 1px solid var(--border); box-shadow: 1.5px 0 0 var(--drop); }
+.fx-radio-choice .cell p { margin: 0; max-width: 46ch; font-size: 13px; line-height: 1.5; color: var(--text); text-wrap: pretty; }
+.fx-radio-choice .head .cell { border-top: 1.3px solid var(--ink-2); border-radius: 10px 10px 0 0; padding-top: 14px; gap: 4px; }
+.fx-radio-choice .row:last-child .cell { border-bottom: 1.3px solid var(--ink-2); border-radius: 0 0 10px 10px; box-shadow: var(--pop); }
+.fx-radio-choice .head svg { max-width: 300px; margin-bottom: 6px; }
+.fx-radio-choice .head svg * { vector-effect: non-scaling-stroke; }
+.fx-radio-choice .head .dash { stroke-dasharray: 3 5; fill: none; }
+.fx-radio-choice .name { font-size: 15px; font-weight: 800; color: var(--title); }
+.fx-radio-choice .head .path { font-size: 12px; color: var(--muted); }
+.fx-radio-choice .tag { display: none; }
+
+/* reports a second: two bars on one shared 0 to 1,000 scale */
+.fx-radio-choice .rate { align-items: stretch; }
+.fx-radio-choice .v b { font-size: 15px; font-weight: 800; color: var(--title); font-variant-numeric: tabular-nums; }
+.fx-radio-choice .v { color: var(--muted); }
+.fx-radio-choice .bar { position: relative; height: 14px; border: 1.3px solid var(--ink-2); border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.fx-radio-choice .bar .fill { position: absolute; inset: 0 auto 0 0; width: 12.5%; background: var(--trace-0); border-right: 1.3px solid var(--ink-2); }
+.fx-radio-choice .bar .more { position: absolute; inset: 0 0 0 12.5%; background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--trace-0) 55%, transparent) 0 2px, transparent 2px 6px); }
+.fx-radio-choice .scale { position: relative; height: 16px; font-size: 11px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fx-radio-choice .scale span { position: absolute; top: 0; }
+.fx-radio-choice .scale .at { left: 12.5%; transform: translateX(-50%); }
+.fx-radio-choice .scale .end { right: 0; }
+
+/* the last row: what to pick, in the page's light green */
+.fx-radio-choice .pick .cell { background: color-mix(in srgb, var(--accent) 55%, var(--node-bg)); }
+.fx-radio-choice .pick .lab { color: var(--title); }
+
+/* phone: each row is a label over one two-part card, so both answers stay side by side */
+@container (width < 560px) {
+  .fx-radio-choice .cmp { gap: 14px; }
+  .fx-radio-choice .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 0; }
+  .fx-radio-choice .lab { grid-column: 1 / -1; border-top: 0; padding: 0 0 7px; }
+  .fx-radio-choice .head .lab { display: none; }
+  .fx-radio-choice .head { column-gap: 10px; }
+  .fx-radio-choice .cell,
+  .fx-radio-choice .head .cell,
+  .fx-radio-choice .row:last-child .cell { padding: 10px 11px 11px; border: 1.3px solid var(--ink-2); box-shadow: var(--pop); }
+  .fx-radio-choice .row:not(.head) .cell.rec { border-radius: 10px 0 0 10px; border-right: 0; }
+  .fx-radio-choice .row:not(.head) .cell.bt { border-radius: 0 10px 10px 0; border-left: 1px dashed var(--border-strong); }
+  .fx-radio-choice .head .cell { border-radius: 10px; }
+  .fx-radio-choice .cell p { font-size: 12.5px; }
+  .fx-radio-choice .name { font-size: 14px; }
+  .fx-radio-choice .head .path { font-size: 11.5px; }
+  .fx-radio-choice .tag { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .fx-radio-choice .v b { font-size: 14px; }
+  .fx-radio-choice .v { font-size: 12px; }
+}
+
+/* wide: chip and sentence side by side, so the chips form a column the eye can run down and across */
+@container (width >= 900px) {
+  .fx-radio-choice .row:not(.head):not(.pick) .cell:not(.rate) { display: grid; grid-template-columns: 168px minmax(0, 1fr); align-items: start; column-gap: 14px; }
+  .fx-radio-choice .row:not(.head):not(.pick) .cell:not(.rate) p { padding-top: 2px; }
+  .fx-radio-choice .cell .fx-chip { justify-self: start; }
+  .fx-radio-choice .rate { display: grid; grid-template-columns: 168px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; row-gap: 4px; align-items: center; }
+  .fx-radio-choice .rate .v { grid-row: 1 / 3; align-self: start; padding-top: 1px; }
+  .fx-radio-choice .rate .v b { display: block; }
+}
