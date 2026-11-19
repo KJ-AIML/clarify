@@ -129,3 +129,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## JetBrains Mono
+
+Every page embeds JetBrains Mono (Latin subset, regular and bold) so it looks the same on every
+machine. The two `.woff2` files in `src/runtime/fonts/` come from the `@fontsource/jetbrains-mono`
+package, version 5.3.0.
+
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono).
+Licensed under the SIL Open Font License, Version 1.1. The full licence is in
+`src/runtime/fonts/OFL.txt`; the font may be bundled and redistributed with software, but not
+sold by itself.

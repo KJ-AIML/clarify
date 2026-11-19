@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { parseDraft } from "../src/parser.js";
-import { compile, packRows } from "../src/render.js";
+import { compile, packRows, FONT_BYTES } from "../src/render.js";
 import { draftToMarkdown } from "../src/export/markdown.js";
 import { parseMermaidFlowchart, parseSequence } from "../src/diagram/mermaid.js";
 
@@ -13,7 +13,8 @@ test("every example compiles without warnings and within the size budget", () =>
   for (const f of examples) {
     const { html, warnings, stats } = compile(parseDraft(read(f)));
     assert.deepEqual(warnings, [], f);
-    const budget = /class="c-lesson"/.test(html) ? 450 * 1024 : 160 * 1024;
+    // The original budgets (450 KB with a lesson, 160 KB without) plus the embedded font, exactly.
+    const budget = (/class="c-lesson"/.test(html) ? 450 * 1024 : 160 * 1024) + FONT_BYTES;
     assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
     assert.ok(!/\{\{|undefined|NaN/.test(html.replace(/<script>[\s\S]*?<\/script>/g, "")), `${f}: template leak`);

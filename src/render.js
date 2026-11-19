@@ -27,6 +27,17 @@ const minifyJs = (js) => js
   .filter(l => l && !l.startsWith("//"))
   .join("\n");
 
+// JetBrains Mono, Latin subset, regular and bold (src/runtime/fonts, OFL-1.1), inlined so every page
+// looks the same on every machine without a network request. Other scripts (Thai, CJK) fall back per
+// glyph to the system's faces through the font stack in themes.css.
+const LATIN = "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
+const fontFace = (weight) => {
+  const woff2 = fs.readFileSync(new URL(`./runtime/fonts/jetbrains-mono-latin-${weight}-normal.woff2`, import.meta.url)).toString("base64");
+  return `@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:${weight};font-display:swap;src:url(data:font/woff2;base64,${woff2}) format("woff2");unicode-range:${LATIN}}`;
+};
+const FONT_CSS = fontFace(400) + fontFace(700);
+/** Bytes the embedded font adds to every page; the page-size budgets in the tests add exactly this. */
+export const FONT_BYTES = Buffer.byteLength(FONT_CSS);
 const CSS = minifyCss(asset("./runtime/themes.css") + asset("./runtime/page.css"));
 const SVG_CSS = minifyCss(asset("./runtime/svg.css"));
 const CLIENT_JS = minifyJs(asset("./runtime/client.js"));
@@ -102,6 +113,7 @@ export function compile(draft, opts = {}) {
 <meta name="generator" content="Clarify">
 <title>${escapeHtml(plainInline(meta.title))}</title>
 <script>(()=>{try{const t=JSON.parse(localStorage.getItem("clarify:theme")||"null");if(t)document.documentElement.dataset.theme=t}catch{}})()</script>
+<style id="c-font">${FONT_CSS}</style>
 <style>${CSS}</style>
 <style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}
 </head>

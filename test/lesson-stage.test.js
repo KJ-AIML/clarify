@@ -8,7 +8,7 @@ import { createPen } from "../src/lesson/pen.js";
 import { OBJECTS } from "../src/lesson/objects/index.js";
 import { renderStage, placeTints } from "../src/lesson/stage.js";
 import { parseDraft } from "../src/parser.js";
-import { compile } from "../src/render.js";
+import { compile, FONT_BYTES } from "../src/render.js";
 import { MINI } from "./fixtures/lesson-mini.js";
 
 const lesson = parseLesson(MINI).lesson;
@@ -76,7 +76,7 @@ test("a lesson of the five heaviest objects stays within the page budget", () =>
   ].join("\n");
   const { stats, warnings } = compile(parseDraft(draft));
   assert.deepEqual(warnings, []);
-  assert.ok(stats.bytes < 450 * 1024, `${heaviest.join(", ")}: ${stats.bytes} bytes`);
+  assert.ok(stats.bytes < 450 * 1024 + FONT_BYTES, `${heaviest.join(", ")}: ${stats.bytes} bytes`);
 });
 
 test("every kind is drawn", () => {
