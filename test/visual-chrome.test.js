@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chromeCandidates } from "./visual/cdp.mjs";
+import { chromeCandidates } from "../src/check/cdp.js";
 
 test("Windows Chrome, Edge and Playwright builds are candidates", () => {
   const env = { PROGRAMFILES: "C:\\Program Files", "PROGRAMFILES(X86)": "C:\\Program Files (x86)", LOCALAPPDATA: "C:\\Users\\u\\AppData\\Local" };
@@ -15,4 +15,11 @@ test("Windows Chrome, Edge and Playwright builds are candidates", () => {
 test("macOS candidates are unchanged", () => {
   const c = chromeCandidates({ platform: "darwin", env: {}, home: "/Users/u", list: () => [] });
   assert.ok(c.includes("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"));
+});
+
+test("macOS candidates include Edge", () => {
+  const c = chromeCandidates({ platform: "darwin", env: {}, home: "/Users/u", list: () => [] });
+  const edge = c.indexOf("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
+  assert.ok(edge > c.indexOf("/Applications/Chromium.app/Contents/MacOS/Chromium"), "after Chromium");
+  assert.ok(edge < c.indexOf("/usr/bin/google-chrome"), "before the Linux paths");
 });

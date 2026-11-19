@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // clarify/bin/clarify.mjs
-// CLI for the Clarify agent skill: render · serve · md · view.
+// CLI for the Clarify agent skill: render · serve · md · check · view.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -18,6 +18,7 @@ Usage:
   clarify render [draft.md | -] [--out page.html] [--no-open] [--quiet]
   clarify serve  <draft.md> [--port 4777] [--no-open]      live preview, reloads on save
   clarify md     [draft.md | -] [--out file.md]            GitHub Markdown (diagrams → mermaid)
+  clarify check  <page.html | draft.md> [--out dir]     browser check of every panel, with pictures
   clarify view   <page.html>
   clarify --version
 
@@ -105,6 +106,13 @@ async function cmdServe({ flags, positional }) {
   process.on("SIGTERM", stop);
 }
 
+async function cmdCheck({ flags, positional }) {
+  if (!positional[0]) throw new Error("Usage: clarify check <page.html | draft.md> [--out dir]");
+  const { checkPage, formatReport } = await import("../src/check/index.js");
+  const report = await checkPage({ input: positional[0], outDir: flags.out });
+  for (const line of formatReport(report)) console.log(line);
+}
+
 async function main() {
   const [command = "help", ...rest] = process.argv.slice(2);
   const args = parseArgs(rest);
@@ -117,6 +125,7 @@ async function main() {
     case "serve": return cmdServe(args);
     case "md":
     case "markdown": return cmdMarkdown(args);
+    case "check": return cmdCheck(args);
     case "view":
       if (!args.positional[0]) throw new Error("Specify a page to open.");
       openTarget(path.resolve(args.positional[0]));
