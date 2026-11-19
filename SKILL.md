@@ -1,15 +1,14 @@
 ---
 name: clarify
-argument-hint: "[render | serve | md] <draft.md>"
+argument-hint: "[render | serve | md | check] <draft.md>"
 description: >-
-  Renders interactive visual briefs: architecture maps with pan, zoom, brand icons,
-  boundaries, an inspector and narrated route tours, step-through lessons on a bench of
-  crafted 3D objects, plus decision cards, trade-off tables and a two-way reply loop. Use
-  proactively when structure beats prose: system architecture, request flows, sequences,
-  multi-option trade-offs, codebase tours, PR or design reviews, or when the user asks to
-  "diagram", "draw", "visualize", "clarify" or "compare". Make a lesson when the user asks
-  for a "lesson", to "teach", to "explain step by step", for a "course", or to "walk me
-  through how X works".
+  Use when structure or a picture would explain something better than prose, even if the user
+  did not ask for a page: how a device, a process or a system works; what is inside a thing; a
+  timeline, an incident or a post-mortem; a comparison, a trade-off or a choice; system
+  architecture, request flows and sequences; a codebase tour; a PR or design review; a decision
+  the user has to make. Use when the user asks to "diagram", "draw", "visualize", "clarify" or
+  "compare", or asks for a "lesson", to "teach", to "explain step by step", for a "course", or
+  to "walk me through how X works".
 ---
 
 # Clarify
@@ -22,78 +21,94 @@ You write a Markdown **draft**. The bundled CLI compiles it into one standalone 
 node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" render - <<'EOF'   # stdin → ~/.clarify/pages/*.html, opens it
 ...draft...
 EOF
+node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" render draft.md      # a draft file (--out page.html, --no-open)
+node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" check draft.md       # every panel in Chrome or Edge, with pictures
 node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" serve draft.md       # live preview, reloads on every save
 node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" md draft.md          # GitHub Markdown (diagrams → mermaid)
 ```
 
-In hosts without `CLAUDE_SKILL_DIR`, use the absolute path of this skill directory.
+In hosts without `CLAUDE_SKILL_DIR`, use the absolute path of this skill directory. Save a page with a free section as a draft file: `check` reads it, and `file=` paths start from its folder.
 
-## Context checklist (a picture without context is not an explanation)
+## Depth and time
 
-The reader has none of your context. Every page must answer these questions in this order:
+Pick the depth from the request. Before you start, tell the user which depth and a rough time, in one line ("A quick page, about 10 minutes.").
 
-1. **The answer first.** `Lead:` states the conclusion or recommendation in 1–3 sentences, not a description of the page.
-2. **Why it matters.** A panel that explains the problem or goal in plain language before any diagram.
-3. **How to read each diagram.** One bold "How to read this" sentence right above it: what boxes, arrows, dashed lines and zones mean here.
-4. **What each component does.** Give every important node a `{ desc: … }`, plus `files:` and one or two facts (`owner:`, `rps:`) when you know them. Hover cards show them instantly, and the inspector shows everything on click.
-5. **The main flow, narrated.** A `trace "Name" { … }` block with one sentence per hop, explaining what happens and why. The page plays it as a guided tour.
-6. **The takeaway.** A `callout ok Takeaway` directly after each diagram, saying what the reader should conclude from it.
-7. **Trade-offs with reasons.** Tables include a *why* or *trade-off* column, not just names and checkmarks.
-8. **What happens next.** An `ask` block when a decision is needed, otherwise next steps or risks.
+| | **Quick** (the default) | **Designed** |
+| --- | --- | --- |
+| When | most requests | the user asks for a course, an explainer or "make it good"; or the content clearly has parts no block can show |
+| Time | about 10 minutes | about 20 to 35 minutes |
+| The page | blocks, chosen and ordered by the steps below; at most one small free section, when it fits the time | as many free sections as the content needs, drawn in parallel by subagents when the host has them |
+| The check | only with a free section: one run, one fix round | every panel's pictures, up to three rounds |
 
-Explanations usually need 4–8 panels. Use 1–3 only for a quick answer to a narrow question.
+In Quick, the time is the hard rule: everything else gives way to it. A part that deserves a drawing that does not fit the time gets the nearest block; your reply names that part and offers the designed page.
 
-## Draft skeleton
+## Think before you draw
+
+A page is its content's parts, each shown in the form that fits it, in the order a reader needs. Its shape comes from the content, so two contents give two shapes. Six steps:
+
+1. **Gather.** Write the facts down first, as a short list: names, numbers, causes, times. Only these facts go on the page.
+2. **Split.** Cut the content into its parts. Each part becomes a panel, titled with what it is ("Inside the keyboard", "What happened, and when").
+3. **Name the kind.** Say in a few words what kind of thing each part is. Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; events in order; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu: a part may be a kind nobody listed.
+4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `lesson` for something moving between places over time, `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
+5. **Order as a story.** The answer first (`Lead:`). The whole before its parts. What to do next comes last. In between, follow the content's own order: the clock, the path, the steps.
+6. **Check.** Render and fix every `⚠`. On a page with a free section, run `check` and read its pictures, as the depth says.
+
+Steps 1 to 5 give a plan: one line per part, `part: kind → form`, in page order. Write it before the draft; the draft follows it.
+
+## What every page guarantees
+
+These are outcomes, met where they fit the content, not panels in a fixed order:
+- The answer comes first: `Lead:` states the conclusion in 1–3 sentences.
+- The page says why it matters to the reader.
+- Every drawing says how to read it and ends with a takeaway: a bold line before a block and a sentence or a `callout ok` after it; `.fx-how` and `.fx-take` in a free section.
+- Trade-offs carry reasons: a table of options has a *why* column.
+- The reader knows what happens next: an `ask` for a decision, or the next steps.
+
+## Two page shapes
+
+Two pages made with these steps. Their contents differ, so their shapes differ; yours follows its own parts.
+
+**A device explainer**, Designed: how a wireless mouse and keyboard work. Its free sections are in `examples/wireless-mouse.md`.
+
+| Panel | Kind | Form |
+| --- | --- | --- |
+| `Lead:` neither device draws on screen; each sends a few bytes by radio | the answer | lead |
+| Why this matters | why it matters | text |
+| In numbers | numbers that matter | free: big numbers |
+| The whole trip | moving between places over time | `lesson` |
+| Inside the keyboard · A position, not a letter | a hidden mechanism · a lookup | free: a grid you press · a table that flips |
+| Receiver or Bluetooth? | a choice between two | free: two columns, the same rows |
+| One key press, in milliseconds | a length of time | free: a ruler |
+| When something goes wrong | a failure and its fix | free: problems pinned on the path |
+
+**A bug post-mortem**, Quick:
+
+| Panel | Kind | Form |
+| --- | --- | --- |
+| `Lead:` what broke, the fix, are we safe now | the answer | lead |
+| What happened, and when | events in order | free: an incident timeline |
+| The failing path | a structure, and one path through it | `arch` + `trace` |
+| The cause | a failure and its cause | text |
+| Fixes compared | a choice | table with a *why* column |
+| What we decide | a decision for the reader | `ask` |
+
+The explainer goes from the whole to its parts; the post-mortem follows the clock.
+
+## Draft basics
 
 ````markdown
 ---
-title: Checkout Architecture
-subtitle: How an order travels from browser to database
-eyebrow: Architecture brief
-theme: auto        # auto | light | dark | tokyo-night | nord | catppuccin | paper | blueprint
-cols: 3
+title: How a Wireless Mouse Works   # also: subtitle, eyebrow (the label above the title), date
+theme: auto                         # auto | light | dark | tokyo-night | nord | catppuccin | paper | blueprint
+cols: 3                             # grid columns on a wide screen, 1–4
 ---
+Lead: The answer, in 1–3 sentences.
 
-Lead: Checkout is synchronous until the DB write and asynchronous after it. Kafka partitions are the scaling risk.
-
-## A Why This Matters {span=3}
-Plain-language problem statement: who is affected, what breaks, what we are deciding.
-
-## B System Map {span=3}
-**How to read this map:** boxes are services, arrows are calls (dashed = async), zones are network boundaries.
-
-```arch LR
-[Web:react] -> [API Gateway:cloudflare]: HTTPS
-group "VPC" {
-  [API Gateway] -> [Checkout:go]: POST /checkout
-  [Checkout] -> [(Orders DB:postgres)]: tx
-  [Checkout] --> [Events:kafka]: OrderPlaced
-}
-[Checkout] { desc: Owns pricing and order creation; files: svc/checkout/; status: warn }
-trace "Checkout" {
-  Web -> API Gateway: The browser posts the cart over HTTPS.
-  API Gateway -> Checkout: The gateway routes the order to checkout.
-  Checkout -> Orders DB: Order and payment intent commit in one transaction.
-}
-```
-
-```callout ok Takeaway
-A slow consumer delays emails, never checkouts.
-```
-
-## C Trade-offs {span=2}
-| Option | Latency | Why / trade-off | Status |
-| --- | ---: | --- | --- |
-| Postgres | 18ms | Strong consistency, team knows it | ok Chosen |
-| DynamoDB | 9ms | Faster, but vendor lock-in | warn Rejected |
-
-## D Decision
-```ask
-Which failover strategy?
-* Multi-region replicas | zero data loss
-- Snapshot restore | cheaper, slower
-```
+## C Inside the keyboard {span=2}
+Text and blocks for this part.
 ````
+
+`## A Title {span=N}`: the letter names the panel in replies; `span` is how many columns it takes. Panels in one row are drawn equally tall, so put parts of similar length side by side, or give a long one the whole row.
 
 ## Diagram syntax (arch / flow)
 
@@ -104,7 +119,31 @@ Which failover strategy?
 - `trace "Name" { A -> B: narration … }` is a narrated route. A line with only `[Node]: text` is a stop without movement. `trace "Name": A -> B -> C` is the short form, without narration.
 - Raw Mermaid also works: a ```` ```mermaid ```` fence, or `flowchart`/`sequenceDiagram` inside `arch`.
 
-Other blocks: ```` ```sequence ```` (Mermaid sequence syntax), ```` ```callout ok|warn|err|info Title ````, ```` ```ask ```` (`*` = suggested option, `-` = option, `[ ]`/`[x]` = multi-select), ```` ```kv ````, ```` ```tree ````, tables with `ok`/`warn`/`no` status cells, and ordinary Markdown. Full reference: `references/syntax.md`.
+Other blocks: ```` ```sequence ```` (Mermaid sequence syntax), ```` ```callout ok|warn|err|info Title ````, ```` ```ask ```` (`*` = suggested option, `-` = option, `[ ]`/`[x]` = multi-select), ```` ```kv ````, ```` ```tree ````, ```` ```free ```` (a section you draw, below), tables with `ok`/`warn`/`no` status cells, and ordinary Markdown. Full reference: `references/syntax.md`.
+
+## Free sections
+
+A **free section** is a part you draw by hand when no block shows it: an HTML fragment with SVG, its own `<style>` and, when it needs one, a `<script>` (`root` is the section). It sits in an ordinary panel and uses the page's tokens and kit, so it looks like the page. A page with one loads nothing from the network. Read `references/free-sections.md` before you draw one: its rules, the kit, the panel widths and every warning with its fix.
+
+````markdown
+## D A position, not a letter
+```free key-code
+<p class="fx-how"><b>How to read this:</b> …</p>
+<svg viewBox="0 0 320 120" role="img" aria-label="…">…</svg>
+<p class="fx-take">…</p>
+<style>.fx-key-code .row { … }</style>
+```
+
+## E Inside the mouse {span=3}
+```free mouse-parts file=sections/mouse-parts.html
+```
+````
+
+The name: lowercase letters, digits and dashes, once per page. `file=` reads the fragment from a file; the path starts from the draft's folder (from stdin, the working directory).
+
+**The check loop.** `check` opens the page at 1440px and 390px, light and dark, checks every panel and saves one picture per panel and view. It prints the pictures of the panels with a problem first, then one `⚠ panel D @390 light: …` line per problem.
+- Quick: run it once. Read the pictures of the section's panel and of every panel with a `⚠`. Fix in one round, then render again.
+- Designed: read every panel's pictures. Up to three rounds of fix and check.
 
 ## Lessons
 
@@ -162,7 +201,7 @@ Full syntax and every warning with its fix: the Lessons section of `references/s
 ## Rules
 
 1. Render with the CLI as the primary action. Do not paste the draft or the HTML into chat.
-2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render.
+2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render. On every page with a free section, also run `clarify check` and work through it as "Free sections" says.
 3. After `✓ <path>`, reply with a 2–3 line summary and the link `[file:///abs/path.html](file:///abs/path.html)`.
 4. When the user pastes a reply starting with `# Re: <title>`, apply its decisions and review comments. `(line N)` points into the draft.
 5. Keep each diagram to 25 nodes or fewer. Split larger systems into an overview map plus detail maps.
