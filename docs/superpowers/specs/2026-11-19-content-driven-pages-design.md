@@ -1,6 +1,6 @@
-# Content-driven pages: each part of the content in the form that fits it
+# Content-driven pages and lessons: each part of the content in the form that fits it
 
-Date: 2026-11-19 · Branch: none yet (`main` is at 0fc0f41) · Status: draft for the owner. Approach A is the owner's call. The rest was delegated and is open to veto. Two questions wait at the end.
+Date: 2026-11-19 · Branches: this document's home is `feat/content-driven-pages` (commit 2a51f6f); the throwaway `spike/lesson-content` adds two spike commits on top · Status: draft for the owner, grown after the owner reviewed the sample. Approach A and the object rule are the owner's calls. The rest was delegated and is open to veto. Three questions wait at the end.
 
 ## Intent and why
 
@@ -15,12 +15,15 @@ So the agent fills a template. A page about a wireless mouse gets the same panel
 
 The owner wants the opposite. The agent reads the content first. It works out what each part is. It serves each part in the form that fits it. There is no fixed list of shapes. The page must still look good, be complete and help the reader. The owner's words: "agent look at content … then analyse and serve the content as a section … no limit, because not every content is the same … some need this UI, style, workflow, type, diagram, so base on content, but still look good and comprehensive and help".
 
+The same problem sits inside lessons. The owner called the sample's lesson (panel C, "The whole trip") "the black sheep": its objects are "not related or linked with the content". The mouse and the keyboard were wooden crates (the `box` fallback). A router stood in for the USB receiver, and a filing cabinet for the keyboard layout. The owner compared it with designed-to-scale.vercel.app, where clarify's look comes from, which is "more object or UI related than us". There, every object is the thing in the story (laptops named Ana and Ben, a tickets database with a ticket icon). A data pill on an object changes as you step ("seat 7 · left: 1"). A card on the stage shows the code the step talks about ("BOOK A SEAT"). Ours had only name tags, and values lived in the counters above the stage. This is not a limit of the drawing style: the cutaway in panel D drew a real mouse with the same pen. The limit is the lesson block. A place must be one of 15 ready-made kinds, and anything else becomes a crate. It is the page's fixed-menu problem again, inside the lesson.
+
 ## Goals, non-goals, anti-goals
 
 Goals:
 - The skill makes the agent think about the content before it chooses any form.
 - A page may hold parts that no block type covers, drawn by hand: **free sections**. They look native to the page.
 - clarify can check every page (every panel, not only free sections) and tells the agent what to fix.
+- A lesson's stage shows the story's real things and its data.
 - Existing drafts keep rendering exactly as they do now.
 - A quick answer still takes about 10 minutes.
 
@@ -29,10 +32,11 @@ Non-goals:
 - A new look. The course look (`2026-11-19-course-ui-design.md`) stays.
 - A visual editor.
 - Any npm dependency.
-- 3D objects outside lessons. That is phase 2.
+- 3D objects outside lessons in Stage 1. They are the last item of Stage 2.
 
 Anti-goals (we must not build these by accident):
 - A page where each section looks like a different product.
+- A stand-in object for one of the story's main things.
 - A page that needs JavaScript or animation to be understood.
 - Quick pages that get slower.
 - A page that loads anything from the network.
@@ -45,7 +49,7 @@ Anti-goals (we must not build these by accident):
 - Works on Windows and macOS.
 - Every existing test stays green.
 - Local commits only. Never push without asking the owner.
-- The version becomes 0.3.0 (`package.json` is 0.2.0 today).
+- Stage 1 makes the version 0.3.0 (`package.json` is 0.2.0 today).
 
 ## Approaches
 
@@ -55,9 +59,11 @@ Anti-goals (we must not build these by accident):
 | B. Only add more ready-made blocks | Faster pages for the shapes we add | Rejected: a list of blocks always misses some content, and it is still a fixed menu |
 | C. The agent designs the whole page from zero every time | Total freedom | Rejected: the slowest, and pages stop looking like one product |
 
-## What the spike showed
+## What the spikes showed
 
-The spike lives in `.tmp/spike-free/` (git-ignored, throwaway). It is one page: "How a Wireless Mouse and Keyboard Work". The page was built from the content. Next to the existing lesson it has 8 free sections, each inside an ordinary panel:
+### The first spike: pages
+
+It lives in `.tmp/spike-free/` (git-ignored, throwaway). It is one page: "How a Wireless Mouse and Keyboard Work". The page was built from the content. Next to the existing lesson it has 8 free sections, each inside an ordinary panel:
 
 | Panel | Section | What it shows |
 | --- | --- | --- |
@@ -76,14 +82,26 @@ What we learned:
 - **The checks work.** `shot.mjs` has five checks: overflow, small text, text overlap, clipped text and page errors. Each one was proven to fire. Authors needed 2 to 5 check-and-fix rounds per section.
 - **The checks missed two things** a person saw at once. One was a half-empty panel (a short text panel beside a tall one). The other was a label line crossing other labels, on the mouse cutaway. A person saw it, and it was fixed by hand: the generator now runs each leader level from its label (`gen/mouse-cutaway.mjs` line 359). At phone width, the dashed "microwave oven" line still runs through the Bluetooth label (`spectrum-390-light.png`).
 - **Time.** Scaffold: 8 minutes. A flat section: about 5 to 10 minutes. The 3D cutaway: 25 minutes. With agents in parallel: about 35 minutes of wall-clock. So free sections do not fit a 10-minute run unless there are few of them.
-- **Size.** The page is 585 KB. Rendered without its sections it is 409 KB, and 262 KB of that is the lesson (409 KB with the `lesson` fence, 146.5 KB without it). The eight sections add 168 KB of their own files. The cutaway alone is 72 KB; the seven flat sections together are 96 KB.
+- **Size.** The page was 585 KB. Rendered without its sections it was 409 KB, and 262 KB of that was the lesson (409 KB with the `lesson` fence, 146.5 KB without it). The eight sections add 168 KB of their own files. The cutaway alone is 72 KB; the seven flat sections together are 96 KB.
 - **What authors built by hand more than once:** a wide drawing and a phone drawing swapped by container width (3 of 4 authors); a hatch for "up to / varies"; solid bars in a role colour; numbered callout dots with leader lines; legend swatches.
 - **Traps they hit:** SVG `<use>` copies ignore scoped selectors (`lesson.css` lines 7–10 explain why). `.fx-btn` sets `display`, which beats the `hidden` attribute. The kit had no blue chip.
 - **3D needs work.** The object tones (`--anatomy-*`) exist only inside `.c-lesson` (`lesson.css` lines 14–71). The cutaway rebuilt them by hand in its own CSS and imported the internal modules `src/lesson/pen.js` and `src/iso/kit.js`. There is no supported way to draw a pen object outside a lesson.
 
+### The second spike: lessons
+
+Branch `spike/lesson-content`: commit 9708f30 (pills and the card) and ab0f94e (four objects), plus scratch in `.tmp/spike-lesson/` (pictures in `shots/`, for example `s-full-1440-step09.png` and `b-solo-light.png`). It rebuilt the sample's lesson.
+
+- **Four objects drawn for this lesson**, in the existing object format (`{ top, draw(pen) }`, no imports): `mouse`, `receiver`, `keyboard`, and `layout` (an easel chart: a key turns into "a"). Drawing time per object: receiver about 4 minutes, keyboard 6, mouse 10, layout 12. With reading and preview rounds: about 15 to 25 minutes per author. Drawn size: mouse about 28 KB, receiver 15 KB, layout 22 KB, keyboard 75 KB (the built-in laptop is 71 KB).
+- **Two new step lines**, spike quality. `note: place = text [level] | …` puts a value pill above a place. It carries forward; an empty value removes it; at most 24 characters. `card: Title | line | …` puts a card on the stage (at most 6 lines); `card: none` hides it.
+- **Layout at run time.** The runtime places pills and the card so they never cover an object, a tag or a resting puck. At phone width, pills that do not fit move to a row under the stage with their place name, and the card becomes a block under the stage.
+- **Result.** All 13 states (12 steps and the quiz) checked at 1440, and two at 390: nothing covered, no page errors. The page grew from 585 KB to 647 KB.
+- **Tests.** `npm test`: 160 of 162 pass. The two failures are expected shape changes: `lesson-parse.test.js` line 39 (a step now has `notes` and `card`) and `lesson-stage.test.js` line 46 (the pinned object tops now include the new kinds).
+- **What the pen lacked** (both object authors and the cutaway author): a curved solid (the mouse shell is a hand-built mesh, `mouse.js` lines 56–125); solids along any axis or tilted (`lying` runs along y only); text on a face (the kit has `faceTextSvg`, `sideMatrix` and `topMatrix`, but the pen does not pass them on, `pen.js` lines 92–96); an accent fill and a thick dark line; helpers objects had to copy (a convex hull and the camera's sin/cos); a `dot` radius in screen units, not world units (`pen.js` lines 49–51).
+- **What the stage author says a real version should change:** lay pills and the card out at build time, so the first paint and the no-JavaScript view are right (today `.l-pills` stays empty until the runtime fills it); test against object outlines, not bounding boxes; do not show the same value twice (counter chip and pill); give card lines a form that keeps indentation and allows `|`; decide the phone layout on purpose.
+
 ## The design
 
-Three parts, plus one rule about depth and time.
+Four parts, plus one rule about depth and time. Parts 1 to 3 are about pages. Part 4 is about lessons.
 
 ### Part 1: the thinking step (`SKILL.md`, `references/`)
 
@@ -184,17 +202,7 @@ A short check that reads the section without a browser, the **static lint**, run
 
 Two more warnings follow from the design: a `free` name used twice on one page (`root` and the CSS scope would collide), and a `file=` that does not exist (the panel then shows the kit's dashed `.fx-missing` box).
 
-**The kit**, `src/runtime/fx.css`. It ships only on pages with a free section, the same way `lesson.css` ships only with a lesson (`render.js` lines 43–45, 117). It starts from the spike's `fx-base.css`. It adds only what two or more spike sections needed:
-- the wide/phone drawing swap by container width;
-- the hatch for "up to / varies";
-- solid bars in each role colour;
-- numbered callout dots with leader lines;
-- legend swatches;
-- a blue chip;
-- a see-through button for click areas over a drawing;
-- the `[hidden]` fix (`[hidden]` always wins inside `.fx`).
-
-Everything else stays in the section's own CSS.
+**The kit**, `src/runtime/fx.css`. It ships only on pages with a free section, the same way `lesson.css` ships only with a lesson (`render.js` lines 43–45, 117). It starts from the spike's `fx-base.css`. It adds only what two or more spike sections needed: the wide/phone drawing swap by container width; the hatch for "up to / varies"; solid bars in each role colour; numbered callout dots with leader lines; legend swatches; a blue chip; a see-through button for click areas over a drawing; the `[hidden]` fix (`[hidden]` always wins inside `.fx`). Everything else stays in the section's own CSS.
 
 **No network.** Pages with a free section also get a Content-Security-Policy meta tag. It goes right after `<meta charset>`, before the first inline script, and blocks every network request. The page must still work, so the policy allows inline scripts and styles, `data:` fonts (the embedded font), `data:` and `blob:` images (PNG export draws a `data:` SVG, `client.js` line 1055), and nothing else. Under `clarify serve`, `connect-src 'self'` stays allowed, because live reload opens an `EventSource` to `/__clarify/events` (`client.js` line 1087).
 
@@ -240,27 +248,81 @@ The file also carries the kit reference, the panel widths (from the spike README
 - **No browser.** With no Chrome or Edge found, it says so and runs only the static lint (which needs the draft).
 - **In the skill.** `SKILL.md` tells the agent: on every page that has a free section, run the check, read the pictures and fix. Which pictures and how many rounds follow the depth rule below.
 
+### Part 4: lessons tied to the content
+
+**The rule** (*owner's requirement*). Every place that is one of the story's main things is an object the reader recognises as that thing. A ready-made kind is used only when it is the thing. `box` stays a kind, for a real box, and is never a stand-in. Today `SKILL.md` (line 154) and `references/syntax.md` (line 139) both call `box` "anything else"; that changes.
+
+**One fallback** (*designer*). Today an unknown kind is drawn as a box, with a warning (`parse.js` line 148). That changes: an unknown kind and a custom object that was not loaded are both drawn as the same neutral placeholder, with a warning. The warning says to pick the kind that is the thing, or draw an object.
+
+**Things with no look of their own** (*designer's reading*). The rule is about things that have a real look: a mouse, a pump. A CLI or a parse step has no look, so it keeps the pictures that "Lessons about code" maps it to (`SKILL.md` line 158).
+
+`SKILL.md` and `references/syntax.md` teach the rule, and the thinking step gets a lesson version:
+1. List the story's things.
+2. For each one, choose the ready-made kind that is that thing, or draw an object.
+3. Decide what data sits on the stage: which value rides on which place (a pill), and which code or record the step talks about (the card).
+
+**Value pills, `note:`**, as spiked. `note: db = seat 7 · left: 1 | s1 = read n = 1` puts a pill above each place. It carries forward to later steps; an empty value removes it; at most 24 characters; `good`, `warn` and `bad` tint it like a counter chip. Guidance: a counter is for a total or a global state; a pill is for what sits at one place. Never show the same value in both.
+
+**The stage card, `card:`**, as spiked, plus a block form for code. The one-line form splits on `|`. In the block form, a `card: Title` line is followed by more-indented lines, kept exactly as written (indentation and `|` included). Either form holds at most 6 lines. `card: none` hides the card.
+
+```text
+  card: The key report | key code: 4 | state: down
+  card: Book a seat
+    n = SELECT left FROM seats
+    if n > 0:
+      UPDATE seats SET left = n - 1
+```
+
+**Layout.** Pills and the card are laid out at build time, where the geometry is known (`stage.js` places every object). The runtime adjusts only on resize and in the narrow layout. So the first paint and the no-JavaScript view are right. At phone width, as spiked: pills that do not fit go to a row under the stage with their place name, and the card becomes a block under the stage.
+
+**Four new ready-made kinds**, from the spike: `mouse`, `keyboard`, `receiver`, and the easel chart renamed `chart` (a general "look it up" object, not only a keyboard layout).
+
+**Custom objects, drawn for one lesson.** The author writes an object file in the same format as the built-in ones and names it in the draft: `places: pump = objects/pump.js "Pump"`.
+- The path is relative to the draft. From stdin, the working directory counts as the draft's folder (as for `file=`).
+- Loading the file runs its code, so it is opt-in. `clarify render` and `clarify serve` load object files only with the flag `--objects`, only from inside the draft's own folder, and print one line per file loaded. `clarify check` on a draft passes the flag on.
+- Without the flag, such a place is drawn as the neutral placeholder, with a warning.
+- `SKILL.md` tells the agent to pass `--objects` only for object files it wrote itself in this run.
+- Rejected: pre-rendering objects to SVG, so `render` never runs code. It needs a second command in every run. And the stage's projection scale differs per lesson (`stage.js` line 126 fits the bench), so the drawing would have to be rescaled.
+
+**`clarify object <file.js>`.** The preview both object authors had to build by hand (`.tmp/spike-lesson/preview-a.mjs`, `preview-b.mjs`). It draws the object alone and large, in light and dark, and at true size beside a laptop. It saves the PNGs and prints the object's `top`, its reach, and any contract warning: outside ±30 (`REACH`, `stage.js` line 52), or not standing on the pad (z 3). It also warns when the object's drawing is over 80 KB. It uses the browser driver from Part 3.
+
+**The pen grows only by what the spike authors needed:** a curved solid (a mesh or a dome); solids along any axis; text on a face; an accent fill; a thick dark line; and the helpers they had to copy (a convex hull, the camera's sin/cos). New file `references/objects.md` documents the object contract and the pen.
+
+**Depth.** A lesson stays Quick when every main thing in the story has a ready-made kind that is that thing. Then it keeps the earlier promise of about 10 minutes per lesson (`2026-11-18-lesson-block-design.md` line 30). A lesson becomes Designed when it needs a custom object. Custom objects are drawn in parallel by subagents when the host has them. In a Quick run, the agent never uses a stand-in: when an object does not exist, it says so and offers the designed page.
+
+**Budgets, tests, export.**
+- The lesson page budget grows by each custom object's own drawing size, not by a flat amount. Drawn sizes vary too much for one number: mouse about 28 KB, receiver 15 KB, keyboard 75 KB, the built-in laptop 71 KB. `clarify object` warns above 80 KB.
+- The two tests that failed in the spike are updated on purpose.
+- Markdown export: under each step, the pills as a short "On the stage:" line, and the card as a code block.
+
 ### Depth and time (*the owner must confirm this one*)
 
 Proposed: the agent picks a depth from the request. It tells the user which depth and a rough time. In Quick, the time is the hard rule: everything else gives way to it.
 
 | | **Quick** (the default) | **Designed** |
 | --- | --- | --- |
-| When | most requests | the user asks for a course, a lesson, an explainer or "make it good"; or the content clearly has parts no block fits |
+| When | most requests; a lesson whose main things all have a ready-made kind that is that thing | the user asks for a course, an explainer or "make it good"; the content clearly has parts no block fits; or a lesson needs a custom object |
 | Time | about 10 minutes | about 20 to 35 minutes |
-| The page | blocks chosen and ordered by the thinking step; at most one small free section, and only when it fits the time | as many free sections as the content needs, drawn in parallel by subagents when the host has them |
+| The page | blocks chosen and ordered by the thinking step; at most one small free section, and only when it fits the time | as many free sections and custom objects as the content needs, drawn in parallel by subagents when the host has them |
 | The check | only when the page has a free section; one run; read the pictures of that section's panel and of every panel with a warning; at most one fix round | read every panel's pictures; at most three rounds |
 
 When a free section would not fit a Quick run, the agent uses the nearest block instead. In its reply it says which part deserves a drawing, and that the user can ask for the designed page.
 
-## Phases
+## Build order
 
-- **Phase 1** is everything above.
-- **Phase 2** is a later, separate design: 3D objects outside lessons. That means page-level object tones, a supported drawing module (instead of importing `pen.js` and `iso/kit.js`), mouse and keyboard objects, and the cutaway as a real example.
+Two stages. Each has its own implementation plan, and each is usable when done.
 
-## Deliverables of phase 1
+| Stage | What | Why in this order |
+| --- | --- | --- |
+| **1. Pages** | Parts 1 to 3 | the thinking step, free sections and the browser check stand on their own |
+| **2. Lessons** | Part 4. Its last item is what used to be "phase 2": object tones at page level and a supported drawing module, so a free section can show an object (the cutaway becomes a real example) | it reuses Stage 1's browser driver, so the agent can look at what it draws |
 
-1. The rewritten `SKILL.md`: the method, the guarantees, two outlines, the depth rule, the check loop.
+The spike branch `spike/lesson-content` and both `.tmp/` folders are throwaway. They are not merged. The plans rebuild from them on purpose.
+
+## Deliverables
+
+Stage 1, pages:
+1. The rewritten `SKILL.md`: the method, the guarantees, two outlines, the depth rule, the check loop, the wider `description`.
 2. `references/forms.md` and `references/free-sections.md`.
 3. The `free` block in `render.js`, with its lint.
 4. `src/runtime/fx.css`, the kit.
@@ -269,10 +331,22 @@ When a free section would not fit a Quick run, the agent uses the nearest block 
 7. The Markdown export fallback.
 8. `clarify serve` watching `file=` files.
 9. Unit tests for each of 3 to 8.
-10. A new example, `examples/wireless-mouse.md`, ported from the spike's seven flat sections. Keeping the spike's work is a deliberate decision. The 3D cutaway waits for phase 2. The example keeps its sections inline, because `render.test.js` compiles examples without a source path, so a `file=` path would resolve against the working directory.
+10. A new example, `examples/wireless-mouse.md`, ported from the spike's seven flat sections, **without the lesson**: the black sheep must not ship as an example. The example keeps its sections inline, because `render.test.js` compiles examples without a source path, so a `file=` path would resolve against the working directory.
 11. The example size budget in `render.test.js` becomes the current budget (450 KB with a lesson, 164 KB without, plus `FONT_BYTES`) plus 40 KB per free section.
 12. The skill test from Part 1: three contents in Quick, before and after, plus one Designed run, with every time recorded.
 13. Version 0.3.0.
+
+Stage 2, lessons:
+1. The object rule and the lesson thinking step in `SKILL.md` and `references/syntax.md`; the neutral placeholder for an unknown kind, with its new warning.
+2. `note:` and `card:` (both card forms) in the parser, the step states and the renderer, laid out at build time, with the phone layout.
+3. The four new kinds: `mouse`, `keyboard`, `receiver`, `chart`.
+4. Custom objects: the path form in `places:`, `--objects` on `render`, `serve` and `check`, and the placeholder.
+5. `clarify object <file.js>`.
+6. The pen additions and `references/objects.md`.
+7. The Markdown export of pills and the card.
+8. Tests: the two spike failures updated on purpose; unit tests for 2 to 7; the lesson budget plus each custom object's drawing size.
+9. The lesson added to `examples/wireless-mouse.md`, with the real objects, pills and the card.
+10. Last: object tones at page level and a supported drawing module for free sections; the mouse cutaway as a real example.
 
 ## Decided by the owner / decided by the designer
 
@@ -281,26 +355,38 @@ When a free section would not fit a Quick run, the agent uses the nearest block 
 | Approach A: the thinking step, free sections and the guard, together | Owner |
 | The look stays (the course look) | Owner |
 | Never push without asking | Owner |
+| Every main thing in a lesson is an object the reader recognises; `box` is never a stand-in | Owner |
 | The block name `free` and its two forms (inline body, `file=`) | Designer |
 | A lint that warns, instead of rewriting selectors to scope them automatically | Designer |
 | The kit holds only what two or more sections needed | Designer |
 | The CSP meta tag on pages with a free section | Designer |
 | The guard as a separate command; `render` never starts a browser | Designer |
-| The depth rule (quick by default, designed when asked) | Designer, waiting for the owner |
+| The depth rule (quick by default, designed when asked; a lesson is designed only when it needs a custom object) | Designer, waiting for the owner |
 | The Markdown export fallback | Designer |
-| 3D objects outside lessons split into phase 2 | Designer |
 | Widen the `SKILL.md` description to any topic where structure or a picture beats prose (triggers only) | Designer |
 | The skill test's three contents, its Designed run and its pass line | Designer |
+| Value pills (`note:`), the stage card (`card:`, two forms), laid out at build time | Designer |
+| Four new kinds: `mouse`, `keyboard`, `receiver`, `chart` | Designer |
+| Custom object files behind `--objects`; pre-rendered SVG rejected | Designer |
+| `clarify object`; the pen grows only by what authors needed | Designer |
+| One fallback: an unknown kind and an unloaded custom object are the same neutral placeholder | Designer |
+| The rule covers things with a real look; a CLI or a parse step keeps the "Lessons about code" mappings | Designer |
+| The lesson budget grows by each custom object's size; `clarify object` warns above 80 KB; the lesson export | Designer |
+| Two stages, pages first; 3D objects outside lessons as the last item of Stage 2 | Designer, waiting for the owner |
 
 The owner delegated the "how". Each designer decision is open to veto.
 
 ## Notes for the plan
 
 Checked facts a plan needs:
-- `.tmp/` is git-ignored (`.gitignore` line 3). A fresh worktree will not contain `.tmp/spike-free/`. Copy what the example port needs first.
+- `.tmp/` is git-ignored (`.gitignore` line 3). A fresh worktree will contain neither `.tmp/spike-free/` nor `.tmp/spike-lesson/`. Copy what each stage needs first.
 - The spike keeps each section as three files: `sections/<name>.html`, `.css` and `.js`. A `free` fence holds one fragment, so porting a section means merging the three (the CSS into `<style>`, the JS into `<script>`).
-- Some spike ids lack the `fx-<name>-` prefix: `fx-km-key-wide` and `fx-km-key-narrow` in `key-matrix` (used by 48 `<use href="#…">`), and four `fxtr-*` ids in `time-ruler` (used by `fill="url(#…)"`). Rename them and every reference, because `render.test.js` demands zero warnings from every example (line 15). The cutaway's `mc-rim-clip` waits for phase 2.
+- Some spike ids lack the `fx-<name>-` prefix: `fx-km-key-wide` and `fx-km-key-narrow` in `key-matrix` (used by 48 `<use href="#…">`), and four `fxtr-*` ids in `time-ruler` (used by `fill="url(#…)"`). Rename them and every reference, because `render.test.js` demands zero warnings from every example (line 15). The cutaway's `mc-rim-clip` waits for Stage 2.
 - `cmdMarkdown` in `bin/clarify.mjs` (lines 86–88) never sets the draft's source path. `file=` sections need it for the export, so set it the way `cmdRender` does (line 73).
+- Spike commit 9708f30 adds `note:` and `card:` (`parse.js`, `state.js`, `lesson/render.js`, `lesson.css`, `lesson.js`), with no export, docs or tests. Commit ab0f94e adds the four objects in `src/lesson/objects/` and registers them in `kinds.js` and `objects/index.js`.
+- Two tests change on purpose: `lesson-parse.test.js` line 39 (the step shape) and `lesson-stage.test.js` line 46 (the pinned tops).
+- `places:` reads the kind as one word (`[\w-]+`, `parse.js` line 40), so `objects/pump.js` does not parse today.
+- `compile()` and `renderLesson()` are synchronous (`render.js` line 77, `lesson/render.js` line 43), but loading an object file needs `import()`, which is async. So the CLI loads the object files first and hands them to `compile`.
 
 ## Left to the builder
 
@@ -309,11 +395,15 @@ Checked facts a plan needs:
 - How the lint parses CSS (the spike's brace walker in `shot.mjs` is a start).
 - The thresholds of the two new checks (half-empty, low contrast).
 - What the checks skip inside clarify's own blocks. Some things are small or clipped on purpose: diagram labels are 9.5 to 10px (`svg.css` lines 11, 39, 85), the `Suggested` tag in `ask` is 9.5px (`page.css` line 178), and a diagram canvas clips by design. Either lift them or skip them; run the check on the six existing examples and record the choice.
-- The exact export text.
+- The exact export text, for free sections and for lesson pills and cards.
+- The exact layout algorithm for pills and the card.
+- The names of the pen's new functions.
+- The look of the neutral placeholder (for an unknown kind and for a custom object that was not loaded).
 - The file layout under `src/`.
 - How the driver is shared between the tests and the CLI.
 
 ## Open questions for the owner
 
-1. Is "quick by default, designed when asked" the right default?
+1. Is "quick by default, designed when asked" the right default? For lessons it means: about 10 minutes when every main thing has a ready-made kind (the earlier promise), and a designed page when a custom object is needed.
 2. Is it right to keep the wireless page as an example?
+3. Build pages first and lessons second (recommended, because lessons reuse the browser check), or lessons first?
