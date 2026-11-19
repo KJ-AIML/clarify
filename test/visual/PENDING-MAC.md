@@ -11,4 +11,4 @@ On the Mac, once, on the branch that has the course look:
 1. Run `npm test`. It must pass.
 2. Run `npm run visual:update`. It regenerates the 13 existing baselines and creates the 4 lesson ones. The 10 behaviour scenarios (`reply-loop`, `export`, `thai-labels` and the seven `lesson-*` checks without a picture) still run their checks: each must print `✓`. `thai-labels` checks that Thai labels fit their boxes in the Mac's Thai face (Thonburi), which Windows cannot check. A `✗` there is a regression to fix, not a baseline to accept.
 3. `git status` should show 13 modified and 4 new PNGs in `test/visual/baselines/`. Open each one and check it against the course look: warm paper, one monospace face, tinted panel keys, outlined tools, the green primary button with its hard shadow; the named presets (nord, blueprint, catppuccin, tokyo, paper) in their own colours; the lesson on step 1 in light and dark, on a phone, and on step 9 (the refused push).
-4. Commit the 17 PNGs, then delete this file.
+4. Commit the 19 PNGs (the 13 changed and the 6 new, `wireless-light` and `wireless-mobile` among them), then delete this file.

@@ -92,6 +92,83 @@ src/
 
 Tables: GFM, with `:--`/`--:`/`:-:` alignment. A cell starting with `ok`, `warn` or `no` becomes a status badge. Inline Markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, `[link](https://…)` (only http/https/mailto/relative links are kept).
 
+## Free sections
+
+A ```` ```free NAME ```` fence holds a part you draw by hand, because no block shows it: an HTML fragment with SVG, its own `<style>` and, when it needs one, a `<script>`. It is the one place raw HTML enters a page. It sits in an ordinary panel, so give the panel a `span` as for any block. It uses the page's colour tokens and a small shared kit, so it looks right in every theme, light and dark, wide and on a phone.
+
+This section is the syntax and the warnings. The rules for authors, the kit's classes, the panel widths, the `<use>` trap and a worked section are in [references/free-sections.md](free-sections.md); forms that fit a kind of content are in [references/forms.md](forms.md). Read the first before you draw one.
+
+````text
+## D A position, not a letter
+```free key-code
+<p class="fx-how"><b>How to read this:</b> …</p>
+<svg viewBox="0 0 320 120" role="img" aria-label="…">…</svg>
+<p class="fx-take">…</p>
+<style>.fx-key-code .row { … }</style>
+```
+
+## E Inside the mouse {span=3}
+```free mouse-parts file=sections/mouse-parts.html
+```
+````
+
+- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). Use each name once per page. Do not use a kit class name (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing`, …) or `hatch`: the section would take that class's style, with no warning.
+- **Inline:** the fence body is the fragment.
+- **`file=path`** (or `file="a path with spaces"`): the fragment comes from that file, and the fence body is ignored. The path starts from the draft's folder; for a draft read from stdin, from the working directory. `clarify serve` reloads when the file changes.
+
+What the renderer does:
+
+1. It wraps the fragment in `<div class="fx fx-NAME" data-fx="NAME">`. The name scopes the section: its CSS starts with `.fx-NAME`, its ids and keyframes with `fx-NAME-`.
+2. It moves every `<style>` into one style element in the head, after the kit, and every `<script>` to the end of the page. Each script runs once with `root` set to the section, inside its own function. An error is caught and logged as `fx NAME: …`, so one broken section stops nothing. A `<script src="…">` is dropped without a warning: write the script inline.
+3. It adds the kit (`src/runtime/fx.css` and the hatch patterns) to a page that has a free section, and to no other page.
+4. A page with a free section loads nothing from the network: a policy in its head allows inline styles and scripts, `data:` fonts, and `data:` and `blob:` images, and nothing else. A plain link (`<a href="https://…">`) is fine, because it loads nothing until the reader clicks it.
+5. `clarify md` and **Copy as Markdown** keep three things of a section: its "How to read this" line, its takeaway, and a note that the drawing is on the HTML page.
+
+### Free section warnings
+
+`clarify render` and `clarify check` read each section as text, the static lint, and print one line per problem: `⚠ panel C: line 56: free "key-code": …`. The line is the fence's line in the draft. A section with a lint warning is still drawn, so fix each one and render again. The fixes in full, with the check's own kinds, are in [references/free-sections.md](free-sections.md).
+
+| Warning | Fix |
+| --- | --- |
+| `free section needs a name of lowercase letters, digits and dashes ("…")` | Name it after `free`: `free key-code`. |
+| `free section "NAME" is used twice on this page; give each one its own name` | Rename one of them. |
+| `free section file not found: PATH` | Fix the path: it starts from the draft's folder. The panel shows a dashed box until then. |
+| `free "NAME": selectors must start with .fx-NAME: …` | Start every rule with `.fx-NAME`, inside `@media` and `@container` too. |
+| `free "NAME": @keyframes "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, in `animation` too. |
+| `free "NAME": id "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, and every `href="#…"` and `url(#…)` that points to it. |
+| `free "NAME": duplicate id "X" on the page` | Give the id another name. |
+| `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. |
+| `free "NAME": external URL "…"; a page loads nothing from the network` | Draw it inline, or embed it as `data:`. Only things that load warn: images, stylesheets, `url(…)`, `@import`, `<use href>`. A plain link (`<a href>`) does not. |
+| `free "NAME": N KB is over the 40 KB budget for a section` | Draw less, draw a repeated shape once and place it with `<use>`, or split the part into two sections. |
+
+## Checking a page
+
+`clarify check` opens a page in a real browser and looks at every panel. It works on any page, not only one with a free section. Unlike `render`, it starts a browser.
+
+```bash
+clarify check draft.md              # pictures in ~/.clarify/checks/<slug>/
+clarify check draft.md --out dir    # pictures in dir
+clarify check page.html             # a page that is already rendered
+```
+
+- **The input.** A draft (`.md`) is rendered first into `<dir>/page.html` without opening it, and its static lint comes along. A page (`.html`) is checked as it is, without the lint. A page rendered from stdin has no draft, so check the `.html` path that `render` printed.
+- **The views.** Four, each with reduced motion: 1440px light, 1440px dark, 390px light, 390px dark.
+- **The checks.** Per panel and view: `overflow` (a part sticks out of its panel), `small text` (under 10.5px on screen), `overlap` (two texts on top of each other), `clipped` (text cut off), `page error` (an exception or a `console.error`; `fx NAME: …` is a free section's script), `half-empty` (at 1440px, content fills under half of the panel's height) and `low contrast` (under 4.5:1, or 3:1 for large text). A page wider than the window is reported on the page, not on a panel.
+- **The pictures.** One per panel per view, named `<panel>-<width>-<scheme>.png` (`D-390-light.png`), with 8px of room round the card. A new run deletes only its own old pictures from the folder.
+- **The output, in this order.** (1) The picture paths of the panels that have a problem. (2) The lint lines, `⚠ panel D: line 56: free "…": …`. (3) One line per problem, `⚠ panel D @390 light: kind: …` (`⚠ page @…` when the problem belongs to the page), at most five per kind, panel and view, then `… and N more`. (4) A summary line. The command exits 0 whatever problems it finds, so read the lines.
+- **No browser.** It looks for Chrome or Edge (`CHROME_PATH` first). With none, it prints `⚠ no Chrome or Edge found (set CHROME_PATH): only the static lint ran` and the lint lines for a draft, or says nothing was checked for a page.
+
+The summary line is one of these two:
+
+```text
+✓ check: 8 panels × 4 views, no problems · pictures in C:\Users\you\.clarify\checks\how-a-wireless-mouse-and-keyboard-work
+⚠ check: 26 problems in 7 panels · pictures in C:\Users\you\.clarify\checks\check-broken
+```
+
+When a problem belongs to the page and not to a panel, the summary says so: `⚠ check: 1 problem on the page · …`, or `⚠ check: 5 problems in 2 panels and the page · …`.
+
+Look at the pictures of the panels with a `⚠`: they show what the checks cannot, such as a leader line that crosses a label. What each kind means and how to fix it: [references/free-sections.md](free-sections.md), "Every warning and its fix". How many rounds to run follows the depth in `SKILL.md`.
+
 ## Lessons
 
 A ```` ```lesson Title ```` fence draws a step-through lesson: a bench of crafted objects (the places) joined by rails, pucks that ride the rails, counter chips, a numbered timeline, and a guide with one article per step, then a quiz. A lesson always takes a full-width panel. Its title goes on the fence line (32 characters or fewer). Inside the fence come the header lines, then the steps, then the quiz.
