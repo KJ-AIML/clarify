@@ -121,7 +121,7 @@ export function compile(draft, opts = {}) {
 
   const slug = slugify(meta.title);
   const pageMeta = { title: meta.title, slug, source: ctx.source, live: Boolean(opts.live) };
-  const markdown = draftToMarkdown(draft);
+  const markdown = draftToMarkdown({ ...draft, source: ctx.source });
 
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(meta.lang || "en")}" data-theme="${escapeHtml(meta.theme)}">

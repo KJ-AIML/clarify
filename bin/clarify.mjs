@@ -85,8 +85,10 @@ async function cmdRender({ flags, positional }) {
 }
 
 async function cmdMarkdown({ flags, positional }) {
-  const { text } = await readInput(positional[0]);
-  const md = draftToMarkdown(parseDraft(text));
+  const { text, source } = await readInput(positional[0]);
+  const draft = parseDraft(text);
+  if (source) draft.source = source;
+  const md = draftToMarkdown(draft);
   if (flags.out) {
     fs.writeFileSync(path.resolve(flags.out), md, "utf8");
     console.log(`✓ ${path.resolve(flags.out)}`);

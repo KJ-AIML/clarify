@@ -7,6 +7,7 @@ import { tokenizeBlocks } from "../markdown.js";
 import { diagramFromFence } from "../diagram/index.js";
 import { graphToMermaid, sequenceToMermaid } from "../diagram/mermaid.js";
 import { lessonToMarkdown } from "../lesson/markdown.js";
+import { freeToMarkdown } from "../free/markdown.js";
 
 /** @typedef {import("../types").Draft} Draft */
 /** @typedef {import("../types").Block} Block */
@@ -22,13 +23,16 @@ export function draftToMarkdown(draft) {
   for (const panel of draft.panels) {
     out.push("", `## ${panel.id} · ${panel.title}`, "");
     const blocks = tokenizeBlocks(panel.body, panel.line - 1);
-    out.push(blocks.map(blockToMarkdown).filter(Boolean).join("\n\n"));
+    out.push(blocks.map(b => blockToMarkdown(b, draft.source || "")).filter(Boolean).join("\n\n"));
   }
   return `${out.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;
 }
 
-/** @param {Block} b */
-export function blockToMarkdown(b) {
+/**
+ * @param {Block} b
+ * @param {string} [source] absolute path of the draft; a `free` fence with `file=` reads relative to it
+ */
+export function blockToMarkdown(b, source = "") {
   switch (b.type) {
     case "paragraph": return b.text;
     case "heading": return `${"#".repeat(Math.max(3, b.level))} ${b.text}`;
@@ -42,7 +46,7 @@ export function blockToMarkdown(b) {
         return `${indent}${bullet} ${box}${it.text}`;
       }).join("\n");
     case "table": return tableToMarkdown(b.rows, b.align);
-    case "fence": return fenceToMarkdown(b);
+    case "fence": return fenceToMarkdown(b, source);
     default: return "";
   }
 }
@@ -60,8 +64,9 @@ function tableToMarkdown(rows, align) {
   return [line(rows[0].map(cell)), line(sep), ...rows.slice(1).map(r => line(r.map(badge)))].join("\n");
 }
 
-function fenceToMarkdown(b) {
+function fenceToMarkdown(b, source) {
   if (b.lang === "lesson") return lessonToMarkdown(b);
+  if (b.lang === "free") return freeToMarkdown(b, source);
   const diagram = diagramFromFence(b);
   if (diagram) {
     const text = diagram.kind === "sequence" ? sequenceToMermaid(diagram) : graphToMermaid(diagram);
