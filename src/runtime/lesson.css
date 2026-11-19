@@ -193,10 +193,13 @@
 .c-lesson .l-goals i { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1.5px solid var(--l-ink); border-radius: 4px; background: var(--l-card); }
 .c-lesson .l-goals .is-hit i { background: var(--l-green); box-shadow: inset 0 0 0 3px var(--l-card); }
 
-/* Without the runtime every article shows, as a list: hide the controls that need it and
-   show each quiz reason. The runtime marks the root .is-ready. */
-.c-lesson:not(.is-ready) :is(.l-tools, .l-top, .l-nav, .l-keys) { display: none; }
+/* Without the runtime every article shows, as a list: hide the controls that need it (the
+   timeline too, whose buttons would do nothing), show each quiz reason and mark the right
+   answer. The runtime marks the root .is-ready. */
+.c-lesson:not(.is-ready) :is(.l-tools, .l-top, .l-nav, .l-keys, .l-timeline) { display: none; }
 .c-lesson:not(.is-ready) .l-why { display: block; }
+.c-lesson:not(.is-ready) .l-option[data-correct="true"] { background: var(--l-done); }
+.c-lesson:not(.is-ready) .l-option[data-correct="true"]::after { content: "Right"; color: var(--l-good); font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .c-lesson.is-ready .l-step-k { display: none; }
 
 /* ── inside the stage SVG (bare selectors: they also reach the <use> copies) ── */

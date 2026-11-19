@@ -234,7 +234,7 @@ async function act(page, kind) {
     const count = () => page.eval(`document.querySelector(".c-lesson .l-count").textContent`);
     const pause = () => page.eval(`(() => { const root = document.querySelector(".c-lesson"); return { paused: root.classList.contains("is-paused"), pressed: root.querySelector('[data-l="pause"]').getAttribute("aria-pressed") }; })()`);
     // A keydown (synthetic KeyboardEvent) on whatever has focus; returns whether a handler called preventDefault.
-    const press = (key) => page.eval(`(() => { const e = new KeyboardEvent("keydown", { key: ${JSON.stringify(key)}, bubbles: true, cancelable: true }); (document.activeElement || document.body).dispatchEvent(e); return e.defaultPrevented; })()`);
+    const press = (key, code = "") => page.eval(`(() => { const e = new KeyboardEvent("keydown", { key: ${JSON.stringify(key)}, code: ${JSON.stringify(code)}, bubbles: true, cancelable: true }); (document.activeElement || document.body).dispatchEvent(e); return e.defaultPrevented; })()`);
     const travels = async (when) => {
       const a = await pucks();
       await page.sleep(300);
@@ -260,6 +260,12 @@ async function act(page, kind) {
     const played = await pause();
     if (played.paused || played.pressed !== "false") throw new Error(`Replay should play again (no is-paused, aria-pressed="false"): ${JSON.stringify(played)}`);
     await travels("step 4 after Replay");
+    // R replays by its place on the keyboard too: a Thai layout types พ there (code "KeyR").
+    await page.click('.c-lesson [data-l="pause"]');
+    if (!(await pause()).paused) throw new Error("Pause should pause the lesson before the Thai R check");
+    if (!await press("พ", "KeyR")) throw new Error('R on a Thai layout (key "พ", code "KeyR") should be handled (preventDefault)');
+    const thai = await pause();
+    if (thai.paused) throw new Error(`R on a Thai layout should replay, which un-pauses: ${JSON.stringify(thai)}`);
     // Start the panel C route tour and stop its autoplay on stop 2; keys pressed in the lesson must not move it.
     await page.click(".c-route-btn");
     await page.click('[data-tour="next"]');
@@ -398,7 +404,36 @@ async function act(page, kind) {
         live: root.querySelector(".l-live").textContent
       };
     })()`);
+    // Next onto the last step: Next reads "Done" and is disabled, with focus handed to Back first; Back brings it back.
+    const nav = () => page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const next = root.querySelector('[data-l="next"]');
+      return { count: root.querySelector(".l-count").textContent, text: next.textContent, disabled: next.disabled, backFocused: document.activeElement === root.querySelector('[data-l="back"]') };
+    })()`);
+    await page.click(".c-lesson .l-timeline li:nth-last-child(2) button");
+    await page.click('.c-lesson [data-l="next"]');
+    const end = await nav();
+    if (end.count !== "Step 11 / 11" || end.text !== "Done" || !end.disabled || !end.backFocused) throw new Error(`on the last step Next should read "Done", be disabled and have handed focus to Back: ${JSON.stringify(end)}`);
+    await page.click('.c-lesson [data-l="back"]');
+    const again = await nav();
+    if (again.count !== "Step 10 / 11" || again.text !== "Next: Quiz" || again.disabled) throw new Error(`Back from the last step should enable "Next: Quiz" again: ${JSON.stringify(again)}`);
     await page.click(".c-lesson .l-timeline li:last-child button");
+    // Without the runtime (no .is-ready, as with JavaScript off) the timeline is hidden and the right answer is marked.
+    const bare = await page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      root.classList.remove("is-ready");
+      const right = root.querySelector('.l-option[data-correct="true"]');
+      const wrong = root.querySelector('.l-option[data-correct="false"]');
+      const out = {
+        timeline: getComputedStyle(root.querySelector(".l-timeline")).display,
+        right: getComputedStyle(right, "::after").content,
+        wrong: getComputedStyle(wrong, "::after").content,
+        marked: getComputedStyle(right).backgroundColor !== getComputedStyle(wrong).backgroundColor
+      };
+      root.classList.add("is-ready");
+      return out;
+    })()`);
+    if (bare.timeline !== "none" || bare.right !== '"Right"' || bare.wrong !== "none" || !bare.marked) throw new Error(`without the runtime the timeline should be hidden and only the right answer marked "Right": ${JSON.stringify(bare)}`);
     await page.click('.c-lesson .l-option[data-correct="false"]');
     const wrong = await quiz();
     const first = wrong.options.find(o => o.correct === "false");

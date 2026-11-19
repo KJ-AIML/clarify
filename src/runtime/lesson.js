@@ -114,8 +114,12 @@
       const quiz = article.classList.contains("l-quiz");
       goals.forEach((li) => li.classList.toggle("is-hit", quiz || Number(li.dataset.at) <= i + 1));
 
-      if (i === 0 && document.activeElement === back) next.focus(); // a disabled button would drop focus
+      // Back is disabled on the first step and Next ("Done") on the last; a disabled button would
+      // drop focus, so focus moves to the other one first.
+      if (i === 0 && document.activeElement === back) next.focus();
+      if (i === total - 1 && i > 0 && document.activeElement === next) back.focus();
       back.disabled = i === 0;
+      next.disabled = i === total - 1;
       next.textContent = i < total - 1 ? "Next: " + model.shorts[i + 1] : "Done";
       count.textContent = "Step " + (i + 1) + " / " + total;
       chapter.textContent = article.querySelector(".l-step-k").textContent;
@@ -149,12 +153,13 @@
       }));
     });
 
-    // Keys act on this lesson only, while focus is inside it: ← → step, R replays, Space pauses
-    // (a focused button keeps Space for itself). Alt, Ctrl and Cmd shortcuts stay the browser's.
+    // Keys act on this lesson only, while focus is inside it: ← → step, R replays (matched by its
+    // key too, so a Thai layout's พ works), Space pauses (a focused button keeps Space for itself).
+    // Alt, Ctrl and Cmd shortcuts stay the browser's.
     root.addEventListener("keydown", (e) => {
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.target.closest("input, textarea, select")) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") show(now + (e.key === "ArrowRight" ? 1 : -1), true);
-      else if (e.key === "r" || e.key === "R") { if (!e.repeat) pucks.replay(); }
+      else if (e.key === "r" || e.key === "R" || e.code === "KeyR") { if (!e.repeat) pucks.replay(); }
       else if (e.key === " " && !e.target.closest("button")) { if (!e.repeat) pucks.pause(!pucks.paused); }
       else return;
       e.preventDefault();
