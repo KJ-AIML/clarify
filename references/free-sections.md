@@ -21,7 +21,7 @@ Read this file before you draw one. For forms that fit a kind of content, see `r
 ```
 ````
 
-- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). It scopes the section: its CSS starts with `.fx-key-code`, its ids and keyframes with `fx-key-code-`. Use each name once per page. Do not name a section `hatch`: the kit owns the ids `fx-hatch-ROLE`.
+- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). It scopes the section: its CSS starts with `.fx-key-code`, its ids and keyframes with `fx-key-code-`. Use each name once per page. Do not give a section the name of a kit class (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing` and the rest under "The kit"): the wrapper is `div.fx.fx-NAME`, so the section would take that class's style, with no warning. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`.
 - **Inline:** the fence body is the fragment.
 - **`file=path`** (or `file="a path with spaces"`): the fragment comes from that file, and the fence body is ignored. The path starts from the draft's folder. For a draft read from stdin, it starts from the working directory. Use it for a large or generated drawing. `clarify serve` reloads when the file changes.
 
@@ -29,7 +29,7 @@ Read this file before you draw one. For forms that fit a kind of content, see `r
 
 1. It wraps the fragment in `<div class="fx fx-NAME" data-fx="NAME">`.
 2. It moves every `<style>` into one style element in the page's head, after the kit.
-3. It moves every `<script>` to the end of the page, each in its own `<script>`, run once with `root` set to the section element. Each script runs inside its own function, so its `const`s stay local. An error is caught and logged as `fx NAME: …`, so one broken section stops nothing; `clarify check` reports it on that section's panel.
+3. It moves every `<script>` to the end of the page, each in its own `<script>`, run once with `root` set to the section element. A `<script src="…">` is dropped without a warning: write the script inline. Each script runs inside its own function, so its `const`s stay local. An error is caught and logged as `fx NAME: …`, so one broken section stops nothing; `clarify check` reports it on that section's panel.
 4. It adds the kit: `src/runtime/fx.css` and the hatch patterns. Only pages with a free section carry them.
 5. A page with a free section loads nothing from the network. A policy in its head allows inline styles and scripts, `data:` fonts, and `data:` and `blob:` images, and nothing else. A plain link (`<a href="https://…">`) is fine: it loads nothing until the reader clicks it.
 6. `clarify md` and the page's "Copy as Markdown" keep three things of a section: its "How to read this" line, its takeaway, and a note that the drawing is on the HTML page.
@@ -141,8 +141,8 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `free "NAME": id "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, and every `href="#…"` and `url(#…)` that points to it. |
 | `free "NAME": duplicate id "X" on the page` | Give the id another name. |
 | `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. |
-| `free "NAME": external URL "…"; a page loads nothing from the network` | Draw it inline, or embed it as `data:`. Only things that load warn: images, scripts, stylesheets, `url(…)`, `@import`, `<use href>`. A plain link (`<a href>`) does not. |
-| `free "NAME": N KB is over the 40 KB budget for a section` | Draw less, or build repeated shapes in a `<script>`. |
+| `free "NAME": external URL "…"; a page loads nothing from the network` | Draw it inline, or embed it as `data:`. Only things that load warn: images, stylesheets, `url(…)`, `@import`, `<use href>`. A plain link (`<a href>`) does not. A `<script src="…">` is dropped without a warning, so write a section's script inline. |
+| `free "NAME": N KB is over the 40 KB budget for a section` | Draw less, draw a repeated shape once and place it with `<use>` (see the `<use>` trap), or split the part into two sections. |
 
 `clarify check` adds what only a browser sees. Its lines look like `⚠ panel D @390 light: overflow: …`.
 
@@ -174,6 +174,8 @@ node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" check draft.md --out dir  # pictures 
 ✓ check: 8 panels × 4 views, no problems · pictures in C:\Users\you\.clarify\checks\how-a-wireless-mouse-and-keyboard-work
 ⚠ check: 26 problems in 7 panels · pictures in C:\Users\you\.clarify\checks\check-broken
 ```
+
+When a problem belongs to the page and not to a panel, the summary says so: `⚠ check: 1 problem on the page · …`, or `⚠ check: 5 problems in 2 panels and the page · …`.
 
 How far to go follows the depth (`SKILL.md`, "Depth and time"):
 

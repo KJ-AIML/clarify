@@ -4,7 +4,7 @@ These are examples, not a list to pick from. Each one is a form that fit one par
 
 Each free form names its **nearest block**: in a Quick page, use that block when the drawing does not fit the time, and say in your reply which part deserves the drawing.
 
-Every snippet below compiles without a warning and passes `clarify check` at 1440px and 390px. The free ones are cut down from `examples/wireless-mouse.md`, which has the full sections.
+Every snippet below compiles without a warning and passes `clarify check` at 1440px and 390px. Seven of the free ones are cut down from `examples/wireless-mouse.md`, which has the full sections; "a thing with parts" and the incident timeline are new.
 
 ## A number that matters: big number, small unit, one line of meaning
 
@@ -264,7 +264,7 @@ Fits when the reader has a symptom and needs to know where to look. Draw the pat
 
 ## Something moving between places over time: a `lesson`
 
-Fits when the reader must follow one thing through several places, step by step: a request through a network, a change through Git, a job through a queue. A block: the page draws the places as objects, and the reader steps with Back and Next. Every place is a kind that is that thing. Syntax: the Lessons section of `SKILL.md`.
+Fits when the reader must follow one thing through several places, step by step (a request through a network, a change through Git, a job through a queue), and every place is a ready-made kind that is that thing (a laptop, a server, a queue). A device with no kind of its own gets a free section. A block: the page draws the places as objects, and the reader steps with Back and Next. Syntax: the Lessons section of `SKILL.md`.
 
 ````markdown
 ## J One page load {span=3}
@@ -308,6 +308,10 @@ trace "One photo" {
   Upload API -> Photos: The photo is saved.
   Upload API -> Resize jobs: A job asks for the small copies.
 }
+```
+
+```callout ok Takeaway
+The app waits only for the save. Making the small copies happens later, from the queue.
 ```
 
 ## L Where the code lives {span=3}

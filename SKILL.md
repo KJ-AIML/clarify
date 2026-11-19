@@ -35,7 +35,7 @@ Pick the depth from the request. Before you start, tell the user which depth and
 
 | | **Quick** (the default) | **Designed** |
 | --- | --- | --- |
-| When | most requests | the user asks for a course, an explainer or "make it good"; or the content clearly has parts no block can show |
+| When | most requests, including "explain how X works" | the user asks for it in words: a course, a designed page or a designed explainer, "make it good", "take your time" |
 | Time | about 10 minutes | about 20 to 35 minutes |
 | The page | blocks, chosen and ordered by the steps below; at most one small free section, when it fits the time | as many free sections as the content needs, drawn in parallel by subagents when the host has them |
 | The check | only with a free section: one run, one fix round | every panel's pictures, up to three rounds |
@@ -49,7 +49,7 @@ A page is its content's parts, each shown in the form that fits it, in the order
 1. **Gather.** Write the facts down first, as a short list: names, numbers, causes, times. Only these facts go on the page.
 2. **Split.** Cut the content into its parts. Each part becomes a panel, titled with what it is ("Inside the keyboard", "What happened, and when").
 3. **Name the kind.** Say in a few words what kind of thing each part is. Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; events in order; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu: a part may be a kind nobody listed.
-4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `lesson` for something moving between places over time, `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
+4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `lesson` for something moving between places over time, when every main thing in the story is one of the ready-made place kinds (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
 5. **Order as a story.** The answer first (`Lead:`). The whole before its parts. What to do next comes last. In between, follow the content's own order: the clock, the path, the steps.
 6. **Check.** Render and fix every `⚠`. On a page with a free section, run `check` and read its pictures, as the depth says.
 
@@ -68,20 +68,20 @@ These are outcomes, met where they fit the content, not panels in a fixed order:
 
 Two pages made with these steps. Their contents differ, so their shapes differ; yours follows its own parts.
 
-**A device explainer**, Designed: how a wireless mouse and keyboard work. Its free sections are in `examples/wireless-mouse.md`.
+**A device explainer**: how a wireless mouse and keyboard work. This is `examples/wireless-mouse.md`, panel for panel.
 
 | Panel | Kind | Form |
 | --- | --- | --- |
 | `Lead:` neither device draws on screen; each sends a few bytes by radio | the answer | lead |
 | Why this matters | why it matters | text |
 | In numbers | numbers that matter | free: big numbers |
-| The whole trip | moving between places over time | `lesson` |
 | Inside the keyboard · A position, not a letter | a hidden mechanism · a lookup | free: a grid you press · a table that flips |
+| The crowded air | a shared space | free: a map of the band |
 | Receiver or Bluetooth? | a choice between two | free: two columns, the same rows |
 | One key press, in milliseconds | a length of time | free: a ruler |
 | When something goes wrong | a failure and its fix | free: problems pinned on the path |
 
-**A bug post-mortem**, Quick:
+**A bug post-mortem**:
 
 | Panel | Kind | Form |
 | --- | --- | --- |

@@ -301,10 +301,12 @@ Proposed: the agent picks a depth from the request. It tells the user which dept
 
 | | **Quick** (the default) | **Designed** |
 | --- | --- | --- |
-| When | most requests; a lesson whose main things all have a ready-made kind that is that thing | the user asks for a course, an explainer or "make it good"; the content clearly has parts no block fits; or a lesson needs a custom object |
+| When | most requests, including "explain how X works"; also a lesson whose main things all have a ready-made kind that is that thing | the user asks for it in words: a course, a designed page or a designed explainer, "make it good", "take your time"; also a lesson that needs a custom object (Stage 2) |
 | Time | about 10 minutes | about 20 to 35 minutes |
 | The page | blocks chosen and ordered by the thinking step; at most one small free section, and only when it fits the time | as many free sections and custom objects as the content needs, drawn in parallel by subagents when the host has them |
 | The check | only when the page has a free section; one run; read the pictures of that section's panel and of every panel with a warning; at most one fix round | read every panel's pictures; at most three rounds |
+
+Amended 2026-11-20 during the build: the depth follows the user's words only, to match the owner's answer 'quick by default, designed when asked'.
 
 When a free section would not fit a Quick run, the agent uses the nearest block instead. In its reply it says which part deserves a drawing, and that the user can ask for the designed page.
 
