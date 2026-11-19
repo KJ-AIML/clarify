@@ -27,7 +27,7 @@ node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" serve draft.md       # live preview, 
 node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" md draft.md          # GitHub Markdown (diagrams → mermaid)
 ```
 
-In hosts without `CLAUDE_SKILL_DIR`, use the absolute path of this skill directory. Save a page with a free section as a draft file: `check` reads it, and `file=` paths start from its folder.
+In hosts without `CLAUDE_SKILL_DIR`, use the absolute path of this skill directory. Save a page with a free section as a draft file: `check` reads it, and `file=` paths start from its folder. A page rendered from stdin has no draft file, so run `check` on the `.html` path that `render` printed: a draft file gets the lint and the browser check, a rendered page is checked as it is, without the lint.
 
 ## Depth and time
 
@@ -38,7 +38,7 @@ Pick the depth from the request. Before you start, tell the user which depth and
 | When | most requests, including "explain how X works" | the user asks for it in words: a course, a designed page or a designed explainer, "make it good", "take your time" |
 | Time | about 10 minutes | about 20 to 35 minutes |
 | The page | blocks, chosen and ordered by the steps below; at most one small free section, when it fits the time | as many free sections as the content needs, drawn in parallel by subagents when the host has them |
-| The check | only with a free section: one run, one fix round | every panel's pictures, up to three rounds |
+| The check | on every page: one run, one fix round | every panel's pictures, up to three rounds |
 
 In Quick, the time is the hard rule: everything else gives way to it. A part that deserves a drawing that does not fit the time gets the nearest block; your reply names that part and offers the designed page.
 
@@ -51,7 +51,7 @@ A page is its content's parts, each shown in the form that fits it, in the order
 3. **Name the kind.** Say in a few words what kind of thing each part is. Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; events in order; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu: a part may be a kind nobody listed.
 4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `lesson` for something moving between places over time, when every main thing in the story is one of the ready-made place kinds (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
 5. **Order as a story.** The answer first (`Lead:`). The whole before its parts. What to do next comes last. In between, follow the content's own order: the clock, the path, the steps.
-6. **Check.** Render and fix every `⚠`. On a page with a free section, run `check` and read its pictures, as the depth says.
+6. **Check.** Render and fix every `⚠`. Then run `check` once on every page and read its pictures, as the depth says ("The check loop", under Free sections).
 
 Steps 1 to 5 give a plan: one line per part, `part: kind → form`, in page order. Write it before the draft; the draft follows it.
 
@@ -141,8 +141,8 @@ A **free section** is a part you draw by hand when no block shows it: an HTML fr
 
 The name: lowercase letters, digits and dashes, once per page. `file=` reads the fragment from a file; the path starts from the draft's folder (from stdin, the working directory).
 
-**The check loop.** `check` opens the page at 1440px and 390px, light and dark, checks every panel and saves one picture per panel and view. It prints the pictures of the panels with a problem first, then one `⚠ panel D @390 light: …` line per problem.
-- Quick: run it once. Read the pictures of the section's panel and of every panel with a `⚠`. Fix in one round, then render again.
+**The check loop** (on every page, not only one with a free section). `check` opens the page at 1440px and 390px, light and dark, checks every panel and saves one picture per panel and view. A check takes about 15 seconds. It prints the pictures of the panels with a problem first, then one `⚠ panel D @390 light: …` line per problem.
+- Quick: run it once on every page. Read the pictures of every panel with a `⚠`, and of the free section's panel when the page has one. Fix in one round, then render again.
 - Designed: read every panel's pictures. Up to three rounds of fix and check.
 
 ## Lessons
@@ -201,7 +201,7 @@ Full syntax and every warning with its fix: the Lessons section of `references/s
 ## Rules
 
 1. Render with the CLI as the primary action. Do not paste the draft or the HTML into chat.
-2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render. On every page with a free section, also run `clarify check` and work through it as "Free sections" says.
+2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render. Then run `clarify check` on every page and work through it as "Free sections" says.
 3. After `✓ <path>`, reply with a 2–3 line summary and the link `[file:///abs/path.html](file:///abs/path.html)`.
 4. When the user pastes a reply starting with `# Re: <title>`, apply its decisions and review comments. `(line N)` points into the draft.
 5. Keep each diagram to 25 nodes or fewer. Split larger systems into an overview map plus detail maps.

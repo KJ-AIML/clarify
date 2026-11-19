@@ -114,7 +114,7 @@ Remove the "Context checklist … in this order" and the single "Draft skeleton"
 | 3. Name the kind | For each part, say what kind of thing it is. |
 | 4. Choose the form | Use a block when one truly fits. Otherwise draw a free section. |
 | 5. Order as a story | The answer first. The whole before the parts. What to do next comes last. |
-| 6. Check | Render and fix every warning. When the page has a free section, run `clarify check`, look at the pictures and fix, as the depth rule says. |
+| 6. Check | Render and fix every warning. Run `clarify check` once, look at the pictures and fix, as the depth rule says. |
 
 Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu. The skill says plainly: when the content needs a form nobody listed, draw it.
 
@@ -246,7 +246,7 @@ The file also carries the kit reference, the panel widths (from the spike README
 - **Pictures.** One PNG per panel per view, under `~/.clarify/checks/<slug>/` (`<slug>` from `slugify(title)`), so the agent can look at them.
 - **Output.** First the picture paths of the panels with a problem, so an agent can read only those. Then lines like `⚠ panel D @390 light: …`, in the same style as render warnings.
 - **No browser.** With no Chrome or Edge found, it says so and runs only the static lint (which needs the draft).
-- **In the skill.** `SKILL.md` tells the agent: on every page that has a free section, run the check, read the pictures and fix. Which pictures and how many rounds follow the depth rule below.
+- **In the skill.** `SKILL.md` tells the agent: on every page, run the check, read the pictures and fix. Which pictures and how many rounds follow the depth rule below.
 
 ### Part 4: lessons tied to the content
 
@@ -304,9 +304,11 @@ Proposed: the agent picks a depth from the request. It tells the user which dept
 | When | most requests, including "explain how X works"; also a lesson whose main things all have a ready-made kind that is that thing | the user asks for it in words: a course, a designed page or a designed explainer, "make it good", "take your time"; also a lesson that needs a custom object (Stage 2) |
 | Time | about 10 minutes | about 20 to 35 minutes |
 | The page | blocks chosen and ordered by the thinking step; at most one small free section, and only when it fits the time | as many free sections and custom objects as the content needs, drawn in parallel by subagents when the host has them |
-| The check | only when the page has a free section; one run; read the pictures of that section's panel and of every panel with a warning; at most one fix round | read every panel's pictures; at most three rounds |
+| The check | one run on every page; read the pictures of every panel with a warning, and of the free section's panel when there is one; at most one fix round | read every panel's pictures; at most three rounds |
 
 Amended 2026-11-20 during the build: the depth follows the user's words only, to match the owner's answer 'quick by default, designed when asked'.
+
+Amended 2026-11-20 after the skill test: a Quick page with no free section was never checked and shipped a half-empty panel, while in the two runs that did check, it found real faults in ordinary block panels.
 
 When a free section would not fit a Quick run, the agent uses the nearest block instead. In its reply it says which part deserves a drawing, and that the user can ask for the designed page.
 

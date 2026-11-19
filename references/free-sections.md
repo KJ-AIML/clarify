@@ -156,8 +156,6 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `half-empty` | at 1440, the panel's content fills under half of its height; it suggests a `span` | that `span`, or a neighbour panel of similar length |
 | `low contrast` | text too faint on its background (it needs 4.5:1, or 3:1 for large text) | `--text` or `--title` for the text, or a lighter fill under it |
 
-One known line is not yours: `figure.c-diagram.is-hero sticks out 3px` at 390 comes from a full-width `arch` map, clarify's own. Leave it.
-
 ## The check loop
 
 ```bash
@@ -179,7 +177,7 @@ When a problem belongs to the page and not to a panel, the summary says so: `⚠
 
 How far to go follows the depth (`SKILL.md`, "Depth and time"):
 
-- **Quick:** one run. Read the pictures of the section's panel and of every panel with a `⚠`. Fix what you see in one round, then render again.
+- **Quick:** one run, on every page. Read the pictures of every panel with a `⚠`, and of the free section's panel when the page has one. Fix what you see in one round, then render again.
 - **Designed:** read every panel's pictures. Up to three rounds of fix and check.
 
 Look at the pictures for what the checks cannot see: a leader line that crosses a label, a drawing that says something the facts do not, two sections that look like different products.
