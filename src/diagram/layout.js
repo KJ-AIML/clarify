@@ -34,7 +34,7 @@ export const LAYOUT = {
   tile: 30,
   tileGap: 10,
   lineH: 17,
-  titleSize: 13.5,
+  titleSize: 13,
   captionSize: 10,
   captionTracking: 0.6,
   edgeLabelSize: 10.5,

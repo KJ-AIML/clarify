@@ -53,23 +53,14 @@
   --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 0 rgba(80, 60, 35, 0.06), 0 10px 22px -16px rgba(80, 60, 35, 0.35);
   --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(60, 40, 20, 0.55);
   --brand-filter: none;
-  --grain: 0.05;
+  --sheen: rgba(255, 255, 255, 0.4);  /* the soft light at the top of the page */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 0 0.18 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");  /* the reference's 5% paper grain */
 }
 
-/* Derived in every preset: the hard shadows and the nine panel-key tints (the reference's folder
-   colours mixed into the preset's own surface, so they work light and dark). */
+/* Derived in every preset: the hard shadows. */
 :root {
   --pop: 1.5px 2.5px 0 var(--drop);
   --tool-shadow: 0 1.5px 0 var(--drop-2);
-  --key-0: color-mix(in srgb, #d5b07a 36%, var(--surface));
-  --key-1: color-mix(in srgb, #7c63d0 26%, var(--surface));
-  --key-2: color-mix(in srgb, #3fa456 28%, var(--surface));
-  --key-3: color-mix(in srgb, #e8834d 32%, var(--surface));
-  --key-4: color-mix(in srgb, #2f86ce 26%, var(--surface));
-  --key-5: color-mix(in srgb, #2a9d8f 28%, var(--surface));
-  --key-6: color-mix(in srgb, #d9577a 26%, var(--surface));
-  --key-7: color-mix(in srgb, #64728a 26%, var(--surface));
-  --key-8: color-mix(in srgb, #8c9a3c 30%, var(--surface));
 }
 
 :root[data-theme="dark"] {
@@ -115,6 +106,7 @@
   --drop-2: #0b0907;
   --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
   --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(0, 0, 0, 0.8);
+  --sheen: rgba(255, 240, 220, 0.03);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -161,6 +153,7 @@
     --drop-2: #0b0907;
     --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
     --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(0, 0, 0, 0.8);
+    --sheen: rgba(255, 240, 220, 0.03);
   }
 }
 
@@ -363,13 +356,16 @@
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
-/* The named presets keep their own colours; these fill in the tokens the course look added. */
-:root:is([data-theme="tokyo-night"], [data-theme="nord"], [data-theme="catppuccin"], [data-theme="paper"], [data-theme="blueprint"]) {
+/* The named presets keep their own colours; these fill in the tokens the course look added
+   (every preset other than auto, light and dark). */
+:root:not([data-theme="auto"], [data-theme="light"], [data-theme="dark"]) {
   --ink-2: color-mix(in srgb, var(--ink) 84%, var(--surface));
   --line-ctl: var(--border-strong);
   --accent: color-mix(in srgb, var(--ok) 20%, var(--surface));
   --accent-2: color-mix(in srgb, var(--ok) 34%, var(--surface));
   --drop: rgba(0, 0, 0, 0.6);
   --drop-2: rgba(0, 0, 0, 0.45);
+  --sheen: transparent;
+  --paper-grain: none;
 }
 :root[data-theme="paper"] { --drop: #22201c; --drop-2: #3a362f; }

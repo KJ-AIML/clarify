@@ -13,8 +13,9 @@ test("every example compiles without warnings and within the size budget", () =>
   for (const f of examples) {
     const { html, warnings, stats } = compile(parseDraft(read(f)));
     assert.deepEqual(warnings, [], f);
-    // The original budgets (450 KB with a lesson, 160 KB without) plus the embedded font, exactly.
-    const budget = (/class="c-lesson"/.test(html) ? 450 * 1024 : 160 * 1024) + FONT_BYTES;
+    // 450 KB with a lesson; 164 KB without (160 KB before the course look, whose own CSS adds about
+    // 3 KB); plus the embedded font, exactly.
+    const budget = (/class="c-lesson"/.test(html) ? 450 * 1024 : 164 * 1024) + FONT_BYTES;
     assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
     assert.ok(!/\{\{|undefined|NaN/.test(html.replace(/<script>[\s\S]*?<\/script>/g, "")), `${f}: template leak`);

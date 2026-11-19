@@ -1,25 +1,26 @@
-/* clarify/src/runtime/svg.css — diagram styling. Embedded in the page and copied into
-   exported SVG/PNG files together with the resolved theme tokens. */
+/* clarify/src/runtime/svg.css — diagram styling in the course look: light cards with an ink outline
+   and a hard drop, warm edges, small-caps labels. Embedded in the page and copied into exported
+   SVG/PNG files together with the resolved theme tokens. */
 
 .c-svg { font-family: var(--font); display: block; overflow: visible; user-select: none; -webkit-user-select: none; }
 .c-svg-bg { fill: var(--canvas); }
 .c-svg text { font-family: var(--font); }
 
-.c-group rect { fill: var(--group-bg); stroke: var(--group-border); stroke-width: 1.2; }
+.c-group rect { fill: var(--group-bg); stroke: var(--group-border); stroke-width: 1.3; }
 .c-group:not(.depth-0) rect { stroke-dasharray: 5 4; }
-.c-group-label { fill: var(--group-text); font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; }
+.c-group-label { fill: var(--group-text); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
 
 .c-edge-halo { fill: none; stroke: var(--canvas); stroke-width: 6; stroke-linecap: round; }
-.c-edge-line { fill: none; stroke: var(--edge); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, opacity 0.15s; }
+.c-edge-line { fill: none; stroke: var(--edge); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, opacity 0.15s; }
 .c-edge.is-dashed .c-edge-line { stroke-dasharray: 6 5; }
 .c-edge.is-thick .c-edge-line { stroke-width: 3; }
 .c-edge.is-back .c-edge-line { stroke-dasharray: 2 4; }
 .c-edge-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
 .c-arrow-head { fill: var(--edge); }
 .c-arrow-head.is-hl { fill: var(--edge-hl); }
-.c-arrow-open { fill: none; stroke: var(--edge); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.c-arrow-open { fill: none; stroke: var(--edge); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-.c-elabel rect { fill: var(--label-bg); stroke: var(--border); stroke-width: 1; }
+.c-elabel rect { fill: var(--label-bg); stroke: var(--line-ctl); stroke-width: 1; }
 .c-elabel text { fill: var(--label-text); font-family: var(--mono); font-size: 10.5px; }
 .c-elabel { cursor: pointer; transition: opacity 0.15s; }
 
@@ -31,11 +32,12 @@
 @keyframes c-dash { to { stroke-dashoffset: -24; } }
 
 .c-node { cursor: pointer; outline: none; transition: opacity 0.15s; }
-.c-node-bg { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1.2; filter: var(--node-shadow); transition: stroke 0.15s, stroke-width 0.15s; }
+.c-node-bg { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1.4; filter: var(--node-shadow); transition: stroke 0.15s, stroke-width 0.15s; }
 .c-node-rim { fill: none; stroke: var(--node-border); stroke-width: 1.3; }
-.c-node-title { fill: var(--node-text); font-size: 13.5px; font-weight: 650; letter-spacing: -0.006em; }
+/* 13px matches LAYOUT.titleSize in src/diagram/layout.js, which sizes the boxes. */
+.c-node-title { fill: var(--node-text); font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
 .c-node-caption { fill: var(--node-caption); font-family: var(--mono); font-size: 10px; letter-spacing: 0.6px; }
-.c-node-tile { fill: var(--tile-ink); }
+.c-node-tile { fill: var(--tile-ink); stroke: var(--border); stroke-width: 1; }
 .c-node-tile.is-mono { fill: var(--primary-soft); }
 .c-node-mono { fill: var(--primary); font-family: var(--mono); font-size: 11px; font-weight: 700; }
 .c-node-meta { fill: var(--muted); opacity: 0.55; }

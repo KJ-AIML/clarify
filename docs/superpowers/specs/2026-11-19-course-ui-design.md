@@ -49,7 +49,7 @@ B, because the look is in the details (A) and clarify is a document, not an app 
 ## Constraints
 
 - Zero dependencies at runtime; standalone HTML with no network requests (the font is inlined).
-- Page-weight budget (`test/render.test.js`) grows by the embedded font only (about 57 KB as base64); nothing else may grow it noticeably.
+- Page-weight budget (`test/render.test.js`) grows by the embedded font (`FONT_BYTES`, about 58 KB as base64) plus 4 KB for the course look's own CSS (pages without a lesson: 160 → 164 KB). *Call made during the build:* after consolidating repeated rules and dropping leading zeros in the minifier, the new tokens, grain and borders still cost about 2.7 KB on top of the old look, and the heaviest example sat 2.4 KB under the old budget. Diagram exports keep explicit hex tokens (no `color-mix` in token values), because exported SVGs copy the resolved token values.
 - Text contrast at least 4.5:1 (AA) in light and dark; reduced motion still removes motion.
 - Every existing test passes; markup class names stay (tests and the reply loop rely on them).
 

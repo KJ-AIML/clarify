@@ -19,6 +19,7 @@ const minifyCss = (css) => css
   .replace(/\s+/g, " ")
   .replace(/\s*([{};,>])\s*/g, "$1")
   .replace(/:\s+/g, ":")
+  .replace(/([\s:,(-])0\.(\d)/g, "$1.$2") // 0.5 -> .5
   .replace(/;}/g, "}")
   .trim();
 const minifyJs = (js) => js
