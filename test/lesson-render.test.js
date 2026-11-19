@@ -116,9 +116,16 @@ test("lesson CSS stacks by container width", () => {
   const css = git.html.match(/<style id="c-lesson-css">([\s\S]*?)<\/style>/)[1];
   assert.ok(css.includes("container-type:inline-size"), "the lesson is its own size container");
   assert.match(css, /@container \(max-width:760px\)\{/);
-  const narrow = compile(parseDraft(`---\nlayout: canvas\ncols: 3\n---\n## A Narrow card {span=1}\n${fence("Narrow", ...SMALL)}\n\n## B Notes {span=1}\nA second card beside it.`));
-  assert.deepEqual(narrow.warnings, []);
-  assert.match(narrow.html, /class="c-lesson"/);
+  // The container query is what stacks a lesson on a phone. A lesson never sits in a narrow card: its card
+  // takes the full row even when the panel asks for one column (src/render.js), and `layout: canvas` makes
+  // every card full width.
+  const grid = compile(parseDraft(`## A Lesson {span=1}\n${fence("Grid", ...SMALL)}\n\n## B Notes {span=1}\nA second card.`));
+  assert.deepEqual(grid.warnings, []);
+  assert.match(grid.html, /<section class="c-card" id="panel-A" data-panel="A" data-line="\d+" data-span="3">/);
+  const canvas = compile(parseDraft(`---\nlayout: canvas\ncols: 3\n---\n## A Lesson {span=1}\n${fence("Canvas", ...SMALL)}`));
+  assert.deepEqual(canvas.warnings, []);
+  assert.match(canvas.html, /<div class="c-page" data-layout="canvas">/);
+  assert.match(canvas.html, /class="c-lesson"/);
 });
 
 // ── the HTML contract the CSS and the runtime rely on ────────────────────────────

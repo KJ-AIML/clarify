@@ -29,7 +29,7 @@
 2. **Two lessons on one page:** SVG ids, keyboard and comment targets must not collide → Task 7 test `two lessons get distinct ids`.
 3. **A half-typed lesson during `clarify serve`:** missing labels, `move: a ->`, `step Save:` must warn, never throw → Task 3 test `half-typed lines warn instead of throwing`.
 4. **No JavaScript** (exported or emailed HTML): every step and the quiz must be readable as a list → Task 7 test `without JS every step is in the page`.
-5. **A lesson in a narrow card** (`layout: canvas`, span 1): it must fall back to the stacked phone layout by its own width, not the window's → Task 7 test `lesson CSS stacks by container width`.
+5. **A narrow lesson** (a phone): it must fall back to the stacked layout by its own width, through a container query on the lesson, not the window's width → Task 7 test `lesson CSS stacks by container width`. A lesson in a narrow card cannot happen: `src/render.js` gives a lesson's card the full row even when its panel asks for `span=1`, and `layout: canvas` makes every card full width.
 
 ---
 
