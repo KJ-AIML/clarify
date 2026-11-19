@@ -4,6 +4,8 @@ The course look (`docs/superpowers/specs/2026-11-19-course-ui-design.md`) change
 
 On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/out`, never plain `npm run visual`: that compares against the Mac baselines (text rendering differs, so it fails) and writes any missing PNGs into `test/visual/baselines/` as untracked files.
 
+Also new: `wireless-light` and `wireless-mobile` (`examples/wireless-mouse.md`, free sections). The same `npm run visual:update` creates them, so step 3 shows 6 new PNGs, not 4. Check them like the others and commit them with the rest.
+
 On the Mac, once, on the branch that has the course look:
 
 1. Run `npm test`. It must pass.

@@ -14,14 +14,25 @@ test("every example compiles without warnings and within the size budget", () =>
     const { html, warnings, stats } = compile(parseDraft(read(f)));
     assert.deepEqual(warnings, [], f);
     // 450 KB with a lesson; 164 KB without (160 KB before the course look, whose own CSS adds about
-    // 3 KB); plus the embedded font, exactly.
-    const budget = (/class="c-lesson"/.test(html) ? 450 * 1024 : 164 * 1024) + FONT_BYTES;
+    // 3 KB); 40 KB for each free section (the most one may weigh); plus the embedded font, exactly.
+    const lesson = /class="c-lesson"/.test(html);
+    const sections = (html.match(/<div class="fx fx-/g) || []).length;
+    const budget = (lesson ? 450 : 164) * 1024 + 40 * 1024 * sections + FONT_BYTES;
     assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
     // Scripts and the font's base64 (which can spell "NaN" by chance) are not template text.
     const text = html.replace(/<script>[\s\S]*?<\/script>/g, "").replace(/<style id="c-font">[\s\S]*?<\/style>/, "");
     assert.ok(!/\{\{|undefined|NaN/.test(text), `${f}: template leak`);
   }
+});
+
+test("the wireless example is seven free sections and no lesson", () => {
+  const { html, warnings } = compile(parseDraft(read("wireless-mouse.md")));
+  assert.equal((html.match(/<div class="fx fx-/g) || []).length, 7);
+  assert.ok(!html.includes('class="c-lesson"'));
+  assert.deepEqual(warnings, []);
+  assert.ok(html.includes('id="c-fx-css"'));
+  assert.ok(html.includes("Content-Security-Policy"));
 });
 
 test("the embedded font is one small Latin face that every page carries", () => {

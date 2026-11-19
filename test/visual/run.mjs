@@ -52,6 +52,9 @@ const SCENARIOS = [
   { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true },
   { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true },
   { name: "lesson-round-trip", draft: "test/visual/fixtures/lesson-round-trip.md", viewport: true, act: "lesson-round-trip", noShot: true },
+  // A page designed from its content: seven free sections and no lesson.
+  { name: "wireless-light", example: "wireless-mouse", scheme: "light" },
+  { name: "wireless-mobile", example: "wireless-mouse", width: 390, height: 844 },
   // Thai labels are set in the system's Thai face, so only a browser can check that they fit (the audit does).
   { name: "thai-labels", draft: "test/visual/fixtures/thai-labels.md", viewport: true, noShot: true },
   // A page with a free section blocks the network; it must still work, and one bad section must not stop the others.
