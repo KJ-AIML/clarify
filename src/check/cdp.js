@@ -96,22 +96,63 @@ export function within(promise, ms, what) {
   return Promise.race([promise, late]).finally(() => clearTimeout(timer));
 }
 
-export async function launchBrowser(executable = findChrome()) {
-  if (!executable) throw new Error("No Chromium found. Set CHROME_PATH or run `npx playwright install chromium`.");
-  const userDir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-chrome-"));
-  const proc = spawn(executable, [
+/**
+ * The browser's command line: headless, driven over a pipe, with its own profile in `userDir`. Chrome will not
+ * start as root (common in agent containers) while its sandbox is on, so only then is the sandbox turned off.
+ * @param {string} userDir
+ * @param {{ platform?: string, root?: boolean }} [opts]
+ * @returns {string[]}
+ */
+export function browserArgs(userDir, { platform = process.platform, root = process.getuid?.() === 0 } = {}) {
+  return [
     "--headless=new", "--remote-debugging-pipe", "--no-first-run", "--no-default-browser-check",
     "--disable-gpu", "--hide-scrollbars", "--force-color-profile=srgb", "--font-render-hinting=none",
     "--disable-background-timer-throttling", "--disable-renderer-backgrounding",
-    ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []),
+    ...(platform === "win32" ? ["--do-not-de-elevate"] : []),
+    ...(root ? ["--no-sandbox"] : []),
     `--user-data-dir=${userDir}`, "about:blank"
-  ],{ stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  ];
+}
+
+/**
+ * Start a headless browser and wait until it answers. Rejects when it exits first, or does not answer in
+ * `startTimeout` ms. Once the browser is gone (it exited, crashed or closed its pipe), every command and wait
+ * still open, and every later command, rejects with the reason ("the browser exited (code N)"), so nothing
+ * waits on it forever. `gone` holds that reason; it is null while the browser runs.
+ * @param {string | null} [executable]
+ * @param {{ startTimeout?: number }} [opts]
+ */
+export async function launchBrowser(executable = findChrome(), { startTimeout = 30000 } = {}) {
+  if (!executable) throw new Error("No Chromium found. Set CHROME_PATH or run `npx playwright install chromium`.");
+  const userDir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-chrome-"));
+  const proc = spawn(executable, browserArgs(userDir), { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
 
   const writer = /** @type {import("node:stream").Writable} */ (proc.stdio[3]);
   const reader = /** @type {import("node:stream").Readable} */ (proc.stdio[4]);
   let nextId = 1;
   const pending = new Map();
   const listeners = new Set();
+  /** Why the browser is gone, or null while it runs. */
+  let gone = null;
+  /** Each is called once, with the reason, when the browser goes: it ends a wait that no command answers. */
+  const onGone = new Set();
+  /** The pipe can close a moment before the process exits; this waits for the exit, and its code. */
+  let pipeTimer;
+  const exited = new Promise((resolve) => { proc.once("exit", resolve); proc.once("error", resolve); });
+  const fail = (reason) => {
+    clearTimeout(pipeTimer);
+    if (gone) return;
+    gone = reason;
+    for (const { reject } of pending.values()) reject(new Error(reason));
+    pending.clear();
+    for (const fn of [...onGone]) fn(reason);
+  };
+  proc.once("exit", (code, signal) => fail(code !== null ? `the browser exited (code ${code})` : `the browser exited (signal ${signal})`));
+  proc.once("error", (err) => fail(`the browser could not start (${err.message})`));
+  reader.once("close", () => { pipeTimer = setTimeout(() => fail("the browser closed its pipe"), 1000); });
+  // Writing to a browser that has gone fails too; fail() has already said why.
+  writer.on("error", () => {});
+  reader.on("error", () => {});
   let buffer = Buffer.alloc(0);
   reader.on("data", (chunk) => {
     buffer = Buffer.concat([buffer, chunk]);
@@ -128,10 +169,25 @@ export async function launchBrowser(executable = findChrome()) {
   });
 
   const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
+    if (gone) return reject(new Error(gone));
     const id = nextId++;
     pending.set(id, { resolve, reject });
     writer.write(`${JSON.stringify({ id, method, params, sessionId })}\0`);
   });
+
+  /** Stops the process, gives it a moment to exit, and removes its profile folder if it can. */
+  async function shutDown() {
+    proc.kill();
+    await within(exited, 3000, "the browser to exit").catch(() => {});
+    try { fs.rmSync(userDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* left in the temp folder */ }
+  }
+
+  try {
+    await within(send("Browser.getVersion"), startTimeout, "the browser to start");
+  } catch {
+    await shutDown();
+    throw new Error(gone || `the browser did not answer in ${startTimeout / 1000} s`);
+  }
 
   async function newPage({ width = 1280, height = 900, colorScheme = "light", reducedMotion = true } = {}) {
     const { targetId } = await send("Target.createTarget", { url: "about:blank" });
@@ -155,13 +211,19 @@ export async function launchBrowser(executable = findChrome()) {
       { name: "prefers-color-scheme", value: colorScheme },
       { name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }
     ] });
-    // The timer is cleared once the event comes, so a finished wait never keeps Node running.
+    // The timer is cleared once the event comes, so a finished wait never keeps Node running. A browser that
+    // goes ends the wait at once, with its reason.
     const waitFor = (method, ms = 10000) => new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
+      if (gone) return reject(new Error(gone));
+      const done = () => {
+        clearTimeout(timer);
+        onGone.delete(end);
         if (waiters.includes(w)) waiters.splice(waiters.indexOf(w), 1);
-        reject(new Error(`timeout waiting for ${method}`));
-      }, ms);
-      const w = { method, resolve: (params) => { clearTimeout(timer); resolve(params); } };
+      };
+      const end = (reason) => { done(); reject(new Error(reason)); };
+      const timer = setTimeout(() => end(`timeout waiting for ${method}`), ms);
+      const w = { method, resolve: (params) => { done(); resolve(params); } };
+      onGone.add(end);
       waiters.push(w);
     });
     const page = {
@@ -227,12 +289,12 @@ export async function launchBrowser(executable = findChrome()) {
 
   return {
     newPage,
+    /** Why the browser is gone ("the browser exited (code N)"), or null while it runs. */
+    get gone() { return gone; },
+    /** Asks the browser to close, then stops it. Safe to call again, and on a browser that has gone. */
     async close() {
-      const exited = new Promise(resolve => proc.once("exit", resolve));
-      try { await send("Browser.close"); } catch { /* already gone */ }
-      await Promise.race([exited, new Promise(r => setTimeout(r, 3000))]);
-      proc.kill();
-      fs.rmSync(userDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+      if (!gone) await within(send("Browser.close"), 3000, "the browser to close").catch(() => {});
+      await shutDown();
     }
   };
 }

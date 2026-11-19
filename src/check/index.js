@@ -1,8 +1,9 @@
 // clarify/src/check/index.js
 // `clarify check`: open a page in a real browser, check what the reader sees in every panel (audit.js),
 // and save a picture of each panel in each view, so an agent can look. A draft is rendered first, and its
-// static lint comes along. `render` never starts a browser; only this does.
+// static lint comes along. `render` only hands a page to the default browser to show; only this drives one.
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,10 +14,12 @@ import { findChrome as findInstalledChrome, launchBrowser, within } from "./cdp.
 import { auditScript } from "./audit.js";
 
 /**
- * @typedef {{ panel: string | null, view: string, kind: "overflow" | "small text" | "overlap" | "clipped" | "page error" | "half-empty" | "low contrast", msg: string }} CheckProblem
- * @typedef {{ browser: boolean, draft?: boolean, page: string, outDir: string, panels: string[], lint: string[], problems: CheckProblem[], pictures: Array<{ panel: string, view: string, file: string }> }} CheckReport
+ * @typedef {{ panel: string | null, view: string, kind: "overflow" | "small text" | "overlap" | "clipped" | "page error" | "half-empty" | "low contrast" | "missing", msg: string }} CheckProblem
+ * @typedef {{ browser: boolean, failure?: string, draft?: boolean, page: string, outDir: string, panels: string[], lint: string[], problems: CheckProblem[], pictures: Array<{ panel: string, view: string, file: string }> }} CheckReport
  * `view` is "<width> <scheme>", as in "390 dark". `panel` null is the page as a whole. `draft` is false
- * when the input was a page, which has no static lint.
+ * when the input was a page, which has no static lint. `panels` are the draft's panels, so one the page lost
+ * keeps its place; for a page, the ones the browser found. `failure` says why a browser that was found did
+ * not start; `browser` is then false.
  */
 
 /** The four views, each with reduced motion: wide and phone, light and dark. */
@@ -36,17 +39,18 @@ const PICTURE = /^[A-Za-z0-9]+-\d+-(?:light|dark)\.png$/;
 
 /**
  * Check a page, or a draft (rendered first into `<outDir>/page.html`), in every view.
- * @param {{ input: string, outDir?: string, findChrome?: () => string | null, loadTimeout?: number }} opts
- *   `outDir` defaults to ~/.clarify/checks/<slug>/; `loadTimeout` (ms) bounds the load and each step after it.
+ * @param {{ input: string, outDir?: string, findChrome?: () => string | null, loadTimeout?: number, launch?: typeof launchBrowser }} opts
+ *   `outDir` defaults to ~/.clarify/checks/<folder>/ (see checkFolder); `loadTimeout` (ms) bounds the load and
+ *   each step after it; `launch` starts the browser (the tests wrap it).
  * @returns {Promise<CheckReport>}
  */
-export async function checkPage({ input, outDir, findChrome = findInstalledChrome, loadTimeout = 10000 }) {
+export async function checkPage({ input, outDir, findChrome = findInstalledChrome, loadTimeout = 10000, launch = launchBrowser }) {
   const file = path.resolve(input);
   if (!fs.existsSync(file)) throw new Error(`Input file not found: ${file}`);
   const text = fs.readFileSync(file, "utf8");
   const draft = !/\.html?$/i.test(file);
   let html = text;
-  let slug;
+  let title;
   /** @type {string[]} */
   let lint = [];
   /** @type {string[]} */
@@ -57,11 +61,11 @@ export async function checkPage({ input, outDir, findChrome = findInstalledChrom
     const result = compile(parsed, { source: file });
     html = result.html;
     lint = result.warnings;
-    slug = slugify(parsed.meta.title);
+    title = parsed.meta.title;
     panels = parsed.panels.map((p) => p.id);
-  } else slug = slugify(pageSlug(text) || path.basename(file).replace(/\.html?$/i, ""));
+  } else title = pageTitle(text);
 
-  const dir = outDir ? path.resolve(outDir) : path.join(os.homedir(), ".clarify", "checks", slug);
+  const dir = outDir ? path.resolve(outDir) : path.join(os.homedir(), ".clarify", "checks", checkFolder(file, title));
   fs.mkdirSync(dir, { recursive: true });
   // Old pictures go first, so none is left from a panel that is gone. Only names a check writes, since
   // --out may name a folder that holds other pictures too.
@@ -73,10 +77,16 @@ export async function checkPage({ input, outDir, findChrome = findInstalledChrom
   const report = { browser: false, draft, page, outDir: dir, panels, lint, problems: [], pictures: [] };
   const executable = findChrome();
   if (!executable) return report;
+  let browser;
+  try {
+    browser = await launch(executable);
+  } catch (err) {
+    report.failure = `${executable}: ${err instanceof Error ? err.message : err}`;
+    return report;
+  }
   report.browser = true;
 
   const url = pathToFileURL(page).href;
-  const browser = await launchBrowser(executable);
   try {
     for (const view of VIEWS) {
       if (!(await checkView(browser, url, view, report, loadTimeout))) break;
@@ -87,17 +97,34 @@ export async function checkPage({ input, outDir, findChrome = findInstalledChrom
   return report;
 }
 
+/** Said of a draft panel that the browser did not find on the page. */
+const MISSING = "not on the page; a free section above it may leave a comment, <style> or <script> open";
+
 /**
- * One view in a fresh tab: the checks, the page errors and a picture of every panel. Returns false when
- * the page ran out of time (one "page error" is added), so the caller skips the remaining views.
+ * One view in a fresh tab: the checks, the page errors and a picture of every panel. Whatever goes wrong
+ * becomes a "page error" of this view, so the views that finished keep their results. Returns false when
+ * the remaining views should be skipped: the browser has gone, or the page ran out of time.
  */
 async function checkView(browser, url, view, report, loadTimeout) {
   const name = viewName(view);
-  const tab = await browser.newPage({ width: view.width, height: view.height, colorScheme: view.scheme, reducedMotion: true });
+  const s = `${loadTimeout / 1000} s`;
+  /** What the view is waiting for, as said when its time runs out. */
+  let waiting = `the browser did not open a tab in ${s}`;
+  let tab = null;
   try {
+    tab = await within(browser.newPage({ width: view.width, height: view.height, colorScheme: view.scheme, reducedMotion: true }), loadTimeout, "a tab");
+    waiting = `the page did not finish loading in ${s} (a script that never ends?)`;
     await tab.goto(url, { timeout: loadTimeout });
+    waiting = `the checks did not finish in ${s} (a script that never ends, or a page too big to measure?)`;
     const found = await within(tab.eval(auditScript({ halfEmpty: view.width === 1440 })), loadTimeout, "the checks");
-    report.panels = found.panels.map((p) => p.id);
+    const ids = found.panels.map((p) => p.id);
+    // A draft's panel that is not on the page was swallowed by a section that leaves something open. It is
+    // said once, in the first view that sees it, since every view reads the same page.
+    if (report.draft) {
+      for (const id of report.panels) {
+        if (!ids.includes(id) && !report.problems.some((p) => p.kind === "missing" && p.panel === id)) report.problems.push({ panel: id, view: name, kind: "missing", msg: MISSING });
+      }
+    } else report.panels = ids;
     for (const p of found.panels) for (const { kind, msg } of p.problems) report.problems.push({ panel: p.id, view: name, kind, msg });
     if (found.overflow > 1) report.problems.push({ panel: null, view: name, kind: "overflow", msg: `the page is ${found.overflow}px wider than the window` });
 
@@ -106,6 +133,7 @@ async function checkView(browser, url, view, report, loadTimeout) {
       const x = Math.max(0, Math.floor(p.rect.x - MARGIN));
       const y = Math.max(0, Math.floor(p.rect.y - MARGIN));
       const clip = { x, y, width: Math.min(pageWidth, Math.ceil(p.rect.x + p.rect.width + MARGIN)) - x, height: Math.ceil(p.rect.y + p.rect.height + MARGIN) - y };
+      waiting = `the picture of panel ${p.id} did not finish in ${s}`;
       const png = await within(tab.screenshot({ clip }), loadTimeout, "a picture");
       const file = path.join(report.outDir, `${p.id}-${view.width}-${view.scheme}.png`);
       fs.writeFileSync(file, png);
@@ -120,23 +148,44 @@ async function checkView(browser, url, view, report, loadTimeout) {
     }
     return true;
   } catch (err) {
-    if (!(err instanceof Error) || !err.message.startsWith("timeout waiting for")) throw err;
-    report.problems.push({ panel: null, view: name, kind: "page error", msg: `the page did not finish loading in ${loadTimeout / 1000} s (a script that never ends?)` });
-    return false;
+    const reason = String(err instanceof Error ? err.message : err).split("\n")[0];
+    const problem = (msg) => report.problems.push({ panel: null, view: name, kind: "page error", msg });
+    if (browser.gone) {
+      problem(`the browser stopped (${browser.gone}); this view and the ones after it were not checked`);
+      return false;
+    }
+    if (reason.startsWith("timeout waiting for")) {
+      problem(waiting);
+      return false;
+    }
+    problem(`this view could not be checked: ${reason}`);
+    return true;
   } finally {
     // A tab stuck in a script may never answer; the browser closes it anyway.
-    await within(tab.close(), 2000, "the tab to close").catch(() => {});
+    if (tab) await within(tab.close(), 2000, "the tab to close").catch(() => {});
   }
 }
 
-/** The slug a clarify page carries in its #c-page-meta, or null. */
-function pageSlug(html) {
+/** The title a clarify page carries in its #c-page-meta, or null. */
+function pageTitle(html) {
   const m = html.match(/<script type="application\/json" id="c-page-meta">([\s\S]*?)<\/script>/);
   try {
-    return m ? JSON.parse(m[1]).slug || null : null;
+    return m ? JSON.parse(m[1]).title || null : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * The folder of a check under ~/.clarify/checks: the slug of the title. A title with no ASCII letter or digit
+ * (Thai, Chinese) slugs to nothing, so then the file's name decides, and when that slugs to nothing too, a
+ * short hash of the file's path. Two pages never share a folder only because their titles are not English.
+ * @param {string} file absolute path of the draft or page
+ * @param {string | null | undefined} title
+ */
+function checkFolder(file, title) {
+  const stem = path.basename(file).replace(/\.[^.]*$/, "");
+  return (title && slugify(title, "")) || slugify(stem, "") || `clarify-${crypto.createHash("sha256").update(file).digest("hex").slice(0, 8)}`;
 }
 
 const count = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -149,7 +198,9 @@ const count = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
  */
 export function formatReport(report) {
   if (!report.browser) {
-    const head = "⚠ no Chrome or Edge found (set CHROME_PATH): ";
+    const head = report.failure
+      ? `⚠ the browser did not start (${report.failure}; set CHROME_PATH to Chrome or Edge): `
+      : "⚠ no Chrome or Edge found (set CHROME_PATH): ";
     if (report.draft === false) return [`${head}nothing checked; the static lint needs the draft`];
     return [`${head}only the static lint ran`, ...report.lint.map((w) => `⚠ ${w}`)];
   }

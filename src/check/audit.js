@@ -99,7 +99,9 @@ function audit(opts, parseColor, contrastRatio) {
   const short = (s) => { s = clean(s); return s.length > 48 ? s.slice(0, 47) + "…" : s; };
   const label = (el) => el.tagName.toLowerCase() + (el.getAttribute("class") ? "." + el.getAttribute("class").trim().split(/\s+/).join(".") : "");
   const isSvg = (el) => el instanceof SVGElement;
-  const ownText = (el) => [...el.childNodes].filter((n) => n.nodeType === 3 && n.nodeValue.trim()).map((n) => n.nodeValue).join(" ");
+  // SVG paints text only inside a <text> (and its tspans): words written straight into an <svg> or a <g> are
+  // never drawn, so they are not text the reader sees.
+  const ownText = (el) => (isSvg(el) && !el.closest("text") ? "" : [...el.childNodes].filter((n) => n.nodeType === 3 && n.nodeValue.trim()).map((n) => n.nodeValue).join(" "));
   const hasBox = (r) => r.width > 0 || r.height > 0;
 
   // Sticky parts back in the flow, and fixed parts outside the panels hidden; both stay so for the pictures.

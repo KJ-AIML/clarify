@@ -1,6 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chromeCandidates } from "../src/check/cdp.js";
+import { chromeCandidates, launchBrowser, browserArgs } from "../src/check/cdp.js";
+
+test("a browser that exits at once rejects with the reason", { timeout: 20000 }, async () => {
+  // Node is no browser: it exits at once on the browser's flags, and nothing may wait on it forever.
+  await assert.rejects(launchBrowser(process.execPath), /the browser exited \(code \d+\)/);
+});
+
+test("the browser runs without its sandbox only as root", () => {
+  // Chrome refuses to start as root with its sandbox on, which is common in agent containers.
+  assert.ok(browserArgs("/tmp/u", { platform: "linux", root: true }).includes("--no-sandbox"));
+  const user = browserArgs("/tmp/u", { platform: "linux", root: false });
+  assert.ok(!user.includes("--no-sandbox"));
+  assert.ok(user.includes("--user-data-dir=/tmp/u") && user.includes("--remote-debugging-pipe"), user.join(" "));
+  assert.ok(browserArgs("C:\\u", { platform: "win32", root: false }).includes("--do-not-de-elevate"));
+});
 
 test("Windows Chrome, Edge and Playwright builds are candidates", () => {
   const env = { PROGRAMFILES: "C:\\Program Files", "PROGRAMFILES(X86)": "C:\\Program Files (x86)", LOCALAPPDATA: "C:\\Users\\u\\AppData\\Local" };

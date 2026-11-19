@@ -441,7 +441,13 @@ function renderAsk(b, ctx) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-export function slugify(title) {
+/**
+ * A name for files and folders: the title's ASCII letters and digits, joined by dashes. A title with none of
+ * them (Thai, Chinese) gives `fallback`.
+ * @param {string} title
+ * @param {string} [fallback]
+ */
+export function slugify(title, fallback = "clarify") {
   return String(title || "board")
     .toLowerCase()
     .normalize("NFKD")
@@ -450,7 +456,7 @@ export function slugify(title) {
     .replace(/[\s_]+/g, "-")
     .replace(/-+/g, "-")
     .slice(0, 48)
-    .replace(/-$/, "") || "clarify";
+    .replace(/-$/, "") || fallback;
 }
 
 /** JSON safe to embed in a <script> element. */

@@ -111,7 +111,15 @@ async function cmdServe({ flags, positional }) {
 async function cmdCheck({ flags, positional }) {
   if (!positional[0]) throw new Error("Usage: clarify check <page.html | draft.md> [--out dir]");
   const { checkPage, formatReport } = await import("../src/check/index.js");
+  // The last guard: when the check waits on something that can no longer answer, Node runs out of work and
+  // would end with no word, which an agent would read as a pass. Say so instead.
+  const silent = () => {
+    console.error("✗ check stopped before it finished, with no report (did the browser go away?)");
+    process.exitCode = 1;
+  };
+  process.once("beforeExit", silent);
   const report = await checkPage({ input: positional[0], outDir: flags.out });
+  process.off("beforeExit", silent);
   for (const line of formatReport(report)) console.log(line);
 }
 

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { findChrome } from "../src/check/cdp.js";
+import { findChrome, launchBrowser } from "../src/check/cdp.js";
 import { parseColor, contrastRatio } from "../src/check/audit.js";
 import { checkPage, formatReport, VIEWS } from "../src/check/index.js";
 
@@ -105,6 +105,49 @@ test("a missing input is an error", async () => {
   await assert.rejects(checkPage({ input: path.join(os.tmpdir(), "clarify-no-such-draft.md"), findChrome: () => null }), /not found/);
 });
 
+test("a browser that will not start is reported, never silent", { timeout: 30000 }, () => withTemp(async (tmp) => {
+  // Node stands in for a browser that exits at once (as Chrome does when it runs as root without --no-sandbox).
+  const draft = path.join(tmp, "draft.md");
+  fs.writeFileSync(draft, ["---", "title: Dead browser", "---", "", "## A Unscoped", "```free a", "<p>hi</p><style>p { font-weight: 700 }</style>", "```", ""].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out"), findChrome: () => process.execPath });
+  assert.equal(report.browser, false);
+  assert.ok(report.failure.startsWith(`${process.execPath}: `), report.failure);
+  assert.match(report.failure, /: the browser exited \(code \d+\)$/);
+  const lines = formatReport(report);
+  assert.equal(lines[0], `⚠ the browser did not start (${report.failure}; set CHROME_PATH to Chrome or Edge): only the static lint ran`);
+  assert.ok(lines.slice(1).some((l) => l.includes("selectors must start with .fx-a")), lines.join("\n"));
+
+  const page = path.join(tmp, "page.html");
+  fs.writeFileSync(page, "<!DOCTYPE html><title>x</title><p>x</p>");
+  const pageLines = formatReport(await checkPage({ input: page, outDir: path.join(tmp, "out2"), findChrome: () => process.execPath }));
+  assert.match(pageLines[0], /^⚠ the browser did not start \(.*\): nothing checked; the static lint needs the draft$/);
+}));
+
+test("titles with no ASCII letters get a check folder each", () => withTemp(async (tmp) => {
+  // The default folder is ~/.clarify/checks/<slug>; a Thai title slugs to nothing, so the draft's name decides.
+  const homes = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };
+  process.env.HOME = process.env.USERPROFILE = tmp;
+  try {
+    const dirs = [];
+    for (const name of ["mouse.md", "keyboard.md", "เมาส์.md", "คีย์บอร์ด.md"]) {
+      const draft = path.join(tmp, name);
+      fs.writeFileSync(draft, "---\ntitle: เมาส์ไร้สายทำงานอย่างไร\n---\n\n## A หนึ่ง\nข้อความ\n");
+      dirs.push((await checkPage({ input: draft, findChrome: () => null })).outDir);
+    }
+    const names = dirs.map((d) => path.basename(d));
+    assert.deepEqual(names.slice(0, 2), ["mouse", "keyboard"]);
+    assert.match(names[2], /^clarify-[0-9a-f]{8}$/);
+    assert.match(names[3], /^clarify-[0-9a-f]{8}$/);
+    assert.notEqual(names[2], names[3]);
+    assert.ok(dirs.every((d) => d.startsWith(path.join(tmp, ".clarify", "checks"))), dirs.join("\n"));
+    const plain = path.join(tmp, "plain.md");
+    fs.writeFileSync(plain, "---\ntitle: How a Mouse Works\n---\n\n## A One\nText.\n");
+    assert.equal(path.basename((await checkPage({ input: plain, findChrome: () => null })).outDir), "how-a-mouse-works");
+  } finally {
+    for (const [k, v] of Object.entries(homes)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+  }
+}));
+
 test("every check fires on the panel that has it", inBrowser, () => withTemp(async (tmp) => {
   const dir = path.join(tmp, "clarify check ✓");
   fs.mkdirSync(dir);
@@ -154,4 +197,65 @@ test("a page that never finishes loading is reported", inBrowser, () => withTemp
   const errors = report.problems.filter((p) => p.kind === "page error");
   assert.equal(errors.length, 1, JSON.stringify(report.problems));
   assert.match(errors[0].msg, /did not finish loading/);
+}));
+
+test("a time limit names what ran out of time", inBrowser, () => withTemp(async (tmp) => {
+  // The page loads, but its script makes the checks hang: the overlap check measures text with a Range.
+  const draft = path.join(tmp, "slow.md");
+  fs.writeFileSync(draft, ["---", "title: Slow checks", "---", "", "## A Slow", "```free slow", "<p>slow</p><script>document.createRange = () => { for (;;) {} };</script>", "```", ""].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out"), loadTimeout: 2000 });
+  const errors = report.problems.filter((p) => p.kind === "page error");
+  assert.equal(errors.length, 1, JSON.stringify(report.problems));
+  assert.equal(errors[0].panel, null);
+  assert.match(errors[0].msg, /^the checks did not finish in 2 s/);
+}));
+
+test("a browser that stops mid-run keeps the views that finished", inBrowser, () => withTemp(async (tmp) => {
+  const draft = path.join(tmp, "plain.md");
+  fs.writeFileSync(draft, "## A Plain\nText.\n");
+  // The browser goes away before the third view's tab: the first two views are done by then.
+  const launch = async (executable) => {
+    const browser = await launchBrowser(executable);
+    const open = browser.newPage;
+    let tabs = 0;
+    browser.newPage = async (opts) => {
+      if (++tabs === 3) await browser.close();
+      return open(opts);
+    };
+    return browser;
+  };
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out"), launch });
+  assert.equal(report.browser, true);
+  assert.deepEqual(report.pictures.map((p) => `${p.panel} ${p.view}`), ["A 1440 light", "A 1440 dark"]);
+  assert.deepEqual(report.problems.map((p) => [p.panel, p.view, p.kind]), [[null, "390 light", "page error"]], JSON.stringify(report.problems));
+  assert.match(report.problems[0].msg, /^the browser stopped \(the browser exited \(.+\)\); this view and the ones after it were not checked$/);
+  assert.match(formatReport(report).at(-1), /^⚠ check: 1 problem on the page · /);
+}));
+
+test("a panel that a free section swallows is reported missing", inBrowser, () => withTemp(async (tmp) => {
+  // B leaves a comment open, so the browser reads C, D and the page's own script as part of that comment.
+  const draft = path.join(tmp, "unclosed.md");
+  fs.writeFileSync(draft, [
+    "---", "title: Unclosed comment", "cols: 3", "---", "Lead: The free section in B leaves a comment open.", "",
+    "## A First {span=3}", "Plain text in A.", "",
+    "## B Section {span=3}", "```free open", '<p class="fx-how"><b>How to read this:</b> a note.</p>', "<!-- a note the author forgot to close", '<p class="fx-take">Takeaway.</p>', "```", "",
+    "## C Third {span=3}", "Text in C.", "", "## D Fourth {span=3}", "Text in D.", ""
+  ].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
+  assert.deepEqual(report.panels, ["A", "B", "C", "D"]);
+  const missing = report.problems.filter((p) => p.kind === "missing");
+  assert.deepEqual(missing.map((p) => [p.panel, p.view]), [["C", "1440 light"], ["D", "1440 light"]], formatReport(report).join("\n"));
+  assert.equal(missing[0].msg, "not on the page; a free section above it may leave a comment, <style> or <script> open");
+  assert.ok(formatReport(report).includes("⚠ panel C @1440 light: missing: not on the page; a free section above it may leave a comment, <style> or <script> open"));
+  assert.match(formatReport(report).at(-1), /^⚠ check: \d+ problems? in \d+ panels/);
+}));
+
+test("text written straight into an svg is not checked as text", inBrowser, () => withTemp(async (tmp) => {
+  // SKILL.md's own placeholder: SVG paints text only inside <text>, so the "…" here is never drawn.
+  const draft = path.join(tmp, "bare.md");
+  fs.writeFileSync(draft, ["---", "title: Bare svg text", "---", "", "## A Bare {span=3}", "```free bare",
+    '<p class="fx-how"><b>How to read this:</b> …</p>', '<svg viewBox="0 0 320 120" role="img" aria-label="…">…<g>loose</g><text class="fx-t" x="10" y="20">drawn</text></svg>', '<p class="fx-take">…</p>',
+    "```", ""].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
+  assert.deepEqual(report.problems, [], formatReport(report).join("\n"));
 }));
