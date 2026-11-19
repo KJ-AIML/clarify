@@ -10,6 +10,7 @@ import { draftToMarkdown } from "./export/markdown.js";
 import { renderBrandSprite } from "./brand-marks/brands.js";
 import { renderLesson } from "./lesson/render.js";
 import { FREE_NAME, parseFreeInfo, loadFreeSection, splitFragment, wrapScript } from "./free/section.js";
+import { lintFree, idsOf } from "./free/lint.js";
 
 /** @typedef {import("./types").Draft} Draft */
 /** @typedef {import("./types").Block} Block */
@@ -86,6 +87,8 @@ export function compile(draft, opts = {}) {
     // named one too) and the absolute path of every `file=`. `source` is "" for a draft read from stdin.
     free: /** @type {Array<{ name: string, panel: string, line: number, html: string, styles: string[], scripts: string[], bytes: number }>} */ ([]),
     files: /** @type {string[]} */ ([]),
+    // How often each id has been seen in free sections on the whole page; the second sighting is a duplicate.
+    freeIds: /** @type {Map<string, number>} */ (new Map()),
     source: opts.source || draft.source || ""
   };
 
@@ -304,7 +307,8 @@ function renderFence(b, ctx) {
 /**
  * A `free` fence: the one place raw HTML enters a page. The fragment is wrapped in its own element; its
  * styles and scripts are collected in `ctx.free` for the head and the end of the body. A missing file or a
- * bad name warns and shows the kit's dashed box instead.
+ * bad name warns and shows the kit's dashed box instead. A good section is linted (src/free/lint.js), and
+ * an id already used by an earlier section, or earlier in this one, warns as a duplicate.
  */
 function renderFree(b, ctx) {
   const s = loadFreeSection(b, ctx.source);
@@ -321,6 +325,12 @@ function renderFree(b, ctx) {
   if (s.missing) return `<div class="fx fx-missing" data-fx="${s.name}">${escapeHtml(`Missing section "${s.name}": ${written} was not found.`)}</div>`;
   const { html, styles, scripts } = splitFragment(s.fragment);
   Object.assign(entry, { html: html.trim(), styles, scripts, bytes: Buffer.byteLength(s.fragment) });
+  lintFree(entry).forEach(w => warn(`free "${s.name}": ${w}`));
+  for (const id of idsOf(entry.html)) {
+    const seen = (ctx.freeIds.get(id) ?? 0) + 1;
+    ctx.freeIds.set(id, seen);
+    if (seen === 2) warn(`free "${s.name}": duplicate id "${id}" on the page`);
+  }
   return `<div class="fx fx-${s.name}" data-fx="${s.name}">${entry.html}</div>`;
 }
 
