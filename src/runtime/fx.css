@@ -1,6 +1,8 @@
 /* clarify/src/runtime/fx.css — the kit for free sections. It ships only on pages with a free section
-   (a `free` fence), the same way lesson.css ships only with a lesson. It starts as a copy of the spike's
-   fx-base.css (docs/superpowers/specs/content-driven-spike/fx-base.css). Built only on clarify tokens
+   (a `free` fence), the same way lesson.css ships only with a lesson. It is the spike's fx-base.css
+   (docs/superpowers/specs/content-driven-spike/fx-base.css) plus what two or more spike sections built by
+   hand: the wide/phone swap, solid bars, the hatch, numbered dots, the legend, the blue chip, hit buttons and
+   the [hidden] fix. Its SVG patterns are in src/free/kit.js. Built only on clarify tokens
    (src/runtime/themes.css) and the sizes page.css uses, so a section looks like it belongs to the page,
    in light and dark. */
 
@@ -9,6 +11,17 @@
 .fx > * { margin: 0; }
 .fx svg { display: block; width: 100%; height: auto; }
 .fx-missing { padding: 18px 16px; border: 1.3px dashed var(--group-border); border-radius: 10px; background: var(--group-bg); color: var(--muted); font: 500 12.5px/1.5 var(--mono); }
+/* The hidden attribute always wins, even over a kit or section class that sets display (.fx-btn does). */
+.fx [hidden] { display: none !important; }
+/* Two drawings of one thing: the wide one shows, the phone one hides, and under 560px they swap. Each keeps
+   its own display; the hiding wins over a section's own display, as [hidden] does. Draw the phone one about
+   330 units wide, so its text stays 11 to 12px on a phone. */
+@container (width >= 560px) {
+  .fx .fx-phone { display: none !important; }
+}
+@container (width < 560px) {
+  .fx .fx-wide { display: none !important; }
+}
 
 /* ── text ───────────────────────────────────────────────────────────────────── */
 /* "How to read this": one line at the top. */
@@ -32,6 +45,7 @@
 .fx-chip.is-info { background: var(--info-bg); }
 .fx-chip.is-accent { background: var(--accent); }
 .fx-chip.is-hot { background: color-mix(in srgb, var(--trace-0) 24%, var(--surface)); }
+.fx-chip.is-cool { background: color-mix(in srgb, var(--trace-1) 24%, var(--surface)); }
 /* Tile: an inner card with the hard shadow. */
 .fx-tile { padding: 12px 14px; border: 1.3px solid var(--ink-2); border-radius: 10px; background: var(--node-bg); box-shadow: var(--pop); min-width: 0; }
 /* Big number and its unit. */
@@ -54,14 +68,38 @@
 /* A wide drawing: put it inside and give the drawing a min-width (or set --fx-min on this element). */
 .fx-scroll { max-width: 100%; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .fx-scroll > * { min-width: var(--fx-min, 0); }
+/* Bar: a length in a role colour. Set the length with style="width: 40%". A plain bar is --surface-2;
+   .is-varies hatches it in its role colour (or in ink), for "up to" or "varies". */
+.fx-bar, .fx-swatch { --fx-role: var(--node-border); border: 1.3px solid var(--node-border); background: var(--surface-2); }
+.fx-bar { display: block; flex: none; height: 14px; min-width: 6px; border-radius: 4px; box-shadow: var(--tool-shadow); }
+.fx-bar.is-hot, .fx-swatch.is-hot { --fx-role: var(--trace-0); background: var(--fx-role); }
+.fx-bar.is-good, .fx-swatch.is-good { --fx-role: var(--ok-line); background: var(--fx-role); }
+.fx-bar.is-bad, .fx-swatch.is-bad { --fx-role: var(--no-line); background: var(--fx-role); }
+.fx-bar.is-slow, .fx-swatch.is-slow { --fx-role: var(--warn-line); background: var(--fx-role); }
+.fx-bar.is-cool, .fx-swatch.is-cool { --fx-role: var(--trace-1); background: var(--fx-role); }
+.fx-bar.is-varies, .fx-swatch.is-varies { background: repeating-linear-gradient(135deg, var(--fx-role) 0 2px, color-mix(in srgb, var(--fx-role) 26%, var(--node-bg)) 2px 6px); }
+/* Legend: a list with one entry per colour or mark: a swatch (the same role classes as a bar) or a small svg,
+   then its words. */
+.fx-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.fx-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.fx-swatch { display: inline-block; flex: none; width: 24px; height: 12px; border-radius: 3px; }
+.fx-legend svg { flex: none; width: 16px; height: 16px; }
+/* Hit: a see-through button over a drawing, for a click area. Put the drawing in a box with
+   position: relative and place each hit with left, top, width and height in % of it; give it an aria-label. */
+.fx-hit { position: absolute; margin: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.fx-hit:hover { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+.fx-hit:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* ── svg ────────────────────────────────────────────────────────────────────── */
-/* Outline: 1.4px in --node-border. Combine with a fill class: class="fx-ink fx-fill". */
-.fx-ink { stroke: var(--node-border); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; fill: none; }
+/* Outline: 1.4px in --node-border. Combine with a fill class: class="fx-ink fx-fill". It fills nothing only
+   when the shape has no fill attribute, so class="fx-ink" fill="url(#fx-hatch-slow)" keeps its hatch. */
+.fx-ink { stroke: var(--node-border); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.fx-ink:where(:not([fill])) { fill: none; }
 .fx-fill { fill: var(--node-bg); }
 .fx-fill-2 { fill: var(--surface-2); }
 /* Colour means: hot = the thing that moves (a report), good = an answer, bad = lost, slow = waiting, cool = other traffic.
-   -fill is a soft tint to fill a shape; -line is the stroke (also for arrows and bars). */
+   -fill is a soft tint to fill a shape; -solid is the full colour (a bar); -line is the stroke (also for arrows).
+   For "up to" or "varies", hatch a shape instead: fill="url(#fx-hatch-ROLE)" (the patterns are in src/free/kit.js). */
 .fx-hot-fill { fill: color-mix(in srgb, var(--trace-0) 26%, var(--node-bg)); }
 .fx-hot-line { stroke: var(--trace-0); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .fx-good-fill { fill: color-mix(in srgb, var(--ok-line) 26%, var(--node-bg)); }
@@ -72,7 +110,18 @@
 .fx-slow-line { stroke: var(--warn-line); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .fx-cool-fill { fill: color-mix(in srgb, var(--trace-1) 26%, var(--node-bg)); }
 .fx-cool-line { stroke: var(--trace-1); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fx-hot-solid { fill: var(--trace-0); }
+.fx-good-solid { fill: var(--ok-line); }
+.fx-bad-solid { fill: var(--no-line); }
+.fx-slow-solid { fill: var(--warn-line); }
+.fx-cool-solid { fill: var(--trace-1); }
 .fx-leader { stroke: var(--edge); stroke-width: 1; fill: none; }
+/* Numbered callout: <g class="fx-dot" transform="translate(x y)"><circle r="9"/><text>1</text></g>, joined to
+   its part by an .fx-leader line. .is-on turns it green, the page's colour for the active thing. */
+.fx-dot { filter: var(--node-shadow); }
+.fx-dot circle { fill: var(--node-bg); stroke: var(--ink-2); stroke-width: 1.3; }
+.fx-dot text { font: 800 11px var(--mono); fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fx-dot.is-on circle { fill: var(--accent); stroke: var(--ink); }
 .fx-axis { stroke: var(--line-ctl); stroke-width: 1; fill: none; }
 /* SVG text: values and names, notes, small-caps heads. Sizes are in drawing units: they shrink with the drawing. */
 .fx-t { font: 600 12px var(--mono); fill: var(--text); }
@@ -81,4 +130,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fx-btn { transition: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fx-hit { transition: background 0.15s; }
+  .fx-dot circle { transition: fill 0.2s, stroke 0.2s; }
 }

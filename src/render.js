@@ -11,6 +11,7 @@ import { renderBrandSprite } from "./brand-marks/brands.js";
 import { renderLesson } from "./lesson/render.js";
 import { FREE_NAME, parseFreeInfo, loadFreeSection, splitFragment, wrapScript } from "./free/section.js";
 import { lintFree, idsOf } from "./free/lint.js";
+import { FX_DEFS } from "./free/kit.js";
 
 /** @typedef {import("./types").Draft} Draft */
 /** @typedef {import("./types").Block} Block */
@@ -131,7 +132,7 @@ export function compile(draft, opts = {}) {
 <style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}${ctx.free.length ? `\n<style id="c-fx-css">${FX_CSS}</style>\n<style id="c-fx-sections">${freeStyles(ctx.free)}</style>` : ""}
 </head>
 <body>
-${SVG_DEFS}
+${SVG_DEFS}${ctx.free.length ? `\n${FX_DEFS}` : ""}
 ${renderBrandSprite(ctx.sprite)}
 <div class="c-page" data-layout="${escapeHtml(meta.layout)}">
 <header class="c-hero">
