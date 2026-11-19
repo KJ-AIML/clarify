@@ -1,128 +1,166 @@
 /* clarify/src/runtime/themes.css — design tokens per theme preset.
-   `auto` uses light tokens and switches to dark under prefers-color-scheme. */
+   The default look follows designed-to-scale (docs/superpowers/specs/2026-11-19-course-ui-design.md):
+   warm paper, one monospace face, warm lines, green for the active thing and hard offset shadows.
+   `auto` uses the light tokens and switches to the dark ones under prefers-color-scheme. */
 
 :root {
-  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  /* Signage faces (DIN family on macOS, Bahnschrift on Windows) for headings and keys. */
-  --font-display: "DIN Alternate", Bahnschrift, "D-DIN", "DIN Next", "Barlow Semi Condensed", "Roboto Condensed", var(--font);
-  --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
-  --radius: 14px;
+  /* One face for everything (render.js embeds JetBrains Mono); Thai and other scripts fall back per
+     glyph. --mono keeps its own stack so a preset that changes --font (paper) still sets code in mono. */
+  --mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, "Leelawadee UI", Thonburi, monospace;
+  --font: var(--mono);
+  --font-display: var(--font);
+  --radius: 12px;
   color-scheme: light;
-  --bg: #f0f1ee;
-  --surface: #ffffff;
-  --surface-2: #f5f6f3;
-  --border: #dcdfd9;
-  --border-strong: #c4c9c2;
-  --text: #1c2128;
-  --muted: #5c646e;
-  --title: #0e1115;
-  --primary: #2747f5;
-  --primary-ink: #ffffff;
-  --primary-soft: rgba(39, 71, 245, 0.09);
-  --ink: #14171c;
-  --ink-contrast: #ffffff;
-  --tile-ink: #eceee9;
-  --canvas: #fafaf8;
-  --grid-dot: #e0e3dd;
-  --edge: #8b939c;
-  --edge-hl: #2747f5;
-  --node-bg: #ffffff;
-  --node-border: #cdd1cb;
-  --node-text: #10141a;
-  --node-caption: #6b737c;
-  --node-shadow: drop-shadow(0 1px 1.5px rgba(20, 23, 28, 0.07));
-  --label-bg: #ffffff;
-  --label-text: #49515b;
-  --group-bg: rgba(20, 23, 28, 0.022);
-  --group-border: #bfc4bd;
-  --group-text: #59616a;
-  --ok: #0f7b4b;  --ok-bg: #e6f4ec;
-  --warn: #a35a00; --warn-bg: #fbf0dc;
-  --no: #c0362c;  --no-bg: #fbe7e4;
-  --info: #2747f5; --info-bg: #e9edfe;
-  --trace-0: #e5402b; --trace-1: #2747f5; --trace-2: #0e9f6e; --trace-3: #d99500;
-  --shadow: 0 1px 2px rgba(20, 23, 28, 0.04);
-  --shadow-lg: 0 18px 50px rgba(20, 23, 28, 0.16);
+  --bg: #f4ebe0;
+  --surface: #f8f0e6;
+  --surface-2: #f1e8db;
+  --border: #ddd3c5;
+  --border-strong: #c6bbac;
+  --text: #1d1b18;
+  --muted: #6b655d;
+  --title: #1d1b18;
+  --primary: #1f63a0;
+  --primary-ink: #fbf6ef;
+  --primary-soft: rgba(31, 99, 160, 0.09);
+  --ink: #1d1b18;
+  --ink-2: #34302b;
+  --ink-contrast: #fbf6ef;
+  --tile-ink: #efe6d8;
+  --canvas: #faf3e9;
+  --grid-dot: #e0d3c0;
+  --edge: #5d564e;
+  --edge-hl: #e8742a;
+  --node-bg: #fffaf2;
+  --node-border: #34302b;
+  --node-text: #1d1b18;
+  --node-caption: #6b655d;
+  --node-shadow: drop-shadow(0 1.5px 0 #34302b);
+  --label-bg: #fbf7f1;
+  --label-text: #5d564e;
+  --group-bg: rgba(80, 60, 35, 0.035);
+  --group-border: #b6ac9f;
+  --group-text: #6b655d;
+  --ok: #276f37;  --ok-bg: #e8efd9;
+  --warn: #8a5208; --warn-bg: #f6e6c9;
+  --no: #b3261e;  --no-bg: #fbebe7;
+  --info: #5a43a6; --info-bg: #ebe3f1;
+  --trace-0: #e8742a; --trace-1: #2f86ce; --trace-2: #3fa456; --trace-3: #d99a1e;
+  --line-ctl: #b6ac9f;  /* the 1.3px border of controls, pills and tiles */
+  --accent: #cfe3b2;    /* the active thing: primary button, chosen option, current stop */
+  --accent-2: #b2d491;
+  --drop: #1d1b18;      /* hard offset shadows */
+  --drop-2: #34302b;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 0 rgba(80, 60, 35, 0.06), 0 10px 22px -16px rgba(80, 60, 35, 0.35);
+  --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(60, 40, 20, 0.55);
   --brand-filter: none;
+  --grain: 0.05;
+}
+
+/* Derived in every preset: the hard shadows and the nine panel-key tints (the reference's folder
+   colours mixed into the preset's own surface, so they work light and dark). */
+:root {
+  --pop: 1.5px 2.5px 0 var(--drop);
+  --tool-shadow: 0 1.5px 0 var(--drop-2);
+  --key-0: color-mix(in srgb, #d5b07a 36%, var(--surface));
+  --key-1: color-mix(in srgb, #7c63d0 26%, var(--surface));
+  --key-2: color-mix(in srgb, #3fa456 28%, var(--surface));
+  --key-3: color-mix(in srgb, #e8834d 32%, var(--surface));
+  --key-4: color-mix(in srgb, #2f86ce 26%, var(--surface));
+  --key-5: color-mix(in srgb, #2a9d8f 28%, var(--surface));
+  --key-6: color-mix(in srgb, #d9577a 26%, var(--surface));
+  --key-7: color-mix(in srgb, #64728a 26%, var(--surface));
+  --key-8: color-mix(in srgb, #8c9a3c 30%, var(--surface));
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0d0f12;
-  --surface: #14171b;
-  --surface-2: #1a1e23;
-  --border: #252a31;
-  --border-strong: #363c45;
-  --text: #e4e6e9;
-  --muted: #8b929c;
-  --title: #f4f5f6;
-  --primary: #7d93ff;
-  --primary-ink: #0d0f12;
-  --primary-soft: rgba(125, 147, 255, 0.14);
-  --ink: #f1f2f4;
-  --ink-contrast: #0d0f12;
-  --tile-ink: #262b32;
-  --canvas: #101317;
-  --grid-dot: #1d2127;
-  --edge: #5f6773;
-  --edge-hl: #7d93ff;
-  --node-bg: #181c21;
-  --node-border: #2f353e;
-  --node-text: #f0f2f4;
-  --node-caption: #8d949e;
-  --node-shadow: none;
-  --label-bg: #13161a;
-  --label-text: #a9b0ba;
-  --group-bg: rgba(255, 255, 255, 0.022);
-  --group-border: #3a414b;
-  --group-text: #9aa2ac;
-  --ok: #4ade80;  --ok-bg: rgba(74, 222, 128, 0.13);
-  --warn: #f5c04a; --warn-bg: rgba(245, 192, 74, 0.13);
-  --no: #ff7466;  --no-bg: rgba(255, 116, 102, 0.14);
-  --info: #7d93ff; --info-bg: rgba(125, 147, 255, 0.13);
-  --trace-0: #ff6b57; --trace-1: #7d93ff; --trace-2: #34d3a0; --trace-3: #f2c14e;
-  --shadow: none;
-  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+  --bg: #211e1a;
+  --surface: #26231e;
+  --surface-2: #2d2822;
+  --border: #38322a;
+  --border-strong: #4f473d;
+  --text: #efe6d6;
+  --muted: #aca191;
+  --title: #f6eee1;
+  --primary: #8ab8e6;
+  --primary-ink: #1d1b17;
+  --primary-soft: rgba(138, 184, 230, 0.13);
+  --ink: #efe6d6;
+  --ink-2: #ddd3c2;
+  --ink-contrast: #1d1b17;
+  --tile-ink: #332e27;
+  --canvas: #24201b;
+  --grid-dot: #3a342c;
+  --edge: #9c9182;
+  --edge-hl: #f08a45;
+  --node-bg: #2b2722;
+  --node-border: #8d7f6c;
+  --node-text: #efe6d6;
+  --node-caption: #aca191;
+  --node-shadow: drop-shadow(0 1.5px 0 #0b0907);
+  --label-bg: #26231e;
+  --label-text: #c9bfb0;
+  --group-bg: rgba(255, 240, 220, 0.025);
+  --group-border: #5a5146;
+  --group-text: #aca191;
+  --ok: #8fd19e;  --ok-bg: #2a3824;
+  --warn: #f0b456; --warn-bg: #3b301e;
+  --no: #ff8f86;  --no-bg: #41261f;
+  --info: #c3b1ef; --info-bg: #332a44;
+  --trace-0: #f08a45; --trace-1: #6aaee8; --trace-2: #6cc47d; --trace-3: #f0c35a;
+  --line-ctl: #625a4e;
+  --accent: #3f4c2b;
+  --accent-2: #536b37;
+  --drop: #050403;
+  --drop-2: #0b0907;
+  --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(0, 0, 0, 0.8);
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] {
     color-scheme: dark;
-    --bg: #0d0f12;
-    --surface: #14171b;
-    --surface-2: #1a1e23;
-    --border: #252a31;
-    --border-strong: #363c45;
-    --text: #e4e6e9;
-    --muted: #8b929c;
-    --title: #f4f5f6;
-    --primary: #7d93ff;
-    --primary-ink: #0d0f12;
-    --primary-soft: rgba(125, 147, 255, 0.14);
-    --ink: #f1f2f4;
-    --ink-contrast: #0d0f12;
-    --tile-ink: #262b32;
-    --canvas: #101317;
-    --grid-dot: #1d2127;
-    --edge: #5f6773;
-    --edge-hl: #7d93ff;
-    --node-bg: #181c21;
-    --node-border: #2f353e;
-    --node-text: #f0f2f4;
-    --node-caption: #8d949e;
-    --node-shadow: none;
-    --label-bg: #13161a;
-    --label-text: #a9b0ba;
-    --group-bg: rgba(255, 255, 255, 0.022);
-    --group-border: #3a414b;
-    --group-text: #9aa2ac;
-    --ok: #4ade80;  --ok-bg: rgba(74, 222, 128, 0.13);
-    --warn: #f5c04a; --warn-bg: rgba(245, 192, 74, 0.13);
-    --no: #ff7466;  --no-bg: rgba(255, 116, 102, 0.14);
-    --info: #7d93ff; --info-bg: rgba(125, 147, 255, 0.13);
-    --trace-0: #ff6b57; --trace-1: #7d93ff; --trace-2: #34d3a0; --trace-3: #f2c14e;
-    --shadow: none;
-    --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+    --bg: #211e1a;
+    --surface: #26231e;
+    --surface-2: #2d2822;
+    --border: #38322a;
+    --border-strong: #4f473d;
+    --text: #efe6d6;
+    --muted: #aca191;
+    --title: #f6eee1;
+    --primary: #8ab8e6;
+    --primary-ink: #1d1b17;
+    --primary-soft: rgba(138, 184, 230, 0.13);
+    --ink: #efe6d6;
+    --ink-2: #ddd3c2;
+    --ink-contrast: #1d1b17;
+    --tile-ink: #332e27;
+    --canvas: #24201b;
+    --grid-dot: #3a342c;
+    --edge: #9c9182;
+    --edge-hl: #f08a45;
+    --node-bg: #2b2722;
+    --node-border: #8d7f6c;
+    --node-text: #efe6d6;
+    --node-caption: #aca191;
+    --node-shadow: drop-shadow(0 1.5px 0 #0b0907);
+    --label-bg: #26231e;
+    --label-text: #c9bfb0;
+    --group-bg: rgba(255, 240, 220, 0.025);
+    --group-border: #5a5146;
+    --group-text: #aca191;
+    --ok: #8fd19e;  --ok-bg: #2a3824;
+    --warn: #f0b456; --warn-bg: #3b301e;
+    --no: #ff8f86;  --no-bg: #41261f;
+    --info: #c3b1ef; --info-bg: #332a44;
+    --trace-0: #f08a45; --trace-1: #6aaee8; --trace-2: #6cc47d; --trace-3: #f0c35a;
+    --line-ctl: #625a4e;
+    --accent: #3f4c2b;
+    --accent-2: #536b37;
+    --drop: #050403;
+    --drop-2: #0b0907;
+    --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 3px 4px 0 var(--drop), 0 30px 60px -28px rgba(0, 0, 0, 0.8);
   }
 }
 
@@ -324,3 +362,14 @@
   --shadow: none;
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
+
+/* The named presets keep their own colours; these fill in the tokens the course look added. */
+:root:is([data-theme="tokyo-night"], [data-theme="nord"], [data-theme="catppuccin"], [data-theme="paper"], [data-theme="blueprint"]) {
+  --ink-2: color-mix(in srgb, var(--ink) 84%, var(--surface));
+  --line-ctl: var(--border-strong);
+  --accent: color-mix(in srgb, var(--ok) 20%, var(--surface));
+  --accent-2: color-mix(in srgb, var(--ok) 34%, var(--surface));
+  --drop: rgba(0, 0, 0, 0.6);
+  --drop-2: rgba(0, 0, 0, 0.45);
+}
+:root[data-theme="paper"] { --drop: #22201c; --drop-2: #3a362f; }
