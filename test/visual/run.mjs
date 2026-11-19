@@ -51,13 +51,16 @@ const SCENARIOS = [
   { name: "lesson-compact", example: "git-commit-lesson", width: 390, height: 844, viewport: true, act: "lesson-compact", noShot: true },
   { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true },
   { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true },
-  { name: "lesson-round-trip", draft: "test/visual/fixtures/lesson-round-trip.md", viewport: true, act: "lesson-round-trip", noShot: true }
+  { name: "lesson-round-trip", draft: "test/visual/fixtures/lesson-round-trip.md", viewport: true, act: "lesson-round-trip", noShot: true },
+  // Thai labels are set in the system's Thai face, so only a browser can check that they fit (the audit does).
+  { name: "thai-labels", draft: "test/visual/fixtures/thai-labels.md", viewport: true, noShot: true }
 ];
 const sourceOf = (s) => s.draft || `examples/${s.example}.md`;
 
 // Runs inside the page; returns a list of problems.
 const AUDIT = `(() => {
   const problems = [];
+  if (![...document.fonts].some(f => f.family.replace(/["']/g, "") === "JetBrains Mono" && f.status === "loaded")) problems.push("the embedded JetBrains Mono did not load");
   if (document.documentElement.scrollWidth > innerWidth + 1) problems.push("horizontal page overflow: " + document.documentElement.scrollWidth + " > " + innerWidth);
   document.querySelectorAll(".c-diagram").forEach((fig, d) => {
     const model = JSON.parse(fig.querySelector(".c-model").textContent);

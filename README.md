@@ -70,7 +70,7 @@ clarify/
 │   ├── brand-marks/brands.js        22 inline brand marks + lookup + sprite
 │   └── runtime/                     themes.css, page.css, svg.css, client.js (inlined at compile time),
 │                                    plus lesson.css and lesson.js on pages with a lesson;
-│                                    fonts/ holds JetBrains Mono (Latin, 400 and 700, OFL), inlined into every page
+│                                    fonts/ holds JetBrains Mono (Latin, one variable file for weights 100–800, OFL), inlined into every page
 └── test/
     ├── *.test.js                    node:test unit tests (parser, layout + fuzz, mermaid, render, serve, lessons)
     └── visual/                      CDP-driven browser audit + screenshot regression (no Playwright)
@@ -84,7 +84,7 @@ npm run visual           # browser audit + pixel diff against test/visual/baseli
 npm run visual:update    # accept intentional visual changes
 ```
 
-The visual suite drives headless Chromium over the DevTools pipe. It finds Chromium through `$CHROME_PATH`, Playwright's browser cache or a system Chrome, and skips cleanly if none exists. Each scenario first runs in-page checks: no console errors, every node label fits its box, every tech node has an icon, and no horizontal page overflow. It then compares the screenshot against its baseline, and diff images go to `test/visual/output/`. Of the 26 scenarios, 17 compare a screenshot. The other 9 check behaviour end to end: the reply loop, SVG/PNG export, and the lesson player (stepping, motion and keys, reduced motion, round trips at rest, compact name tags, the quiz and step comments).
+The visual suite drives headless Chromium over the DevTools pipe. It finds Chromium through `$CHROME_PATH`, Playwright's browser cache or a system Chrome, and skips cleanly if none exists. Each scenario first runs in-page checks: no console errors, the embedded font loaded, every node label fits its box, every tech node has an icon, and no horizontal page overflow. It then compares the screenshot against its baseline, and diff images go to `test/visual/output/`. Of the 27 scenarios, 17 compare a screenshot. The other 10 check behaviour end to end: the reply loop, SVG/PNG export, Thai labels fitting their boxes, and the lesson player (stepping, motion and keys, reduced motion, round trips at rest, compact name tags, the quiz and step comments).
 
 Baselines depend on the machine's fonts. Regenerate them with `npm run visual:update` on the machine (or CI image) that runs the comparison.
 
@@ -93,9 +93,9 @@ On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/
 ## Design notes
 
 - **Plain ESM with JSDoc types.** There's no build step. `src/types.d.ts` defines the contracts, and modules reference them via `@typedef {import("./types")…}`, so editors and `tsc --checkJs` type-check without a compile pass.
-- **Deterministic text measurement.** Node-side layout measures text in the page's monospace face: 0.6em per character, 1em for CJK, nothing for combining marks. The browser audit verifies that labels actually fit.
+- **Deterministic text measurement.** Node-side layout measures text in the page's monospace face (0.6em per character, 1em for CJK, nothing for non-spacing marks), and never less than the older per-letter estimate for proportional faces, so Paper's serif fits too. The browser audit verifies that labels actually fit.
 - **Untrusted input.** All draft text is escaped. Links are limited to http/https/mailto/relative URLs, and embedded JSON is `<`-escaped. The live server binds to loopback and rejects foreign `Host` headers.
-- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 81 KB of inlined CSS and JS per page, and the embedded font adds about 58 KB. Brand paths are emitted once per page as a `<symbol>` sprite. Pages without a lesson are typically 170–220 KB. A page with a lesson is roughly 360–470 KB: it also carries the lesson player (about 36 KB of CSS and JS) and the stage, drawn as one SVG.
+- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 81 KB of inlined CSS and JS per page, and the embedded font adds about 53 KB. Brand paths are emitted once per page as a `<symbol>` sprite. Pages without a lesson are typically 165–215 KB. A page with a lesson is roughly 355–465 KB: it also carries the lesson player (about 36 KB of CSS and JS) and the stage, drawn as one SVG.
 
 ## License
 

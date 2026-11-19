@@ -132,9 +132,9 @@ SOFTWARE.
 
 ## JetBrains Mono
 
-Every page embeds JetBrains Mono (Latin subset, regular and bold) so it looks the same on every
-machine. The two `.woff2` files in `src/runtime/fonts/` come from the `@fontsource/jetbrains-mono`
-package, version 5.3.0.
+Every page embeds JetBrains Mono (Latin subset, one variable file for weights 100 to 800) so it
+looks the same on every machine. The `.woff2` file in `src/runtime/fonts/` comes from the
+`@fontsource-variable/jetbrains-mono` package, version 5.3.0.
 
 Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono).
 Licensed under the SIL Open Font License, Version 1.1. The full licence is in

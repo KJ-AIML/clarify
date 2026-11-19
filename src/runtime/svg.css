@@ -2,7 +2,7 @@
    and a hard drop, warm edges, small-caps labels. Embedded in the page and copied into exported
    SVG/PNG files together with the resolved theme tokens. */
 
-.c-svg { font-family: var(--font); display: block; overflow: visible; user-select: none; -webkit-user-select: none; }
+.c-svg { font-family: var(--font); font-feature-settings: "calt" 0, "liga" 0; display: block; overflow: visible; user-select: none; -webkit-user-select: none; }
 .c-svg-bg { fill: var(--canvas); }
 .c-svg text { font-family: var(--font); }
 
@@ -42,11 +42,11 @@
 .c-node-mono { fill: var(--primary); font-family: var(--mono); font-size: 11px; font-weight: 700; }
 .c-node-meta { fill: var(--muted); opacity: 0.55; }
 .c-node-status { fill: var(--muted); }
-.c-node.is-ok .c-node-status { fill: var(--ok); }
-.c-node.is-warn .c-node-status { fill: var(--warn); }
-.c-node.is-warn .c-node-bg { stroke: var(--warn); }
-.c-node.is-no .c-node-status, .c-node.is-err .c-node-status { fill: var(--no); }
-.c-node.is-no .c-node-bg, .c-node.is-err .c-node-bg { stroke: var(--no); }
+.c-node.is-ok .c-node-status { fill: var(--ok-line); }
+.c-node.is-warn .c-node-status { fill: var(--warn-line); }
+.c-node.is-warn .c-node-bg { stroke: var(--warn-line); }
+.c-node.is-no .c-node-status, .c-node.is-err .c-node-status { fill: var(--no-line); }
+.c-node.is-no .c-node-bg, .c-node.is-err .c-node-bg { stroke: var(--no-line); }
 .c-node:hover .c-node-bg, .c-node:focus-visible .c-node-bg { stroke: var(--edge-hl); stroke-width: 2; }
 .c-brand { filter: var(--brand-filter); }
 .c-brand.is-ink { color: var(--node-text); }
@@ -60,7 +60,7 @@
 .c-edge.is-hl .c-edge-line[marker-end] { marker-end: url(#c-arrow-hl); }
 .c-edge.is-hl .c-edge-line[marker-start] { marker-start: url(#c-arrow-hl); }
 .c-node.is-selected .c-node-bg { stroke: var(--edge-hl); stroke-width: 2.4; }
-.c-node.is-annotated .c-node-meta, .c-edge.is-annotated .c-edge-line { stroke: var(--warn); }
+.c-node.is-annotated .c-node-meta, .c-edge.is-annotated .c-edge-line { stroke: var(--warn-line); }
 
 /* Route tour: the active route becomes a cased transit line; stops are ringed. */
 .c-svg.is-touring .c-traces { display: none; }

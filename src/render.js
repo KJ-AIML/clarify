@@ -28,15 +28,13 @@ const minifyJs = (js) => js
   .filter(l => l && !l.startsWith("//"))
   .join("\n");
 
-// JetBrains Mono, Latin subset, regular and bold (src/runtime/fonts, OFL-1.1), inlined so every page
-// looks the same on every machine without a network request. Other scripts (Thai, CJK) fall back per
-// glyph to the system's faces through the font stack in themes.css.
+// JetBrains Mono, Latin subset, one variable file for every weight from 100 to 800 (src/runtime/fonts,
+// OFL-1.1), inlined so every page looks the same on every machine without a network request. Other
+// scripts (Thai, CJK) fall back per glyph to the system's faces through the font stack in themes.css.
 const LATIN = "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
-const fontFace = (weight) => {
-  const woff2 = fs.readFileSync(new URL(`./runtime/fonts/jetbrains-mono-latin-${weight}-normal.woff2`, import.meta.url)).toString("base64");
-  return `@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:${weight};font-display:swap;src:url(data:font/woff2;base64,${woff2}) format("woff2");unicode-range:${LATIN}}`;
-};
-const FONT_CSS = fontFace(400) + fontFace(700);
+const FONT_WOFF2 = fs.readFileSync(new URL("./runtime/fonts/jetbrains-mono-latin-wght-normal.woff2", import.meta.url)).toString("base64");
+const FONT_CSS = `/* JetBrains Mono © 2020 The JetBrains Mono Project Authors, SIL Open Font License 1.1 */` +
+  `@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:100 800;font-display:swap;src:url(data:font/woff2;base64,${FONT_WOFF2}) format("woff2");unicode-range:${LATIN}}`;
 /** Bytes the embedded font adds to every page; the page-size budgets in the tests add exactly this. */
 export const FONT_BYTES = Buffer.byteLength(FONT_CSS);
 const CSS = minifyCss(asset("./runtime/themes.css") + asset("./runtime/page.css"));

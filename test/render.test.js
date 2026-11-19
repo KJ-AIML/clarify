@@ -18,8 +18,21 @@ test("every example compiles without warnings and within the size budget", () =>
     const budget = (/class="c-lesson"/.test(html) ? 450 * 1024 : 164 * 1024) + FONT_BYTES;
     assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
-    assert.ok(!/\{\{|undefined|NaN/.test(html.replace(/<script>[\s\S]*?<\/script>/g, "")), `${f}: template leak`);
+    // Scripts and the font's base64 (which can spell "NaN" by chance) are not template text.
+    const text = html.replace(/<script>[\s\S]*?<\/script>/g, "").replace(/<style id="c-font">[\s\S]*?<\/style>/, "");
+    assert.ok(!/\{\{|undefined|NaN/.test(text), `${f}: template leak`);
   }
+});
+
+test("the embedded font is one small Latin face that every page carries", () => {
+  // The budgets above add FONT_BYTES whatever it is, so its own size is pinned here (the variable
+  // Latin subset is about 54 KB as base64; a full or second face would not fit).
+  assert.ok(FONT_BYTES < 60 * 1024, `FONT_BYTES is ${FONT_BYTES}`);
+  const { html } = compile(parseDraft(read(examples[0])));
+  const faces = html.match(/@font-face\{[^}]*\}/g) || [];
+  assert.equal(faces.length, 1);
+  assert.match(faces[0], /font-family:"JetBrains Mono";font-style:normal;font-weight:100 800;/);
+  assert.match(faces[0], /src:url\(data:font\/woff2;base64,d09GMg/); // "wOF2", the woff2 signature
 });
 
 test("brand icons render via a deduplicated sprite", () => {

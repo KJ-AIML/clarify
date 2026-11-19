@@ -9,7 +9,7 @@
   --mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, "Leelawadee UI", Thonburi, monospace;
   --font: var(--mono);
   --font-display: var(--font);
-  --radius: 12px;
+  --radius: 14px;  /* cards and the index */
   color-scheme: light;
   --bg: #f4ebe0;
   --surface: #f8f0e6;
@@ -48,6 +48,9 @@
   --line-ctl: #b6ac9f;  /* the 1.3px border of controls, pills and tiles */
   --accent: #cfe3b2;    /* the active thing: primary button, chosen option, current stop */
   --accent-2: #b2d491;
+  --ctl-bg: var(--node-bg);  /* option cards, links, route buttons, tables, checks */
+  --hi: rgba(255, 255, 255, 0.45);  /* the inset light on the top edge of pills and buttons */
+  --ok-line: #4caf50; --warn-line: #e8a33a; --no-line: #e5534b;  /* status strokes and dots (not text) */
   --drop: #1d1b18;      /* hard offset shadows */
   --drop-2: #34302b;
   --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 0 rgba(80, 60, 35, 0.06), 0 10px 22px -16px rgba(80, 60, 35, 0.35);
@@ -102,6 +105,8 @@
   --line-ctl: #625a4e;
   --accent: #3f4c2b;
   --accent-2: #536b37;
+  --hi: rgba(255, 240, 220, 0.04);
+  --ok-line: #8fd19e; --warn-line: #f0b456; --no-line: #ff8f86;
   --drop: #050403;
   --drop-2: #0b0907;
   --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
@@ -149,6 +154,8 @@
     --line-ctl: #625a4e;
     --accent: #3f4c2b;
     --accent-2: #536b37;
+    --hi: rgba(255, 240, 220, 0.04);
+    --ok-line: #8fd19e; --warn-line: #f0b456; --no-line: #ff8f86;
     --drop: #050403;
     --drop-2: #0b0907;
     --shadow: inset 0 1px 0 rgba(255, 240, 220, 0.04), 0 1px 0 rgba(0, 0, 0, 0.25), 0 10px 22px -16px rgba(0, 0, 0, 0.6);
@@ -367,5 +374,8 @@
   --drop-2: rgba(0, 0, 0, 0.45);
   --sheen: transparent;
   --paper-grain: none;
+  --ctl-bg: var(--surface);
+  --hi: transparent;
+  --ok-line: var(--ok); --warn-line: var(--warn); --no-line: var(--no);
 }
-:root[data-theme="paper"] { --drop: #22201c; --drop-2: #3a362f; }
+:root[data-theme="paper"] { --drop: #22201c; --drop-2: #3a362f; --line-ctl: #8b8475; --on-route: var(--canvas); }
