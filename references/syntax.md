@@ -112,7 +112,7 @@ This section is the syntax and the warnings. The rules for authors, the kit's cl
 ```
 ````
 
-- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). Use each name once per page. Do not use a kit class name (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing`, …) or `hatch`: the section would take that class's style, with no warning.
+- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). Use each name once per page. Do not use a kit class name (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing`, …): the section would take that class's style, with no warning. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`, and the ids of a section named `hatch` would collide with them, with no warning.
 - **Inline:** the fence body is the fragment.
 - **`file=path`** (or `file="a path with spaces"`): the fragment comes from that file, and the fence body is ignored. The path starts from the draft's folder; for a draft read from stdin, from the working directory. `clarify serve` reloads when the file changes.
 
@@ -143,7 +143,7 @@ What the renderer does:
 
 ## Checking a page
 
-`clarify check` opens a page in a real browser and looks at every panel. It works on any page, not only one with a free section. Unlike `render`, it starts a browser.
+`clarify check` opens a page in a real browser and looks at every panel. It works on any page, not only one with a free section. Unlike `render`, it loads the page in a browser and reads it.
 
 ```bash
 clarify check draft.md              # pictures in ~/.clarify/checks/<slug>/
