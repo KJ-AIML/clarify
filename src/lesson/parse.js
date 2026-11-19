@@ -394,7 +394,7 @@ function readMoveDetail(text = "") {
   return { word, count };
 }
 
-/** `Short: Title [chapter]` or `Title [chapter]`; the short name defaults to the first two words. */
+/** `Short: Title [chapter]` or `Title [chapter]`; the short name defaults to the title's first two words. */
 function readStepHead(head) {
   let rest = head;
   let chapter = "how";
@@ -406,8 +406,32 @@ function readStepHead(head) {
   }
   const colon = rest.search(COLON);
   const title = (colon < 0 ? rest : rest.slice(colon + 1)).trim();
-  const short = (colon < 0 ? "" : rest.slice(0, colon).trim()) || title.split(/\s+/).slice(0, 2).join(" ");
+  const short = (colon < 0 ? "" : rest.slice(0, colon).trim()) || firstTwoWords(title);
   return { short, title, chapter };
+}
+
+/**
+ * The text up to the end of its second word, as written: what lies between the two words stays, and
+ * so does punctuation stuck to the second (`Sorting [wip]`) unless a third word runs on (`Step-by`).
+ * Words come from Intl.Segmenter, so text without spaces, such as Thai, splits too.
+ */
+function firstTwoWords(text) {
+  let seen = 0;
+  let end = 0; // the end of the second word, or of everything read before it
+  let tail = 0; // the end of the punctuation stuck to the second word
+  for (const { segment, index, isWordLike } of words.segment(text)) {
+    if (seen < 2) {
+      if (isWordLike) seen++;
+      end = tail = index + segment.length;
+    } else if (isWordLike) {
+      return text.slice(0, end);
+    } else if (/\s/.test(segment)) {
+      break;
+    } else {
+      tail = index + segment.length;
+    }
+  }
+  return text.slice(0, tail);
 }
 
 /** The text after `tip`: `[idea|try|warn] [Title:] text`. */

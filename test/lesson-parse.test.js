@@ -259,6 +259,23 @@ test("step headers: short name, chapter, and title forms", () => {
   ]);
 });
 
+test("without a short name, the first two words of the title are used, as written, Thai too", () => {
+  const { lesson, warnings } = run([
+    "step ส่งงานขึ้นเซิร์ฟเวอร์ [how]",
+    "step ส่ง commit ขึ้น origin",
+    "step `git add` copies them",
+    "step Step-by-step guide"
+  ].join("\n"));
+  assert.deepEqual(warnings, []);
+  // Thai has no spaces between words: Intl.Segmenter finds them (ส่ง | งาน | ขึ้น | เซิร์ฟเวอร์).
+  assert.deepEqual(lesson.steps.map(s => [s.short, s.title]), [
+    ["ส่งงาน", "ส่งงานขึ้นเซิร์ฟเวอร์"],
+    ["ส่ง commit", "ส่ง commit ขึ้น origin"],
+    ["`git add`", "`git add` copies them"],
+    ["Step-by", "Step-by-step guide"]
+  ]);
+});
+
 test("tips: kind and title defaults, and a colon is only a split before a space", () => {
   const { lesson } = run([
     "step One: First",
