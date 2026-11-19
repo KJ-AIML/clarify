@@ -53,7 +53,9 @@ const SCENARIOS = [
   { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true },
   { name: "lesson-round-trip", draft: "test/visual/fixtures/lesson-round-trip.md", viewport: true, act: "lesson-round-trip", noShot: true },
   // Thai labels are set in the system's Thai face, so only a browser can check that they fit (the audit does).
-  { name: "thai-labels", draft: "test/visual/fixtures/thai-labels.md", viewport: true, noShot: true }
+  { name: "thai-labels", draft: "test/visual/fixtures/thai-labels.md", viewport: true, noShot: true },
+  // A page with a free section blocks the network; it must still work, and one bad section must not stop the others.
+  { name: "free-csp", draft: "test/visual/fixtures/free-csp.md", viewport: true, act: "free-csp", noShot: true }
 ];
 const sourceOf = (s) => s.draft || `examples/${s.example}.md`;
 
@@ -159,6 +161,40 @@ async function act(page, kind) {
     // The exported SVG must render standalone (no page CSS): screenshot it as its own document.
     await page.goto(pathToFileURL(svgFile).href);
     fs.writeFileSync(path.join(output, "export-standalone.png"), await page.screenshot({ fullPage: true }));
+  }
+  if (kind === "free-csp") {
+    // The policy is in the page, and the page still works under it: the sections run, the kit's hidden rule
+    // holds, and the diagram's PNG export still downloads. The AUDIT already proved the font loads under font-src data:.
+    const problems = [];
+    const csp = await page.eval(`document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content ?? ""`);
+    if (!csp.startsWith("default-src 'none';")) problems.push(`no Content-Security-Policy meta in the DOM: "${csp}"`);
+    // Review Focus 1: a section whose script throws, or does not parse, must not stop the sections around it.
+    for (const name of ["ok", "after"]) {
+      const ran = await page.eval(`document.querySelector('[data-fx="${name}"]')?.dataset.ran ?? "(no section)"`);
+      if (ran !== "yes") problems.push(`section ${name}: data-ran is "${ran}", expected "yes"`);
+    }
+    // The two deliberate errors: one caught and logged by the wrapper, one uncaught SyntaxError. Take both out,
+    // so the error check after this act sees only what is left over (a policy violation would show there).
+    for (const [label, test] of [["fx boom: Error: on purpose", (e) => e.startsWith("fx boom: Error: on purpose")], ["SyntaxError", (e) => e.startsWith("SyntaxError")]]) {
+      const hits = page.errors.filter(test);
+      if (hits.length !== 1) problems.push(`expected one "${label}" error, got ${hits.length}: ${JSON.stringify(page.errors)}`);
+      else page.errors.splice(page.errors.indexOf(hits[0]), 1);
+    }
+    const display = await page.eval(`getComputedStyle(document.querySelector(".fx-btn[hidden]")).display`);
+    if (display !== "none") problems.push(`a hidden .fx-btn computes to display: ${display}, expected none`);
+    const dir = path.join(output, "downloads-csp");
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    await page.allowDownloads(dir);
+    await page.click('[data-act="menu"]');
+    await page.click('[data-act="export-png"]');
+    try {
+      const png = decodePng(fs.readFileSync(await waitForFile(dir, /\.png$/)));
+      if (!(png.width > 0 && png.height > 0)) problems.push("the exported PNG is empty");
+    } catch (err) {
+      problems.push(`PNG export under the policy: ${err instanceof Error ? err.message : err}`);
+    }
+    if (problems.length) throw new Error(problems.join("\n    "));
   }
   if (kind === "inspect") {
     const sel = await page.eval(`(() => { const m = JSON.parse(document.querySelector(".c-model").textContent); return '.c-node[data-node="' + m.nodes.findIndex(n => n.id === "Checkout Service") + '"]'; })()`);

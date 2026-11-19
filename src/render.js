@@ -49,6 +49,10 @@ const LESSON_CSS = minifyCss(asset("./iso/kit.css") + asset("./runtime/lesson.cs
 const LESSON_JS = minifyJs(asset("./runtime/lesson.js"));
 // Only pages that contain a free section carry the kit; each section's own CSS follows it as written.
 const FX_CSS = minifyCss(asset("./runtime/fx.css"));
+// A free section is raw HTML and script, so its page may not use the network. Inline script and style, the
+// embedded font (data:) and the PNG export (data: and blob: images) still work. `clarify serve` adds
+// `connect-src 'self'` for live reload's EventSource.
+const FREE_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; form-action 'none'; base-uri 'none'";
 
 export const THEMES = [
   ["auto", "Auto (system)"], ["light", "Light"], ["dark", "Dark"], ["tokyo-night", "Tokyo Night"],
@@ -122,7 +126,7 @@ export function compile(draft, opts = {}) {
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(meta.lang || "en")}" data-theme="${escapeHtml(meta.theme)}">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8">${ctx.free.length ? `\n<meta http-equiv="Content-Security-Policy" content="${FREE_CSP}${opts.live ? "; connect-src 'self'" : ""}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="Clarify">
 <title>${escapeHtml(plainInline(meta.title))}</title>

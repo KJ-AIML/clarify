@@ -121,3 +121,28 @@ test("a bad name warns", () => {
   assert.equal(count(html, /<div class="fx fx-missing">This free section needs a name\.<\/div>/g), 2);
   assert.doesNotMatch(html, /<p>key<\/p>|<p>bare<\/p>/);
 });
+
+const POLICY = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; form-action 'none'; base-uri 'none'";
+const policyOf = (html) => (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)">/) || [])[1];
+const withFree = ["## A Keys", fence("key-code", "<p>a</p>")].join("\n");
+
+test("a page with a free section blocks the network", () => {
+  const { html } = compile(parseDraft(withFree));
+  assert.equal(policyOf(html), POLICY);
+  const meta = html.indexOf('<meta http-equiv="Content-Security-Policy"');
+  assert.ok(html.indexOf('<meta charset="utf-8">') < meta, "right after the charset");
+  assert.ok(meta < html.indexOf("<script"), "before the first script");
+});
+
+test("under clarify serve the policy also allows connect-src 'self'", () => {
+  assert.equal(policyOf(compile(parseDraft(withFree), { live: true }).html), `${POLICY}; connect-src 'self'`);
+  assert.doesNotMatch(policyOf(compile(parseDraft(withFree)).html), /connect-src/);
+});
+
+test("pages without a free section have no policy", () => {
+  const plain = examples.filter((f) => !/data-fx=/.test(compile(parseDraft(read(f))).html));
+  assert.ok(plain.length > 0);
+  for (const f of plain) {
+    assert.doesNotMatch(compile(parseDraft(read(f)), { live: true }).html, /Content-Security-Policy/, f);
+  }
+});
