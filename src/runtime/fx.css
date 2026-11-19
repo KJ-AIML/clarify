@@ -69,8 +69,9 @@
 .fx-scroll { max-width: 100%; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .fx-scroll > * { min-width: var(--fx-min, 0); }
 /* Bar: a length in a role colour. Set the length with style="width: 40%". A plain bar is --surface-2;
-   .is-varies hatches it in its role colour (or in ink), for "up to" or "varies". */
-.fx-bar, .fx-swatch { --fx-role: var(--node-border); border: 1.3px solid var(--node-border); background: var(--surface-2); }
+   .is-varies hatches it in its role colour, or with no role in ink (--ink-2, which stands out in every
+   theme; --node-border is too faint in the named dark themes), for "up to" or "varies". */
+.fx-bar, .fx-swatch { --fx-role: var(--ink-2); border: 1.3px solid var(--node-border); background: var(--surface-2); }
 .fx-bar { display: block; flex: none; height: 14px; min-width: 6px; border-radius: 4px; box-shadow: var(--tool-shadow); }
 .fx-bar.is-hot, .fx-swatch.is-hot { --fx-role: var(--trace-0); background: var(--fx-role); }
 .fx-bar.is-good, .fx-swatch.is-good { --fx-role: var(--ok-line); background: var(--fx-role); }
