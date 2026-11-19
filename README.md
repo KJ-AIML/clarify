@@ -16,7 +16,7 @@ Interactive architecture and decision boards for AI coding agents. The agent wri
 - **Live preview.** `clarify serve draft.md` reloads the page on every save and keeps zoom, pan and scroll.
 - **Eight themes.** Auto (system), Light, Dark, Tokyo Night, Nord, Catppuccin, Paper (e-ink), Blueprint.
 
-The visual direction is wayfinding. Chrome stays ink-and-paper and neutral, and color is reserved for meaning: routes use transit-line colors, statuses and brand marks keep theirs. Headings use system signage faces (DIN Alternate on macOS, Bahnschrift on Windows), and labels and counts use monospace.
+The visual direction is the course look, after [designed-to-scale](https://designed-to-scale.vercel.app): warm paper with a faint grain, one monospace face for everything (JetBrains Mono, embedded so pages look the same on every machine), warm lines, small-caps labels, green for the active thing and a hard offset shadow on it. Color still means something: routes use their own line colors, statuses and brand marks keep theirs, and each panel key takes a folder color in turn. The named presets keep their palettes and take the same shapes; Paper keeps its serif.
 
 ## Install
 
@@ -69,7 +69,8 @@ clarify/
 │   ├── export/markdown.js           draft → GitHub Markdown
 │   ├── brand-marks/brands.js        22 inline brand marks + lookup + sprite
 │   └── runtime/                     themes.css, page.css, svg.css, client.js (inlined at compile time),
-│                                    plus lesson.css and lesson.js on pages with a lesson
+│                                    plus lesson.css and lesson.js on pages with a lesson;
+│                                    fonts/ holds JetBrains Mono (Latin, 400 and 700, OFL), inlined into every page
 └── test/
     ├── *.test.js                    node:test unit tests (parser, layout + fuzz, mermaid, render, serve, lessons)
     └── visual/                      CDP-driven browser audit + screenshot regression (no Playwright)
@@ -87,14 +88,14 @@ The visual suite drives headless Chromium over the DevTools pipe. It finds Chrom
 
 Baselines depend on the machine's fonts. Regenerate them with `npm run visual:update` on the machine (or CI image) that runs the comparison.
 
-On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/out` instead of `npm run visual`: the committed baselines come from a Mac, so plain `npm run visual` fails on fonts and writes the missing lesson baselines into `test/visual/baselines/`. The first run fills `.tmp/before` (git-ignored), and later runs compare against it.
+On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/out` instead of `npm run visual`: the committed baselines come from a Mac, so plain `npm run visual` fails on text rendering and writes any missing baselines into `test/visual/baselines/`. The first run fills `.tmp/before` (git-ignored), and later runs compare against it.
 
 ## Design notes
 
 - **Plain ESM with JSDoc types.** There's no build step. `src/types.d.ts` defines the contracts, and modules reference them via `@typedef {import("./types")…}`, so editors and `tsc --checkJs` type-check without a compile pass.
-- **Deterministic text measurement.** Node-side layout estimates text width per character class. The browser audit verifies that labels actually fit.
+- **Deterministic text measurement.** Node-side layout measures text in the page's monospace face: 0.6em per character, 1em for CJK, nothing for combining marks. The browser audit verifies that labels actually fit.
 - **Untrusted input.** All draft text is escaped. Links are limited to http/https/mailto/relative URLs, and embedded JSON is `<`-escaped. The live server binds to loopback and rejects foreign `Host` headers.
-- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 78 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Pages without a lesson are typically 110–160 KB. A page with a lesson is roughly 300–410 KB: it also carries the lesson player (about 36 KB of CSS and JS) and the stage, drawn as one SVG.
+- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 81 KB of inlined CSS and JS per page, and the embedded font adds about 58 KB. Brand paths are emitted once per page as a `<symbol>` sprite. Pages without a lesson are typically 170–220 KB. A page with a lesson is roughly 360–470 KB: it also carries the lesson player (about 36 KB of CSS and JS) and the stage, drawn as one SVG.
 
 ## License
 
