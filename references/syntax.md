@@ -112,14 +112,14 @@ This section is the syntax and the warnings. The rules for authors, the kit's cl
 ```
 ````
 
-- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). Use each name once per page. Do not use a kit class name (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing`, …): the section would take that class's style, with no warning. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`, and the ids of a section named `hatch` would collide with them, with no warning.
+- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). Use each name once per page. Do not use a kit class name (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing`, …): the section would take that class's style, so the lint warns. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`, and the ids of a section named `hatch` would collide with them, so the lint warns about that too.
 - **Inline:** the fence body is the fragment.
 - **`file=path`** (or `file="a path with spaces"`): the fragment comes from that file, and the fence body is ignored. The path starts from the draft's folder; for a draft read from stdin, from the working directory. `clarify serve` reloads when the file changes.
 
 What the renderer does:
 
 1. It wraps the fragment in `<div class="fx fx-NAME" data-fx="NAME">`. The name scopes the section: its CSS starts with `.fx-NAME`, its ids and keyframes with `fx-NAME-`.
-2. It moves every `<style>` into one style element in the head, after the kit, and every `<script>` to the end of the page. Each script runs once with `root` set to the section, inside its own function. An error is caught and logged as `fx NAME: …`, so one broken section stops nothing. A `<script src="…">` is dropped without a warning: write the script inline.
+2. It moves each `<style>` to the head, after the kit, as a style element of its own, so a `{` left open spoils only the rest of that `<style>`. It moves every `<script>` to the end of the page. Each script runs once with `root` set to the section, inside its own function, so one broken section stops nothing. An error thrown while the script runs is caught and logged as `fx NAME: …`, and `clarify check` reports it on the section's panel. A script that does not parse, an error thrown later (in a click or a timer) and a load that the page's policy blocks are reported on the page instead (`⚠ page @…`). A `<script src="…">` is dropped without a warning: write the script inline.
 3. It adds the kit (`src/runtime/fx.css` and the hatch patterns) to a page that has a free section, and to no other page.
 4. A page with a free section loads nothing from the network: a policy in its head allows inline styles and scripts, `data:` fonts, and `data:` and `blob:` images, and nothing else. A plain link (`<a href="https://…">`) is fine, because it loads nothing until the reader clicks it.
 5. `clarify md` and **Copy as Markdown** keep three things of a section: its "How to read this" line, its takeaway, and a note that the drawing is on the HTML page.
@@ -133,17 +133,24 @@ What the renderer does:
 | `free section needs a name of lowercase letters, digits and dashes ("…")` | Name it after `free`: `free key-code`. |
 | `free section "NAME" is used twice on this page; give each one its own name` | Rename one of them. |
 | `free section file not found: PATH` | Fix the path: it starts from the draft's folder. The panel shows a dashed box until then. |
+| `free "NAME": the name "NAME" is a kit class (.fx-NAME): the section would take its style; choose another name` | Rename the section: `free colour-key`, not `free legend`. |
+| `free "NAME": the name "hatch" belongs to the kit: its hatch patterns are fx-hatch-ROLE; choose another name` | Rename the section. |
+| `free "NAME": "<!--" is never closed, so the rest of the page disappears into the comment; close it with "-->"` | Close the comment with `-->`. Until then every panel after it, and the page's own script (theme, replies, Copy as Markdown), is gone. |
+| `free "NAME": "<script>" is never closed, so the rest of the page disappears into it; close it with "</script>"` (or `"<style>"`) | Close it with its end tag. |
+| `free "NAME": "<textarea>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</textarea>"` (or `title`, `template`, `xmp`, `iframe`, `noscript`) | Take it out, and draw that part with other tags. A `<title>` inside an `<svg>` is the drawing's own and is fine. |
+| `free "NAME": a "{" in a <style> is never closed: the rules after it in that <style> are lost; add the "}"` | Add the missing `}`. |
 | `free "NAME": selectors must start with .fx-NAME: …` | Start every rule with `.fx-NAME`, inside `@media` and `@container` too. |
 | `free "NAME": @keyframes "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, in `animation` too. |
 | `free "NAME": id "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, and every `href="#…"` and `url(#…)` that points to it. |
 | `free "NAME": duplicate id "X" on the page` | Give the id another name. |
-| `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. |
+| `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. A colour's name (`white`, `black`, `navy`) is a raw colour too; `none`, `currentColor`, `transparent` and `inherit` are fine. |
 | `free "NAME": external URL "…"; a page loads nothing from the network` | Draw it inline, or embed it as `data:`. Only things that load warn: images, stylesheets, `url(…)`, `@import`, `<use href>`. A plain link (`<a href>`) does not. |
+| `free "NAME": <meta http-equiv="refresh"> reloads the page or leaves it; take it out` | Take it out. |
 | `free "NAME": N KB is over the 40 KB budget for a section` | Draw less, draw a repeated shape once and place it with `<use>`, or split the part into two sections. |
 
 ## Checking a page
 
-`clarify check` opens a page in a real browser and looks at every panel. It works on any page, not only one with a free section. Unlike `render`, it loads the page in a browser and reads it.
+`clarify check` opens a page in a real browser and looks at every panel. It works on any page, not only one with a free section. `render` only hands the page to your browser to show; `check` drives a browser itself, loads the page and reads what the reader sees.
 
 ```bash
 clarify check draft.md              # pictures in ~/.clarify/checks/<slug>/
@@ -153,10 +160,11 @@ clarify check page.html             # a page that is already rendered
 
 - **The input.** A draft (`.md`) is rendered first into `<dir>/page.html` without opening it, and its static lint comes along. A page (`.html`) is checked as it is, without the lint. A page rendered from stdin has no draft, so check the `.html` path that `render` printed.
 - **The views.** Four, each with reduced motion: 1440px light, 1440px dark, 390px light, 390px dark.
-- **The checks.** Per panel and view: `overflow` (a part sticks out of its panel), `small text` (under 10.5px on screen), `overlap` (two texts on top of each other), `clipped` (text cut off), `page error` (an exception or a `console.error`; `fx NAME: …` is a free section's script), `half-empty` (at 1440px, content fills under half of the panel's height) and `low contrast` (under 4.5:1, or 3:1 for large text). A page wider than the window is reported on the page, not on a panel.
-- **The pictures.** One per panel per view, named `<panel>-<width>-<scheme>.png` (`D-390-light.png`), with 8px of room round the card. A new run deletes only its own old pictures from the folder.
-- **The output, in this order.** (1) The picture paths of the panels that have a problem. (2) The lint lines, `⚠ panel D: line 56: free "…": …`. (3) One line per problem, `⚠ panel D @390 light: kind: …` (`⚠ page @…` when the problem belongs to the page), at most five per kind, panel and view, then `… and N more`. (4) A summary line. The command exits 0 whatever problems it finds, so read the lines.
-- **No browser.** It looks for Chrome or Edge (`CHROME_PATH` first). With none, it prints `⚠ no Chrome or Edge found (set CHROME_PATH): only the static lint ran` and the lint lines for a draft, or says nothing was checked for a page.
+- **The checks.** Per panel and view: `overflow` (a part sticks out of its panel), `small text` (under 10.5px on screen), `overlap` (two texts on top of each other), `clipped` (text cut off), `page error` (an exception or a `console.error`; `fx NAME: …` is a free section's script), `half-empty` (at 1440px, content fills under half of the panel's height) and `low contrast` (under 4.5:1, or 3:1 for large text). For a draft, `missing` says a panel is not on the page at all: a free section above it left a comment, `<style>` or `<script>` open, and the lint names which. A page wider than the window is reported on the page, not on a panel.
+- **When a view cannot finish.** Each step has 10 seconds. A step that runs out of time adds one `page error` on the page that names it (`the page did not finish loading in 10 s …`, `the checks did not finish in 10 s …`, `the picture of panel C did not finish in 10 s`), and the views after it are skipped. A browser that stops partway adds `the browser stopped (…); this view and the ones after it were not checked`, and any other failure adds `this view could not be checked: …`; the views that finished keep their results.
+- **The pictures.** One per panel per view, named `<panel>-<width>-<scheme>.png` (`D-390-light.png`), with 8px of room round the card. A new run deletes only its own old pictures from the folder. Without `--out`, the folder is `~/.clarify/checks/<slug>/`, named after the title; a title with no ASCII letters (Thai, Chinese) is named after the file instead, or a short hash of its path.
+- **The output, in this order.** (1) The picture paths of the panels that have a problem. (2) The lint lines, `⚠ panel D: line 56: free "…": …`. (3) One line per problem, `⚠ panel D @390 light: kind: …` (`⚠ page @…` when the problem belongs to the page), at most five per kind, panel and view, then `… and N more`. (4) A summary line. The command exits 0 whatever problems it finds, so read the lines. It never ends without a line.
+- **No browser.** It looks for Chrome or Edge (`CHROME_PATH` first). With none, it prints `⚠ no Chrome or Edge found (set CHROME_PATH): only the static lint ran` and the lint lines for a draft, or says nothing was checked for a page. A browser that is found but does not start gives `⚠ the browser did not start (PATH: the browser exited (code N); set CHROME_PATH to Chrome or Edge): only the static lint ran` instead. Run as root (in a container, say), it starts Chrome without its sandbox, as Chrome requires there.
 
 The summary line is one of these two:
 
@@ -213,7 +221,7 @@ Any other line before the first `step` raises an `unknown key` warning. There is
 | `mailbox` | a post-mounted mailbox with letters | email, notifications, webhooks |
 | `folder` | a box file of folders and papers | files, a directory, a file system |
 | `cloud` | a small datacenter building | a cloud provider, a region, a datacenter |
-| `box` | a wooden crate with a label plate | anything else (an unknown kind is drawn as a box, with a warning) |
+| `box` | a wooden crate with a label plate | a real box, never a stand-in: a thing with no kind of its own gets a free section (an unknown kind is drawn as a box, with a warning) |
 
 ### Layout
 

@@ -74,3 +74,13 @@ test("SKILL.md stays lean", () => {
   const lines = skill.split("\n").length;
   assert.ok(lines < 230, `${lines} lines`);
 });
+
+test("box is a real box, never a stand-in", () => {
+  // A lesson is offered only when every main thing is a ready-made kind; "box (anything else)" made that rule circular.
+  const line = "a real box, never a stand-in: a thing with no kind of its own gets a free section";
+  assert.ok(skill.includes(`\`box\` (${line})`), "SKILL.md");
+  assert.ok(!/`box` \(anything else\)/.test(skill), "SKILL.md");
+  const syntax = read("references/syntax.md");
+  assert.ok(syntax.includes(line), "references/syntax.md");
+  assert.ok(!/\| `box` \|[^\n]*\| anything else/.test(syntax), "references/syntax.md");
+});

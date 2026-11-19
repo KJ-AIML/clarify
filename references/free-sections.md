@@ -21,15 +21,15 @@ Read this file before you draw one. For forms that fit a kind of content, see `r
 ```
 ````
 
-- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). It scopes the section: its CSS starts with `.fx-key-code`, its ids and keyframes with `fx-key-code-`. Use each name once per page. Do not give a section the name of a kit class (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing` and the rest under "The kit"): the wrapper is `div.fx.fx-NAME`, so the section would take that class's style, with no warning. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`.
+- **The name** comes right after `free`: lowercase letters, digits and dashes, starting with a letter or digit (`key-code`, `step-2`). It scopes the section: its CSS starts with `.fx-key-code`, its ids and keyframes with `fx-key-code-`. Use each name once per page. Do not give a section the name of a kit class (`how`, `take`, `cap`, `chip`, `tile`, `num`, `bar`, `legend`, `hit`, `dot`, `missing` and the rest under "The kit"): the wrapper is `div.fx.fx-NAME`, so the section would take that class's style, and the lint warns. Do not name one `hatch` either: the kit owns the ids `fx-hatch-ROLE`, and the lint warns about that too.
 - **Inline:** the fence body is the fragment.
 - **`file=path`** (or `file="a path with spaces"`): the fragment comes from that file, and the fence body is ignored. The path starts from the draft's folder. For a draft read from stdin, it starts from the working directory. Use it for a large or generated drawing. `clarify serve` reloads when the file changes.
 
 ## What the renderer does
 
 1. It wraps the fragment in `<div class="fx fx-NAME" data-fx="NAME">`.
-2. It moves every `<style>` into one style element in the page's head, after the kit.
-3. It moves every `<script>` to the end of the page, each in its own `<script>`, run once with `root` set to the section element. A `<script src="…">` is dropped without a warning: write the script inline. Each script runs inside its own function, so its `const`s stay local. An error is caught and logged as `fx NAME: …`, so one broken section stops nothing; `clarify check` reports it on that section's panel.
+2. It moves each `<style>` to the page's head, after the kit, as a style element of its own. A `{` left open spoils only the rest of its own `<style>`, never another section's.
+3. It moves every `<script>` to the end of the page, each in its own `<script>`, run once with `root` set to the section element. A `<script src="…">` is dropped without a warning: write the script inline. Each script runs inside its own function, so its `const`s stay local, and one broken section stops nothing. An error thrown while the script runs is caught and logged as `fx NAME: …`; `clarify check` reports it on that section's panel. A script that does not parse, an error thrown later (in a click or a timer) and a load that the page's policy blocks are reported on the page instead (`⚠ page @…`).
 4. It adds the kit: `src/runtime/fx.css` and the hatch patterns. Only pages with a free section carry them.
 5. A page with a free section loads nothing from the network. A policy in its head allows inline styles and scripts, `data:` fonts, and `data:` and `blob:` images, and nothing else. A plain link (`<a href="https://…">`) is fine: it loads nothing until the reader clicks it.
 6. `clarify md` and the page's "Copy as Markdown" keep three things of a section: its "How to read this" line, its takeaway, and a note that the drawing is on the HTML page.
@@ -76,7 +76,7 @@ Text
 - `.fx-take`: the takeaway, a compact green box. Write only the sentence.
 - `.fx-cap`: a caption, 12.5px, muted.
 - `.fx-eyebrow`: a small-caps label, 10.5px, like the page's own section heads.
-- `.fx-term`: a named term, bold with an amber highlight: `<b class="fx-term">key matrix</b>`.
+- `.fx-term`: a named term, bold with an amber highlight: `<b class="fx-term">key matrix</b>`. Inside an `.fx-cap` it takes the text colour, so it stays readable on the highlight.
 
 Pieces
 
@@ -136,12 +136,19 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `free section needs a name of lowercase letters, digits and dashes ("…")` | Name it after `free`: `free key-code`. |
 | `free section "NAME" is used twice on this page; give each one its own name` | Rename one of them. |
 | `free section file not found: PATH` | Fix the path: it starts from the draft's folder (from stdin, the working directory). The panel shows a dashed box until then. |
+| `free "NAME": the name "NAME" is a kit class (.fx-NAME): the section would take its style; choose another name` | Rename the section: `free colour-key`, not `free legend`. |
+| `free "NAME": the name "hatch" belongs to the kit: its hatch patterns are fx-hatch-ROLE; choose another name` | Rename the section. |
+| `free "NAME": "<!--" is never closed, so the rest of the page disappears into the comment; close it with "-->"` | Close the comment with `-->`. Until then every panel after it, and the page's own script (theme, replies, Copy as Markdown), is gone; `check` reports those panels as `missing`. |
+| `free "NAME": "<script>" is never closed, so the rest of the page disappears into it; close it with "</script>"` (or `"<style>"`) | Close it with its end tag. |
+| `free "NAME": "<textarea>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</textarea>"` (or `title`, `template`, `xmp`, `iframe`, `noscript`) | Take it out, and draw that part with other tags. A `<title>` inside an `<svg>` is the drawing's own and is fine. |
+| `free "NAME": a "{" in a <style> is never closed: the rules after it in that <style> are lost; add the "}"` | Add the missing `}`. Each `<style>` is its own sheet, so the other sections keep their style. |
 | `free "NAME": selectors must start with .fx-NAME: …` | Start every rule with `.fx-NAME`: `.fx-NAME .row`, `.fx-NAME.is-on`. Rules inside `@media` and `@container` too; rules nested inside a scoped rule are fine. |
 | `free "NAME": @keyframes "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, in `animation` too. |
 | `free "NAME": id "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, and every `href="#…"` and `url(#…)` that points to it. |
 | `free "NAME": duplicate id "X" on the page` | Give the id another name. |
-| `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. |
+| `free "NAME": raw colour "…"; use a token such as var(--trace-0)` | Use a token, or a `color-mix()` of tokens. A colour's name (`fill="white"`, `stroke: black`) is a raw colour too: it does not change with the theme. `none`, `currentColor`, `transparent` and `inherit` are fine. |
 | `free "NAME": external URL "…"; a page loads nothing from the network` | Draw it inline, or embed it as `data:`. Only things that load warn: images, stylesheets, `url(…)`, `@import`, `<use href>`. A plain link (`<a href>`) does not. A `<script src="…">` is dropped without a warning, so write a section's script inline. |
+| `free "NAME": <meta http-equiv="refresh"> reloads the page or leaves it; take it out` | Take it out: a section never moves the reader. |
 | `free "NAME": N KB is over the 40 KB budget for a section` | Draw less, draw a repeated shape once and place it with `<use>` (see the `<use>` trap), or split the part into two sections. |
 
 `clarify check` adds what only a browser sees. Its lines look like `⚠ panel D @390 light: overflow: …`.
@@ -152,9 +159,10 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `small text` | text under 10.5px on screen | bigger text, or a drawing fewer units wide |
 | `overlap` | two texts on top of each other | move one; at 390, a phone drawing |
 | `clipped` | text cut off by `overflow: hidden` | let the box grow, or let the text wrap |
-| `page error` | an exception or a `console.error`; `fx NAME: …` is your script | fix the script |
+| `page error` | an exception or a `console.error`; `fx NAME: …` is your script. On the page (`⚠ page @…`), it may also say that a view could not finish: a step ran out of time (it names which: the load, the checks, a picture), or the browser stopped | fix the script; for a time limit, a script that never ends or a page too big to measure |
 | `half-empty` | at 1440, the panel's content fills under half of its height; it suggests a `span` | that `span`, or a neighbour panel of similar length |
 | `low contrast` | text too faint on its background (it needs 4.5:1, or 3:1 for large text) | `--text` or `--title` for the text, or a lighter fill under it |
+| `missing` | a panel of the draft is not on the page: a free section above it left a comment, `<style>` or `<script>` open | fix that section; its lint line names what is open |
 
 ## The check loop
 
@@ -164,8 +172,8 @@ node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" check draft.md --out dir  # pictures 
 ```
 
 - A draft is rendered first (it does not open), and the static lint comes along. A page (`.html`) is checked as it is, without the lint.
-- It opens the page in Chrome or Edge in four views, each with reduced motion: 1440 light, 1440 dark, 390 light, 390 dark. With no browser found it says so and runs only the static lint; set `CHROME_PATH` to point at one.
-- It saves one picture per panel per view, `<panel>-<width>-<scheme>.png` (`D-390-light.png`), with 8px of room round the card. A new run deletes only its own old pictures.
+- It opens the page in Chrome or Edge in four views, each with reduced motion: 1440 light, 1440 dark, 390 light, 390 dark. With no browser found it says so and runs only the static lint; set `CHROME_PATH` to point at one. A browser that is found but does not start is reported the same way, with the reason: `⚠ the browser did not start (PATH: the browser exited (code N); set CHROME_PATH to Chrome or Edge): only the static lint ran`. It never ends without a line.
+- It saves one picture per panel per view, `<panel>-<width>-<scheme>.png` (`D-390-light.png`), with 8px of room round the card. A new run deletes only its own old pictures. The folder is named after the title; a title with no ASCII letters (Thai, Chinese) gives the draft's file name instead, or a short hash of its path.
 - It prints, in this order: the picture paths of the panels with a problem; the lint lines; one line per problem, `⚠ panel D @390 light: kind: …` (`⚠ page @…` when it belongs to the page, not a panel); and a summary line:
 
 ```text

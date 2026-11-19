@@ -259,3 +259,16 @@ test("text written straight into an svg is not checked as text", inBrowser, () =
   const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
   assert.deepEqual(report.problems, [], formatReport(report).join("\n"));
 }));
+
+test("the kit's own text passes the check: a term inside a caption", inBrowser, () => withTemp(async (tmp) => {
+  // Rule 7 of free-sections.md asks for .fx-term; inside the muted .fx-cap it must still read.
+  const draft = path.join(tmp, "term.md");
+  fs.writeFileSync(draft, ["---", "title: Term contrast", "cols: 3", "---", "", "## A Terms {span=3}", "```free terms",
+    '<p class="fx-how"><b>How to read this:</b> under the keys runs a grid of wires, the <b class="fx-term">key matrix</b>.</p>',
+    '<p class="fx-cap">A caption that names a <b class="fx-term">debounce</b> term.</p>',
+    '<p class="fx-take">The chip reads the <b class="fx-term">key matrix</b> one row at a time.</p>',
+    "```", ""].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
+  assert.deepEqual(report.lint, []);
+  assert.deepEqual(report.problems, [], formatReport(report).join("\n"));
+}));

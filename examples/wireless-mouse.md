@@ -142,7 +142,6 @@ You use a mouse and keyboard all day, and only think about them when something g
 .fx-key-matrix .km-sig { max-width: 360px; }
 .fx-key-matrix .km-sig-line { fill: none; stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; }
 .fx-key-matrix .km-sig-dot { fill: var(--ok-line); stroke: var(--ink-2); stroke-width: 1.3; }
-.fx-key-matrix .fx-cap .fx-term { color: var(--text); }
 
 @media (prefers-reduced-motion: no-preference) {
   .fx-key-matrix .km-w,

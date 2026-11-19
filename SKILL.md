@@ -190,7 +190,7 @@ quiz Why does the app queue the email?
 ```
 ````
 
-- **Objects** (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (anything else).
+- **Objects** (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (a real box, never a stand-in: a thing with no kind of its own gets a free section).
 - **Pucks:** `change` (orange, the default), `reply` (green), `fail` (red, stops short), `store` (violet), `slow` (amber). `a <-> b` sends a green `reply` back.
 - **Layout** is automatic: places follow the first rail chain in a zigzag, and a place on a later chain (`| worker - db`) stands next to the place it joins. A rail runs straight along a row or column of the grid, so a place can have at most 4 rails (one per side), and a rail that closes a loop usually warns `can't be drawn straight`. Prefer one main chain plus short branches; `at=x,y` pins a place to a cell.
 - **Counters:** `set: Label = value level | Label = value`. The level word (`good`, `warn`, `bad` or `none`) is optional and goes after the value; it colours the chip and is never shown, so never use one of those words as a value or as its last word (`Status = all good` shows `all`).
@@ -201,7 +201,7 @@ Full syntax and every warning with its fix: the Lessons section of `references/s
 ## Rules
 
 1. Render with the CLI as the primary action. Do not paste the draft or the HTML into chat.
-2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render. Then run `clarify check` on every page and work through it as "Free sections" says.
+2. If the CLI prints `⚠` warnings, they cite draft line numbers. Fix the draft and re-render. Then run `node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" check` on every page and work through it as "Free sections" says.
 3. After `✓ <path>`, reply with a 2–3 line summary and the link `[file:///abs/path.html](file:///abs/path.html)`.
 4. When the user pastes a reply starting with `# Re: <title>`, apply its decisions and review comments. `(line N)` points into the draft.
 5. Keep each diagram to 25 nodes or fewer. Split larger systems into an overview map plus detail maps.

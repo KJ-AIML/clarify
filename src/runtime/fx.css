@@ -35,6 +35,8 @@
 .fx-eyebrow { margin: 0; font: 800 10.5px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 /* A named term: bold, with the amber highlight the lesson gives ==term==. */
 .fx-term { font-weight: 700; color: inherit; background: color-mix(in srgb, var(--trace-3) 28%, transparent); padding: 0 3px; border-radius: 3px; }
+/* The muted caption's colour is too faint on the amber highlight, so a term in a caption takes the text colour. */
+.fx-cap .fx-term { color: var(--text); }
 
 /* ── pieces ─────────────────────────────────────────────────────────────────── */
 /* Chip: a pill like .c-badge. */
