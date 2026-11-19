@@ -23,7 +23,8 @@ const update = args.includes("--update");
 const only = flag("--only");
 const MAX_DIFF = 0.002;
 
-/** @type {Array<{ name: string, example: string, width?: number, height?: number, scheme?: "light"|"dark", theme?: string, viewport?: boolean, motion?: boolean, act?: string, noShot?: boolean }>} */
+// A scenario renders examples/<example>.md, or `draft`: a test-only draft's path from the repo root.
+/** @type {Array<{ name: string, example?: string, draft?: string, width?: number, height?: number, scheme?: "light"|"dark", theme?: string, viewport?: boolean, motion?: boolean, act?: string, noShot?: boolean }>} */
 const SCENARIOS = [
   { name: "ecommerce-light", example: "ecommerce-architecture", scheme: "light" },
   { name: "ecommerce-dark", example: "ecommerce-architecture", scheme: "dark" },
@@ -49,8 +50,10 @@ const SCENARIOS = [
   { name: "lesson-still", example: "git-commit-lesson", viewport: true, act: "lesson-still", noShot: true },
   { name: "lesson-compact", example: "git-commit-lesson", width: 390, height: 844, viewport: true, act: "lesson-compact", noShot: true },
   { name: "lesson-quiz", example: "git-commit-lesson", viewport: true, act: "lesson-quiz", noShot: true },
-  { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true }
+  { name: "lesson-comment", example: "git-commit-lesson", viewport: true, act: "lesson-comment", noShot: true },
+  { name: "lesson-round-trip", draft: "test/visual/fixtures/lesson-round-trip.md", viewport: true, act: "lesson-round-trip", noShot: true }
 ];
+const sourceOf = (s) => s.draft || `examples/${s.example}.md`;
 
 // Runs inside the page; returns a list of problems.
 const AUDIT = `(() => {
@@ -436,6 +439,67 @@ async function act(page, kind) {
     const gone = await page.eval(`(() => { const s = document.querySelector(".c-sheet"); return { open: s.classList.contains("is-open"), comments: s.querySelectorAll(".c-comment").length, title: s.querySelector(".c-sheet-title h2").textContent }; })()`);
     if (!gone.open || gone.comments !== 0 || gone.title !== title) throw new Error(`deleting the note should re-render the same sheet without it: ${JSON.stringify(gone)}`);
   }
+  if (kind === "lesson-round-trip") {
+    // Reduced motion on a test-only lesson of round trips, x1, x2 and x5 (test/visual/fixtures/lesson-round-trip.md).
+    // On every step each leg rests on its own side of the rail: its first puck 62-65% along its own trip and its
+    // other pucks queued back from there, every outbound puck past every reply, no outbound puck over a reply puck
+    // by more than 25% of a puck's box, and no puck over 25% covered by an object's or a tag's box (the lesson-still
+    // rule). A leg's own pucks may overlap: on a rail between neighbours (48 units) the two legs' first pucks are
+    // only 13.4 units apart, so four pucks 9.6 units wide cannot all keep clear of each other between them.
+    const steps = await page.eval(`(() => {
+      const root = document.querySelector(".c-lesson");
+      const model = JSON.parse(root.querySelector(".l-model").textContent);
+      const share = (p, t) => Math.max(0, Math.min(p.right, t.right) - Math.max(p.left, t.left)) * Math.max(0, Math.min(p.bottom, t.bottom) - Math.max(p.top, t.top)) / (p.width * p.height);
+      const worst = (box, sel) => [...root.querySelectorAll(sel)].map(el => [el.dataset.place, Math.round(100 * share(box, el.getBoundingClientRect()))]).sort((p, q) => q[1] - p[1])[0] || ["", 0];
+      return model.states.map((state, s) => {
+        root.querySelector('.l-timeline [data-step="' + s + '"]').click();
+        root.querySelector(".l-stage").scrollIntoView({ block: "center" });
+        const [move] = state.moves;
+        const rail = model.rails[move.rail];
+        const [from, to] = move.reverse ? [rail.b, rail.a] : [rail.a, rail.b];
+        const uses = [...root.querySelectorAll(".l-pucks use")];
+        const boxes = uses.map(u => u.getBoundingClientRect());
+        const pucks = uses.map((u, i) => {
+          const m = u.transform.baseVal.consolidate().matrix;
+          const at = [model.origin[0] + m.e, model.origin[1] + m.f];
+          const along = ((at[0] - from[0]) * (to[0] - from[0]) + (at[1] - from[1]) * (to[1] - from[1])) / ((to[0] - from[0]) ** 2 + (to[1] - from[1]) ** 2);
+          return { leg: u.classList.contains("is-reply") ? "reply" : "out", along: Math.round(along * 1000) / 1000, opacity: getComputedStyle(u).opacity, obj: worst(boxes[i], ".l-obj"), tag: worst(boxes[i], ".l-tag") };
+        });
+        const crossings = [];
+        pucks.forEach((p, i) => pucks.forEach((q, j) => {
+          if (j > i && p.leg !== q.leg) crossings.push({ out: p.along, reply: q.along, overlap: Math.round(100 * share(boxes[i], boxes[j])) });
+        }));
+        return { step: s + 1, move: move.rail + (move.reverse ? " reversed" : "") + " x" + move.count, count: move.count, pucks, crossings };
+      });
+    })()`);
+    const problems = [];
+    for (const { step, move, count, pucks, crossings } of steps) {
+      const at = `step ${step} (${move})`;
+      const n = Math.min(5, count);
+      const out = pucks.filter(p => p.leg === "out");
+      const back = pucks.filter(p => p.leg === "reply");
+      if (out.length !== n || back.length !== n) problems.push(`${at}: expected ${n} outbound and ${n} reply pucks, got ${out.length} and ${back.length}`);
+      // each leg's shares of its own trip, furthest first
+      for (const [leg, shares] of [["outbound", out.map(p => p.along)], ["reply", back.map(p => Math.round((1 - p.along) * 1000) / 1000)]]) {
+        shares.sort((a, b) => b - a);
+        if (!(shares[0] >= 0.62 && shares[0] <= 0.65)) problems.push(`${at}: the ${leg} leg's first puck should rest 62-65% along its trip, not at ${shares[0]}`);
+        if (new Set(shares).size !== shares.length) problems.push(`${at}: the ${leg} leg's pucks should queue back from its first, got ${shares.join(", ")}`);
+      }
+      if (out.length && back.length && !(Math.min(...out.map(p => p.along)) > Math.max(...back.map(p => p.along)))) {
+        problems.push(`${at}: every outbound puck should rest past every reply puck: outbound at ${out.map(p => p.along).join(", ")}, replies at ${back.map(p => p.along).join(", ")}`);
+      }
+      const piled = crossings.filter(c => c.overlap > 25);
+      if (piled.length) problems.push(`${at}: outbound and reply pucks overlap over 25% of a puck's box: ${JSON.stringify(piled)}`);
+      const hidden = pucks.filter(p => p.opacity === "0" || p.obj[1] > 25 || p.tag[1] > 25);
+      if (hidden.length) problems.push(`${at}: pucks not drawn, or covered over 25% by an object's or a tag's box: ${JSON.stringify(hidden)}`);
+    }
+    // No travel and no loop: the last step's pucks hold still.
+    const still = () => page.eval(`[...document.querySelectorAll(".c-lesson .l-pucks use")].map(u => u.getAttribute("transform") + " " + getComputedStyle(u).opacity).join(" ; ")`);
+    const before = await still();
+    await page.sleep(300);
+    if (before !== await still()) problems.push("reduced motion: the pucks moved between two samples 300 ms apart");
+    if (problems.length) throw new Error(problems.join("\n    "));
+  }
 }
 
 async function main() {
@@ -447,11 +511,12 @@ async function main() {
   fs.mkdirSync(baselines, { recursive: true });
   const pages = new Map();
   for (const s of SCENARIOS) {
-    if (pages.has(s.example)) continue;
-    const draft = parseDraft(fs.readFileSync(path.join(root, "examples", `${s.example}.md`), "utf8"));
-    const file = path.join(output, `${s.example}.html`);
+    const source = sourceOf(s);
+    if (pages.has(source)) continue;
+    const draft = parseDraft(fs.readFileSync(path.join(root, source), "utf8"));
+    const file = path.join(output, `${path.basename(source, ".md")}.html`);
     fs.writeFileSync(file, compile(draft).html);
-    pages.set(s.example, file);
+    pages.set(source, file);
   }
 
   const browser = await launchBrowser();
@@ -462,7 +527,7 @@ async function main() {
       const page = await browser.newPage({ width: s.width || 1440, height: s.height || 1000, colorScheme: s.scheme || "light", reducedMotion: !s.motion });
       const problems = [];
       try {
-        await page.goto(pathToFileURL(pages.get(s.example)).href);
+        await page.goto(pathToFileURL(pages.get(sourceOf(s))).href);
         if (s.theme) {
           await page.eval(`document.documentElement.dataset.theme = ${JSON.stringify(s.theme)}`);
           await page.sleep(80);

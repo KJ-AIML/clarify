@@ -8,8 +8,9 @@
 // It also plays each step's moves: pucks (copies of the stage's #l{n}-puck drawing) ride the
 // rails, moved with transforms only, on a schedule that loops while the stage is on screen and
 // not paused; a refused (fail) puck stops short. With reduced motion each puck is drawn once,
-// resting near the end of its trip. Plus Replay and Pause, keys on the focused lesson (← → step,
-// R replay, Space pause), numbered name tags when full ones would collide, and the quiz.
+// resting partway along its trip (REST, or ROUND for a round trip). Plus Replay and Pause, keys on
+// the focused lesson (← → step, R replay, Space pause), numbered name tags when full ones would
+// collide, and the quiz.
 (() => {
   "use strict";
 
@@ -28,6 +29,12 @@
   // move stops 12% further back.
   const REST = 0.55;
   const QUEUE = 0.12;
+  // A round trip rests both legs on one rail, so each leg stops 64% along its own trip, whatever
+  // its puck kind: the outbound pucks past the middle, the replies short of it. A leg's later pucks
+  // queue back from there, closer than QUEUE when they must, so that the two legs always keep
+  // APART between them: one puck width on a rail between neighbours (9.6 of its 48 units).
+  const ROUND = 0.64;
+  const APART = 0.2;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
 
   document.querySelectorAll(".c-lesson").forEach((root) => {
@@ -190,9 +197,12 @@
         const [a, b] = m.reverse ? [rail.b, rail.a] : [rail.a, rail.b];
         const trips = [[a, b, m.kind, at]];
         if (m.roundTrip) trips.push([b, a, "reply", at + (n - 1) * TIME.repeat + TIME.travel + TIME.back]);
+        // Where each leg's first puck stops, and how much further back each later one stops.
+        const stop = m.roundTrip ? ROUND : REST;
+        const queue = m.roundTrip ? Math.min(QUEUE, (2 * ROUND - 1 - APART) / Math.max(1, 2 * n - 2)) : QUEUE;
         for (const [from, to, kind, start] of trips) {
           const group = [];
-          for (let i = 0; i < n; i++) group.push(add(from, to, kind, start + i * TIME.repeat, REST - QUEUE * i));
+          for (let i = 0; i < n; i++) group.push(add(from, to, kind, start + i * TIME.repeat, stop - queue * i));
           // Painted back to front: a trip heading down the screen comes toward the viewer, so its first puck
           // (always the furthest along) goes on last.
           const order = to[1] > from[1] ? [...group].reverse() : group;
