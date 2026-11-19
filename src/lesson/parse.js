@@ -295,21 +295,31 @@ export function parseLesson(block) {
 
   // ── quiz ───────────────────────────────────────────────────────────────────────
 
+  /** One question, 2-4 options, exactly one marked `*`, and a reason after `|` on each (spec §5.4). */
   function readQuiz(section) {
+    if (lesson.quiz) {
+      warn(section.line, "more than one quiz; only the first is kept");
+      return;
+    }
     const quiz = { question: section.head, options: [], line: section.line };
-    for (const { text } of section.lines) {
+    for (const { text, line } of section.lines) {
       const option = text.match(/^([*-])\s+(.*)$/);
       if (option) {
         const bar = option[2].indexOf("|");
-        quiz.options.push({
+        const read = {
           text: (bar < 0 ? option[2] : option[2].slice(0, bar)).trim(),
           correct: option[1] === "*",
           why: bar < 0 ? "" : option[2].slice(bar + 1).trim()
-        });
+        };
+        if (!read.why) warn(line, `option "${read.text}" needs a reason after |`);
+        quiz.options.push(read);
       } else if (text) {
         quiz.question = `${quiz.question} ${text}`.trim();
       }
     }
+    const n = quiz.options.length;
+    if (!quiz.question) warn(section.line, "quiz needs a question");
+    if (n < 2 || n > 4) warn(section.line, `quiz has ${n} ${n === 1 ? "option" : "options"} (give 2 to 4)`);
     if (quiz.options.filter(o => o.correct).length !== 1) {
       warn(section.line, "quiz needs one correct option, marked with *");
     }

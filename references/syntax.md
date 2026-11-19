@@ -225,6 +225,10 @@ quiz Your push was refused. What do you run first?
 | `could not read cut "…"` | Write `cut: a - b`, with spaces around the dash and cuts separated by `,`. |
 | `counter "…" is not declared in counters:` | Add it to `counters:` (names are split by vertical bars, not commas) or fix its spelling. Write `set: Label = value`. |
 | `quiz needs one correct option, marked with *` | Mark exactly one option with `*` and the others with `-`. |
+| `quiz needs a question` | Write the question on the `quiz` line, after `quiz `. |
+| `quiz has N options (give 2 to 4)` | Give two to four options, one per line, each starting with `* ` or `- `. |
+| `option "…" needs a reason after \|` | End every option, right or wrong, with `\|` and the reason: picking an option shows them all. |
+| `more than one quiz; only the first is kept` | A lesson has one quiz, after its last step. Keep one question. |
 | `"…" has no rail` | Join the place to the machine in `rails:`. |
 | `rail … - … can't be drawn straight` | A rail closes a loop, a place has more than four rails, or an `at=` cell is not in line with its partner. Drop a rail or reorder the chains; pin a place with `at=` only as a last resort. |
 | `"…" overlaps "…"` | Two places want one cell: change or remove `at=`. |

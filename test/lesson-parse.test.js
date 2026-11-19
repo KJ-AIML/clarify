@@ -96,9 +96,18 @@ test("warns with line numbers", () => {
       ["line 10: title has 33 characters (keep it to 32)"]],
     ["quiz without a correct option", "quiz Pick one\n  - wrong | no\n  - also wrong | no",
       ["line 6: quiz needs one correct option, marked with *"]],
-    ["quiz without options", "\nquiz Pick one", ["line 7: quiz needs one correct option, marked with *"]],
+    ["quiz without options", "\nquiz Pick one",
+      ["line 7: quiz has 0 options (give 2 to 4)", "line 7: quiz needs one correct option, marked with *"]],
     ["quiz with two correct options", "quiz Pick one\n  * right | yes\n  * right too | yes",
-      ["line 6: quiz needs one correct option, marked with *"]]
+      ["line 6: quiz needs one correct option, marked with *"]],
+    ["quiz without a question", "quiz \n  * right | yes\n  - wrong | no", ["line 6: quiz needs a question"]],
+    ["quiz with one option", "quiz Pick one\n  * right | yes", ["line 6: quiz has 1 option (give 2 to 4)"]],
+    ["quiz with five options", "quiz Pick one\n  * a | yes\n  - b | no\n  - c | no\n  - d | no\n  - e | no",
+      ["line 6: quiz has 5 options (give 2 to 4)"]],
+    ["option without a reason", "quiz Pick one\n  * right\n  - wrong | no", ['line 7: option "right" needs a reason after |']],
+    ["option with an empty reason", "quiz Pick one\n  * right | yes\n  - wrong |", ['line 8: option "wrong" needs a reason after |']],
+    ["a second quiz", "quiz Pick one\n  * right | yes\n  - wrong | no\nquiz Again?\n  * yes\n  - no",
+      ["line 9: more than one quiz; only the first is kept"]]
   ];
   for (const [name, body, expected] of cases) {
     assert.deepEqual(warningsOf(body), expected, name);
@@ -284,6 +293,24 @@ test("paragraphs join consecutive lines; a blank line or a directive ends one", 
   ].join("\n"));
   assert.deepEqual(lesson.steps[0].paras, ["First line continues here.", "A second paragraph.", "Third paragraph."]);
   assert.deepEqual(lesson.steps[0].takeaways, ["a takeaway"]);
+});
+
+test("a second quiz is skipped: the first one is kept, and the second is not checked", () => {
+  const { lesson, warnings } = run([
+    "quiz Pick one",
+    "  * right | yes",
+    "  - wrong | no",
+    "",
+    "quiz Again?",
+    "  * only option"
+  ].join("\n"));
+  assert.deepEqual(lesson.quiz, {
+    question: "Pick one",
+    options: [{ text: "right", correct: true, why: "yes" }, { text: "wrong", correct: false, why: "no" }],
+    line: 6
+  });
+  // The second quiz (one option, no reason) would warn twice more if it were read.
+  assert.deepEqual(warnings, ["line 10: more than one quiz; only the first is kept"]);
 });
 
 test("header keys are only read before the first step; later lines are step text", () => {
