@@ -6,6 +6,11 @@ import path from "node:path";
 import { parseDraft } from "../src/parser.js";
 import { compile } from "../src/render.js";
 import { parseFreeInfo } from "../src/free/section.js";
+import { findChrome, launchBrowser } from "../src/check/cdp.js";
+import { pathToFileURL } from "node:url";
+
+// The browser test needs Chrome or Edge; without one it is skipped, not failed.
+const inBrowser = { skip: !findChrome() && "no Chrome or Edge", timeout: 60000 };
 
 const examples = fs.readdirSync(new URL("../examples/", import.meta.url)).filter((f) => f.endsWith(".md"));
 const read = (f) => fs.readFileSync(new URL(`../examples/${f}`, import.meta.url), "utf8");
@@ -33,7 +38,7 @@ test("an inline free section is wrapped and its style and script are moved", () 
   assert.deepEqual(warnings, []);
   assert.match(html, /<div class="fx fx-key-code" data-fx="key-code">\s*<p class="fx-how">How<\/p>\s*<\/div>/);
   const kit = html.indexOf('<style id="c-fx-css">');
-  const own = html.indexOf('<style id="c-fx-sections">');
+  const own = html.indexOf('<style data-fx-css="key-code">');
   const head = html.indexOf("</head>");
   assert.ok(kit > 0 && kit < own && own < head, "the kit, then the section styles, in the head");
   assert.match(html.slice(kit, own), /\.fx-how\{/);
@@ -45,6 +50,37 @@ test("an inline free section is wrapped and its style and script are moved", () 
   assert.equal(script, `<script>(() => { const root = document.querySelector('[data-fx="key-code"]'); if (!root) return; try {
 root.dataset.ran = "yes"
 } catch (e) { console.error("fx key-code: " + (e && e.stack || e)); } })();</script>`);
+});
+
+test("each <style> of a section is its own style element, after the kit, in page order", () => {
+  // A { left open then spoils only the rest of its own <style>: the browser stops at the end of each sheet.
+  const draft = ["## A Two", fence("a", "<p>a</p><style>.fx-a p { font-style: italic;</style><style>.fx-a b { color: var(--ink) }</style>"), "",
+    "## B Three", fence("b", "<p>b</p><style>.fx-b p { font-weight: 800 }</style>"), "", fence("c", "<p>no style</p><style> </style>")].join("\n");
+  const { html } = compile(parseDraft(draft));
+  const head = html.slice(html.indexOf('<style id="c-fx-css">'), html.indexOf("</head>"));
+  assert.deepEqual(head.match(/<style[^>]*>/g), ['<style id="c-fx-css">', '<style data-fx-css="a">', '<style data-fx-css="a">', '<style data-fx-css="b">']);
+  assert.match(head, /<\/style>\n<style data-fx-css="a">\.fx-a p \{ font-style: italic;<\/style>\n<style data-fx-css="a">\.fx-a b \{ color: var\(--ink\) \}<\/style>\n<style data-fx-css="b">\.fx-b p \{ font-weight: 800 \}<\/style>\n$/);
+  assert.doesNotMatch(compile(parseDraft(read("ecommerce-architecture.md"))).html, /data-fx-css/);
+});
+
+test("one section's unclosed { leaves the next section's style alone", inBrowser, async () => {
+  const draft = ["## A One", fence("a", "<p>a</p>", "<style>.fx-a p { font-style: italic;</style>"), "",
+    "## B Two", fence("b", "<p>b</p>", "<style>.fx-b p { font-weight: 800; letter-spacing: 3px; }</style>")].join("\n");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-free-"));
+  const file = path.join(tmp, "blast.html");
+  fs.writeFileSync(file, compile(parseDraft(draft)).html);
+  const browser = await launchBrowser();
+  try {
+    const page = await browser.newPage({ width: 1280, height: 900 });
+    await page.goto(pathToFileURL(file).href);
+    const style = (fx) => page.eval(`(() => { const cs = getComputedStyle(document.querySelector('[data-fx="${fx}"] p')); return [cs.fontStyle, cs.fontWeight, cs.letterSpacing].join(" / "); })()`);
+    assert.equal(await style("b"), "normal / 800 / 3px");
+    assert.equal(await style("a"), "italic / 400 / normal", "the open rule still applies to its own section");
+    await page.close();
+  } finally {
+    await browser.close();
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 });
 
 test("each section script is its own script element", () => {

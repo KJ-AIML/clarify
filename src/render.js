@@ -49,7 +49,7 @@ const LESSON_CSS = minifyCss(asset("./iso/kit.css") + asset("./runtime/lesson.cs
 const LESSON_JS = minifyJs(asset("./runtime/lesson.js"));
 // Only pages that contain a free section carry the kit; each section's own CSS follows it as written.
 const FX_CSS = minifyCss(asset("./runtime/fx.css"));
-// A free section is raw HTML and script, so its page may not use the network. Inline script and style, the
+// A free section is raw HTML and script, so its page must stay off the network. Inline script and style, the
 // embedded font (data:) and the PNG export (data: and blob: images) still work. `clarify serve` adds
 // `connect-src 'self'` for live reload's EventSource.
 const FREE_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; form-action 'none'; base-uri 'none'";
@@ -133,7 +133,7 @@ export function compile(draft, opts = {}) {
 <script>(()=>{try{const t=JSON.parse(localStorage.getItem("clarify:theme")||"null");if(t)document.documentElement.dataset.theme=t}catch{}})()</script>
 <style id="c-font">${FONT_CSS}</style>
 <style>${CSS}</style>
-<style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}${ctx.free.length ? `\n<style id="c-fx-css">${FX_CSS}</style>\n<style id="c-fx-sections">${freeStyles(ctx.free)}</style>` : ""}
+<style id="c-svg-css">${SVG_CSS}</style>${ctx.lessons ? `\n<style id="c-lesson-css">${LESSON_CSS}</style>` : ""}${ctx.free.length ? `\n<style id="c-fx-css">${FX_CSS}</style>${freeStyles(ctx.free)}` : ""}
 </head>
 <body>
 ${SVG_DEFS}${ctx.free.length ? `\n${FX_DEFS}` : ""}
@@ -182,9 +182,12 @@ ${cards.join("\n")}
   };
 }
 
-/** Each free section's own CSS, as written, after a comment line with its name (`fx NAME`). */
+/**
+ * Each `<style>` of each free section, as written, in its own style element named by the section. The browser
+ * stops at the end of each sheet, so a `{` left open spoils only the rest of its own `<style>`.
+ */
 function freeStyles(free) {
-  return free.filter(f => f.styles.length).map(f => `/* fx ${f.name} */\n${f.styles.join("\n")}`).join("\n");
+  return free.flatMap(f => f.styles.filter(css => css.trim()).map(css => `\n<style data-fx-css="${f.name}">${css}</style>`)).join("");
 }
 
 /**

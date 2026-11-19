@@ -109,7 +109,7 @@ Lead: One panel per piece of the kit. Each must look like the page, in light and
 ```
 
 ## F The legend
-```free legend
+```free colour-key
 <p class="fx-cap">A legend names each colour and the stripes. Colour never stands alone.</p>
 <ul class="fx-legend">
   <li><span class="fx-swatch is-hot"></span>hot: moves</li>

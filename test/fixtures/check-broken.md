@@ -9,7 +9,7 @@ Lead: Each panel from B to I breaks one rule that `clarify check` looks for. A a
 A short line of plain text. Nothing in this panel should be reported.
 
 ## B Too wide
-```free wide
+```free too-wide
 <div style="width: 900px; padding: 8px; border: 1px solid var(--border)">This box is 900px wide, in a panel about 400px wide.</div>
 ```
 

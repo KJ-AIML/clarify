@@ -157,3 +157,83 @@ test("render warns when a section is over the budget", () => {
   const draft = ["## A Big", fence("big", `<p>${"x".repeat(41 * 1024)}</p>`)].join("\n");
   assert.deepEqual(compile(parseDraft(draft)).warnings, ['panel A: line 2: free "big": 41.0 KB is over the 40 KB budget for a section']);
 });
+
+// ── what the final review found ──────────────────────────────────────────────
+
+const raw = (c) => `raw colour "${c}"; use a token such as var(--trace-0)`;
+
+test("a comment left open warns: the rest of the page would disappear into it", () => {
+  assert.deepEqual(lint("a", "", '<p class="fx-how">a</p>\n<!-- a note the author forgot to close\n<p class="fx-take">b</p>'), [
+    '"<!--" is never closed, so the rest of the page disappears into the comment; close it with "-->"'
+  ]);
+  assert.deepEqual(lint("a", "", "<p>a</p><!-- closed --><p>b</p>"), []);
+});
+
+test("a <script> or <style> left open, or a tag that holds text, warns", () => {
+  // splitFragment takes out every closed <style> and <script>, so one that is left is never closed.
+  assert.deepEqual(lint("a", "", "<p>a</p><script>root.x = 1;"), ['"<script>" is never closed, so the rest of the page disappears into it; close it with "</script>"']);
+  assert.deepEqual(lint("a", "", '<STYLE media="x">.fx-a { }'), ['"<style>" is never closed, so the rest of the page disappears into it; close it with "</style>"']);
+  const html = "<textarea>t</textarea><title>t</title><template><p>t</p></template><xmp>x</xmp><iframe></iframe><noscript>n</noscript><textarea>again</textarea>";
+  assert.deepEqual(lint("a", "", html), ["textarea", "title", "template", "xmp", "iframe", "noscript"].map((t) =>
+    `"<${t}>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</${t}>"`));
+});
+
+test("a <title> inside an svg is the drawing's own, and a tag in a comment is no tag", () => {
+  const html = '<svg viewBox="0 0 10 10" role="img"><title>a tooltip</title><foreignObject><p>x</p></foreignObject><g><title>t</title></g></svg>'
+    + "<!-- <textarea> <script> --><svg/><p>after</p>";
+  assert.deepEqual(lint("a", "", html), []);
+  assert.deepEqual(lint("a", "", '<svg><foreignObject><textarea>x</textarea></foreignObject></svg>'), [
+    '"<textarea>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</textarea>"'
+  ]);
+});
+
+test("a { never closed warns, and each <style> of a section is read on its own", () => {
+  const styles = [".fx-a p { font-style: italic;", "p { color: var(--ink) } .fx-a { fill: #abc }"];
+  assert.deepEqual(lintFree({ name: "a", html: "", styles, bytes: 100 }), [
+    'a "{" in a <style> is never closed: the rules after it in that <style> are lost; add the "}"',
+    "selectors must start with .fx-a: p",
+    raw("#abc")
+  ]);
+  assert.deepEqual(lintFree({ name: "a", html: "", styles: [".fx-a { a: 1 }", ".fx-a { b: 2 }"], bytes: 10 }), []);
+});
+
+test("named colours and upper-case colour functions are raw colours", () => {
+  const css = ".fx-a { color: navy; background: Gainsboro; border: 1px solid black; box-shadow: 0 0 2px RED; fill: RGB(1,2,3); stroke: HSL(0 0% 0%); }"
+    + " .fx-a p { outline-color: white; text-decoration: underline wavy orange; filter: drop-shadow(0 1px 1px Black); }";
+  const html = '<rect fill="white" stroke="Black"/><stop stop-color="navy"/><feFlood flood-color="gold"/><text color="Tomato"/><g style="fill: teal; stroke: var(--ink)"/>';
+  assert.deepEqual(lint("a", css, html), [
+    raw("navy"), raw("Gainsboro"), raw("black"), raw("RED"), raw("RGB(1,2,3)"), raw("HSL(0 0% 0%)"),
+    raw("white"), raw("orange"), raw("gold"), raw("Tomato"), raw("teal")
+  ]);
+});
+
+test("none, currentColor, transparent, inherit and words that are not colours are fine", () => {
+  const css = '.fx-a { border: 1px solid transparent; outline: none; background: var(--red, transparent); color: inherit;'
+    + ' fill: currentColor; font: 600 12px var(--mono); transition: fill 0.2s, color 0.2s; animation: fx-a-red 1s; content: "black"; }'
+    + " .fx-a .white { color: var(--ink); background: url(#fx-a-tan) no-repeat center; } @keyframes fx-a-red { from { opacity: 0 } }";
+  const html = '<rect fill="none" stroke="currentColor"/><stop stop-color="transparent"/><g fill="inherit" color="currentcolor"/>'
+    + '<p class="red white" data-fill="white" title="green">red</p><rect fill="url(#fx-a-tan)"/>';
+  assert.deepEqual(lint("a", css, html), []);
+});
+
+test("a section named after a kit class, or hatch, warns", () => {
+  const kit = (n) => `the name "${n}" is a kit class (.fx-${n}): the section would take its style; choose another name`;
+  assert.deepEqual(lint("bar"), [kit("bar")]);
+  assert.deepEqual(lint("take"), [kit("take")]);
+  assert.deepEqual(lint("hatch"), ['the name "hatch" belongs to the kit: its hatch patterns are fx-hatch-ROLE; choose another name']);
+  assert.deepEqual(lint("bars"), []);
+  assert.deepEqual(lint("key-code"), []);
+});
+
+test("the kit's names come from fx.css itself", async () => {
+  const fs = await import("node:fs");
+  const css = fs.readFileSync(new URL("../src/runtime/fx.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const names = [...new Set([...css.matchAll(/\.fx-([a-z0-9-]+)/g)].map((m) => m[1]))];
+  assert.ok(names.length > 40 && names.includes("num") && names.includes("t-h") && names.includes("phone"), names.join(" "));
+  assert.deepEqual(names.filter((n) => !lint(n).some((w) => w.startsWith(`the name "${n}" is a kit class`))), []);
+});
+
+test("a meta refresh warns: it takes the reader off the page", () => {
+  assert.deepEqual(lint("a", "", '<meta http-equiv="Refresh" content="0; url=https://x.test/">'), ['<meta http-equiv="refresh"> reloads the page or leaves it; take it out']);
+  assert.deepEqual(lint("a", "", '<meta name="refresh" content="1">'), []);
+});
