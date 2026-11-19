@@ -148,8 +148,9 @@ export async function launchBrowser(executable = findChrome(), { startTimeout = 
     for (const fn of [...onGone]) fn(reason);
   };
   proc.once("exit", (code, signal) => fail(code !== null ? `the browser exited (code ${code})` : `the browser exited (signal ${signal})`));
-  proc.once("error", (err) => fail(`the browser could not start (${err.message})`));
-  reader.once("close", () => { pipeTimer = setTimeout(() => fail("the browser closed its pipe"), 1000); });
+  // Kept on: a later "error" (a kill that fails) with no listener would throw.
+  proc.on("error", (err) => fail(`the browser could not start (${err.message})`));
+  reader.once("close", () => { if (!gone) pipeTimer = setTimeout(() => fail("the browser closed its pipe"), 1000); });
   // Writing to a browser that has gone fails too; fail() has already said why.
   writer.on("error", () => {});
   reader.on("error", () => {});
