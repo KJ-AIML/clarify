@@ -1,6 +1,6 @@
 # Content-driven pages and lessons: each part of the content in the form that fits it
 
-Date: 2026-11-19 · Branches: this document's home is `feat/content-driven-pages` (commit 2a51f6f); the throwaway `spike/lesson-content` adds two spike commits on top · Status: draft for the owner, grown after the owner reviewed the sample. Approach A and the object rule are the owner's calls. The rest was delegated and is open to veto. Three questions wait at the end.
+Date: 2026-11-19 · Branches: this document's home is `feat/content-driven-pages` (commit 2a51f6f); the throwaway `spike/lesson-content` adds two spike commits on top · Status: approved by the owner on 2026-11-20. Approach A and the object rule are the owner's calls. The rest was delegated and is open to veto. The owner's answers to the three questions are at the end.
 
 ## Intent and why
 
@@ -295,7 +295,7 @@ The file also carries the kit reference, the panel widths (from the spike README
 - The two tests that failed in the spike are updated on purpose.
 - Markdown export: under each step, the pills as a short "On the stage:" line, and the card as a code block.
 
-### Depth and time (*the owner must confirm this one*)
+### Depth and time (confirmed by the owner, 2026-11-20)
 
 Proposed: the agent picks a depth from the request. It tells the user which depth and a rough time. In Quick, the time is the hard rule: everything else gives way to it.
 
@@ -361,7 +361,7 @@ Stage 2, lessons:
 | The kit holds only what two or more sections needed | Designer |
 | The CSP meta tag on pages with a free section | Designer |
 | The guard as a separate command; `render` never starts a browser | Designer |
-| The depth rule (quick by default, designed when asked; a lesson is designed only when it needs a custom object) | Designer, waiting for the owner |
+| The depth rule (quick by default, designed when asked; a lesson is designed only when it needs a custom object) | Designer, confirmed by the owner (2026-11-20) |
 | The Markdown export fallback | Designer |
 | Widen the `SKILL.md` description to any topic where structure or a picture beats prose (triggers only) | Designer |
 | The skill test's three contents, its Designed run and its pass line | Designer |
@@ -372,7 +372,7 @@ Stage 2, lessons:
 | One fallback: an unknown kind and an unloaded custom object are the same neutral placeholder | Designer |
 | The rule covers things with a real look; a CLI or a parse step keeps the "Lessons about code" mappings | Designer |
 | The lesson budget grows by each custom object's size; `clarify object` warns above 80 KB; the lesson export | Designer |
-| Two stages, pages first; 3D objects outside lessons as the last item of Stage 2 | Designer, waiting for the owner |
+| Two stages, pages first; 3D objects outside lessons as the last item of Stage 2 | Designer, confirmed by the owner (2026-11-20) |
 
 The owner delegated the "how". Each designer decision is open to veto.
 
@@ -402,8 +402,8 @@ Checked facts a plan needs:
 - The file layout under `src/`.
 - How the driver is shared between the tests and the CLI.
 
-## Open questions for the owner
+## The owner's answers (2026-11-20)
 
-1. Is "quick by default, designed when asked" the right default? For lessons it means: about 10 minutes when every main thing has a ready-made kind (the earlier promise), and a designed page when a custom object is needed.
-2. Is it right to keep the wireless page as an example?
-3. Build pages first and lessons second (recommended, because lessons reuse the browser check), or lessons first?
+1. Quick by default, designed when asked: **yes.** For lessons this means about 10 minutes when every main thing has a ready-made kind (the earlier promise), and a designed page when a custom object is needed.
+2. Keep the wireless page as an example: **yes.**
+3. Pages first, lessons second: **yes.**
