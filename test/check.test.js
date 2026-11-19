@@ -133,6 +133,18 @@ test("every check fires on the panel that has it", inBrowser, () => withTemp(asy
   for (const p of report.pictures) assert.ok(fs.statSync(p.file).size > 0, p.file);
 }));
 
+test("clarify's own blocks check clean", inBrowser, () => withTemp(async (tmp) => {
+  // The hero diagram (3px out at 390), the ▶ of a route button (4.44:1) and code in a table (9.7px) are clarify's own.
+  const draft = path.join(tmp, "check-own.md");
+  fs.copyFileSync(new URL("./fixtures/check-own.md", import.meta.url), draft);
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
+  assert.equal(report.browser, true);
+  assert.deepEqual(report.lint, []);
+  assert.deepEqual(report.panels, ["A", "B"]);
+  assert.deepEqual(report.problems, [], formatReport(report).join("\n"));
+  assert.equal(report.pictures.length, 8);
+}));
+
 test("a page that never finishes loading is reported", inBrowser, () => withTemp(async (tmp) => {
   const draft = path.join(tmp, "spin.md");
   fs.writeFileSync(draft, ["---", "title: Spin", "---", "", "## A Spins", "```free spin", "<p>spin</p><script>for(;;){}</script>", "```", ""].join("\n"));
