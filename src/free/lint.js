@@ -17,23 +17,26 @@ const EXTERNAL = /^\s*(?:https?:|\/\/)/i;
 // `@import "…"` or `url(…)`, with or without quotes.
 const CSS_URL = /@import\s*["']\s*([^"']*)|url\(\s*["']?\s*([^"')\s]*)/gi;
 
-// A start tag with its attribute text, and one attribute (`name`, `name=value`, `name="value"`) inside it.
-const TAG = /<[a-zA-Z][^\s/>]*((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+// A link loads nothing until the reader clicks it, so the `href` of these elements is not an external load.
+const LINK_ELEMENTS = new Set(["a", "area"]);
+
+// A start tag (its name, then its attribute text), and one attribute (`name`, `name=value`, `name="value"`) inside it.
+const TAG = /<([a-zA-Z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
 const ATTR = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
 
 const stripCssComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 const stripHtmlComments = (html) => html.replace(/<!--[\s\S]*?-->/g, "");
 
 /**
- * Every attribute of every tag in a fragment, in page order, with the name in lowercase.
+ * Every attribute of every tag in a fragment, in page order: its name and its element's name, both in lowercase, and its value.
  * @param {string} html
- * @returns {Array<[string, string]>}
+ * @returns {Array<[string, string, string]>} `[name, value, element]`
  */
 function attributes(html) {
-  /** @type {Array<[string, string]>} */
+  /** @type {Array<[string, string, string]>} */
   const found = [];
   for (const tag of stripHtmlComments(html).matchAll(TAG)) {
-    for (const a of tag[1].matchAll(ATTR)) found.push([a[1].toLowerCase(), (a[2] ?? a[3] ?? a[4] ?? "").trim()]);
+    for (const a of tag[2].matchAll(ATTR)) found.push([a[1].toLowerCase(), (a[2] ?? a[3] ?? a[4] ?? "").trim(), tag[1].toLowerCase()]);
   }
   return found;
 }
@@ -143,7 +146,8 @@ export function lintFree({ name, html, styles, bytes }) {
   const written = [...declarations, ...attrs.filter(([n]) => COLOUR_ATTRS.has(n)).map(([, v]) => v)];
   for (const colour of new Set(written.flatMap(rawColours))) out.push(`raw colour "${colour}"; use a token such as var(--trace-0)`);
 
-  const urls = [...cssUrls(css), ...attrs.flatMap(([n, v]) => URL_ATTRS.has(n) ? [v] : n === "style" ? cssUrls(v) : [])];
+  const loads = ([n, v, el]) => URL_ATTRS.has(n) && !(LINK_ELEMENTS.has(el) && (n === "href" || n === "xlink:href")) ? [v] : n === "style" ? cssUrls(v) : [];
+  const urls = [...cssUrls(css), ...attrs.flatMap(loads)];
   for (const url of new Set(urls.filter((u) => EXTERNAL.test(u)))) out.push(`external URL "${url}"; a page loads nothing from the network`);
 
   if (bytes > BUDGET_KB * 1024) out.push(`${(bytes / 1024).toFixed(1)} KB is over the ${BUDGET_KB} KB budget for a section`);

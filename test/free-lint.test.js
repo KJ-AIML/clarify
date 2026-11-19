@@ -86,13 +86,23 @@ test("a hex-looking word that is not a colour value is not a raw colour", () => 
 
 test("external URLs warn", () => {
   const css = '@import "https://x.test/a.css"; .fx-a { src: url(//cdn.test/f.woff2); background: url( "http://x.test/b.png" ); }';
-  const html = '<img src="https://x.test/a.png"><a href="//x.test/p">p</a><image xlink:href="http://x.test/i.png"/>'
+  const html = '<img src="https://x.test/a.png"><image xlink:href="http://x.test/i.png"/>'
     + '<video poster="https://x.test/p.jpg"></video><form action="https://x.test/go"></form>';
   const external = (u) => `external URL "${u}"; a page loads nothing from the network`;
   assert.deepEqual(lint("a", css, html), [
     external("https://x.test/a.css"), external("//cdn.test/f.woff2"), external("http://x.test/b.png"),
-    external("https://x.test/a.png"), external("//x.test/p"), external("http://x.test/i.png"),
+    external("https://x.test/a.png"), external("http://x.test/i.png"),
     external("https://x.test/p.jpg"), external("https://x.test/go")
+  ]);
+});
+
+test("a plain link is not a load", () => {
+  const links = '<a href="https://example.test/page">source</a><area href="//example.test/area"/><svg><a xlink:href="https://example.test/x"><text>x</text></a><a href="http://example.test/y"><text>y</text></a></svg>';
+  assert.deepEqual(lint("a", "", links), []);
+  assert.deepEqual(lint("a", "", `${links}<svg><use href="https://example.test/a.svg#i"/><image xlink:href="https://example.test/i.png"/></svg><link href="https://example.test/s.css">`), [
+    'external URL "https://example.test/a.svg#i"; a page loads nothing from the network',
+    'external URL "https://example.test/i.png"; a page loads nothing from the network',
+    'external URL "https://example.test/s.css"; a page loads nothing from the network'
   ]);
 });
 
