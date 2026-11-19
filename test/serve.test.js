@@ -5,11 +5,49 @@ import os from "node:os";
 import path from "node:path";
 import http from "node:http";
 import { serve } from "../src/serve.js";
+import { findChrome, launchBrowser } from "../src/check/cdp.js";
+
+// The browser test needs Chrome or Edge; without one it is skipped, not failed.
+const inBrowser = { skip: !findChrome() && "no Chrome or Edge", timeout: 60000 };
 
 const statusWithHost = (url, host) => new Promise((resolve, reject) => {
   const u = new URL(url);
   http.get({ hostname: u.hostname, port: u.port, path: "/", headers: { Host: host } }, res => { res.resume(); resolve(res.statusCode); }).on("error", reject);
 });
+
+/**
+ * Opens the server's event stream. `reload()` resolves with the stream text at the next `event: reload`
+ * it has not returned yet, and rejects when none comes within `ms`.
+ */
+async function openEvents(server) {
+  const ctrl = new AbortController();
+  const res = await fetch(new URL("/__clarify/events", server.url), { signal: ctrl.signal });
+  const reader = res.body.getReader();
+  let text = "";
+  let taken = 0;
+  (async () => {
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += new TextDecoder().decode(value);
+      }
+    } catch { /* the stream was closed */ }
+  })();
+  await new Promise(r => setTimeout(r, 100));
+  return {
+    async reload(ms = 4000) {
+      const deadline = Date.now() + ms;
+      while (text.split("event: reload").length - 1 <= taken) {
+        if (Date.now() > deadline) throw new Error("no reload event");
+        await new Promise(r => setTimeout(r, 25));
+      }
+      taken++;
+      return text;
+    },
+    close: () => ctrl.abort()
+  };
+}
 
 test("serve: renders the draft, pushes reload on save, rejects foreign hosts", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
@@ -24,27 +62,116 @@ test("serve: renders the draft, pushes reload on save, rejects foreign hosts", a
     assert.equal(await statusWithHost(server.url, "evil.example"), 403, "DNS-rebinding guard");
     assert.equal(await statusWithHost(server.url, `localhost:${server.port}`), 200);
 
-    const ctrl = new AbortController();
-    const res = await fetch(new URL("/__clarify/events", server.url), { signal: ctrl.signal });
-    const reader = res.body.getReader();
-    const events = (async () => {
-      let text = "";
-      while (!text.includes("event: reload")) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        text += new TextDecoder().decode(value);
-      }
-      return text;
-    })();
-    await new Promise(r => setTimeout(r, 100));
+    const events = await openEvents(server);
     fs.writeFileSync(file, "---\ntitle: Live Two\n---\n## A First\nchanged");
-    const text = await Promise.race([events, new Promise((_, rej) => setTimeout(() => rej(new Error("no reload event")), 4000))]);
+    const text = await events.reload();
     assert.match(text, /event: reload/);
-    ctrl.abort();
+    events.close();
     const updated = await (await fetch(server.url)).text();
     assert.match(updated, /<title>Live Two<\/title>/);
   } finally {
     await server.close();
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("serve: reloads when a file= section changes", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
+  const file = path.join(dir, "draft.md");
+  fs.mkdirSync(path.join(dir, "sections"));
+  fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>first</p>");
+  fs.writeFileSync(path.join(dir, "near.html"), "<p>near</p>");
+  fs.writeFileSync(file, "---\ntitle: Files\n---\n## A Parts\n```free part file=sections/part.html\n```\n\n```free near file=near.html\n```\n");
+  const server = await serve({ file, port: 0 });
+  let events;
+  try {
+    assert.match(await (await fetch(server.url)).text(), /<p>first<\/p>/);
+    events = await openEvents(server);
+
+    fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>second</p>");
+    await events.reload();
+    assert.match(await (await fetch(server.url)).text(), /<p>second<\/p>/, "a file in a sub-folder");
+
+    fs.writeFileSync(path.join(dir, "near.html"), "<p>third</p>");
+    await events.reload();
+    assert.match(await (await fetch(server.url)).text(), /<p>third<\/p>/, "a file next to the draft");
+  } finally {
+    events?.close();
+    await server.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("serve: a file= folder that is deleted and made again is watched again", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
+  const file = path.join(dir, "draft.md");
+  const draft = (note) => `---\ntitle: Folder\n---\n## A Parts\n${note}\n\n\`\`\`free part file=sections/part.html\n\`\`\`\n`;
+  const page = async () => (await fetch(server.url)).text();
+  fs.mkdirSync(path.join(dir, "sections"));
+  fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>first</p>");
+  fs.writeFileSync(file, draft("one"));
+  const server = await serve({ file, port: 0 });
+  let events;
+  try {
+    events = await openEvents(server);
+    fs.rmSync(path.join(dir, "sections"), { recursive: true, force: true });
+    await events.reload();
+    assert.match(await page(), /Missing section/, "the folder is gone, so the section is missing");
+
+    fs.mkdirSync(path.join(dir, "sections"));
+    fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>again</p>");
+    fs.writeFileSync(file, draft("two"));
+    await events.reload();
+    assert.match(await page(), /<p>again<\/p>/, "saving the draft finds the folder again");
+
+    fs.writeFileSync(path.join(dir, "sections", "part.html"), "<p>later</p>");
+    await events.reload();
+    assert.match(await page(), /<p>later<\/p>/, "and the folder is watched again");
+  } finally {
+    events?.close();
+    await server.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("serve: a free page keeps live reload under its policy", inBrowser, async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clarify-serve-"));
+  const file = path.join(dir, "draft.md");
+  const draft = (word) => `---\ntitle: Policy\n---\n## A Words\nalpha ${word}\n\n\`\`\`free demo\n<p>inline</p>\n\`\`\`\n`;
+  fs.writeFileSync(file, draft("bravo"));
+  const server = await serve({ file, port: 0 });
+  let browser;
+  try {
+    browser = await launchBrowser();
+    const page = await browser.newPage();
+    // Polls the page until `expression` is true; a page that is mid-reload counts as "not yet".
+    const until = async (expression, ms, what) => {
+      const deadline = Date.now() + ms;
+      for (;;) {
+        if (await page.eval(expression).catch(() => false)) return;
+        if (Date.now() > deadline) throw new Error(`still waiting for ${what} after ${ms} ms`);
+        await page.sleep(50);
+      }
+    };
+    const live = `document.querySelector(".c-live")?.textContent === "Live"`;
+    const hasWord = `document.body.innerText.includes("charlie")`;
+
+    await page.goto(server.url);
+    const policy = await page.eval(`document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content`);
+    assert.ok(policy?.endsWith("; connect-src 'self'"), `the policy ends with connect-src 'self': ${policy}`);
+    await until(live, 5000, "the live indicator");
+    assert.equal(await page.eval(hasWord), false);
+
+    await page.eval("window.__beforeReload = true");
+    fs.writeFileSync(file, draft("charlie"));
+    await until(hasWord, 5000, "the new word on the open page");
+    assert.equal(await page.eval("window.__beforeReload"), undefined, "the page reloaded itself; the test did not navigate again");
+
+    await until(live, 5000, "the live indicator after the reload");
+    assert.deepEqual(page.errors, [], "no policy violation or other error");
+  } finally {
+    await browser?.close();
+    await server.close();
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
