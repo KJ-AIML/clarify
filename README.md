@@ -59,32 +59,42 @@ clarify/
 │   │   ├── layout.js                layered layout engine
 │   │   ├── svg.js, sequence-svg.js  renderers (class-based, themed by CSS tokens)
 │   │   └── index.js                 fence → model → SVG dispatch
+│   ├── lesson/
+│   │   ├── parse.js, state.js       lesson fence → model + warnings → one state per step
+│   │   ├── layout.js, stage.js      bench layout → the stage, drawn once as SVG
+│   │   ├── objects/, pen.js         the 15 crafted objects + their drawing helpers
+│   │   ├── render.js, kinds.js      lesson HTML + runtime model; shared vocabulary
+│   │   └── markdown.js              lesson → GitHub Markdown
+│   ├── iso/kit.js, kit.css          vendored isometric anatomy kit (MIT)
 │   ├── export/markdown.js           draft → GitHub Markdown
 │   ├── brand-marks/brands.js        22 inline brand marks + lookup + sprite
-│   └── runtime/                     themes.css, page.css, svg.css, client.js (inlined at compile time)
+│   └── runtime/                     themes.css, page.css, svg.css, client.js (inlined at compile time),
+│                                    plus lesson.css and lesson.js on pages with a lesson
 └── test/
-    ├── *.test.js                    node:test unit tests (parser, layout + fuzz, mermaid, render, serve)
+    ├── *.test.js                    node:test unit tests (parser, layout + fuzz, mermaid, render, serve, lessons)
     └── visual/                      CDP-driven browser audit + screenshot regression (no Playwright)
 ```
 
 ## Testing
 
 ```bash
-npm test                 # 75 unit tests, including the 300-layout fuzz pass
+npm test                 # 161 unit tests, including the 300-layout fuzz pass
 npm run visual           # browser audit + pixel diff against test/visual/baselines
 npm run visual:update    # accept intentional visual changes
 ```
 
-The visual suite drives headless Chromium over the DevTools pipe. It finds Chromium through `$CHROME_PATH`, Playwright's browser cache or a system Chrome, and skips cleanly if none exists. Each scenario first runs in-page checks: no console errors, every node label fits its box, every tech node has an icon, and no horizontal page overflow. It then compares the screenshot against its baseline, and diff images go to `test/visual/output/`. Two scenarios exercise the reply loop and SVG/PNG export end to end.
+The visual suite drives headless Chromium over the DevTools pipe. It finds Chromium through `$CHROME_PATH`, Playwright's browser cache or a system Chrome, and skips cleanly if none exists. Each scenario first runs in-page checks: no console errors, every node label fits its box, every tech node has an icon, and no horizontal page overflow. It then compares the screenshot against its baseline, and diff images go to `test/visual/output/`. Of the 26 scenarios, 17 compare a screenshot. The other 9 check behaviour end to end: the reply loop, SVG/PNG export, and the lesson player (stepping, motion and keys, reduced motion, round trips at rest, compact name tags, the quiz and step comments).
 
 Baselines depend on the machine's fonts. Regenerate them with `npm run visual:update` on the machine (or CI image) that runs the comparison.
+
+On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/out` instead of `npm run visual`: the committed baselines come from a Mac, so plain `npm run visual` fails on fonts and writes the missing lesson baselines into `test/visual/baselines/`. The first run fills `.tmp/before` (git-ignored), and later runs compare against it.
 
 ## Design notes
 
 - **Plain ESM with JSDoc types.** There's no build step. `src/types.d.ts` defines the contracts, and modules reference them via `@typedef {import("./types")…}`, so editors and `tsc --checkJs` type-check without a compile pass.
 - **Deterministic text measurement.** Node-side layout estimates text width per character class. The browser audit verifies that labels actually fit.
 - **Untrusted input.** All draft text is escaped. Links are limited to http/https/mailto/relative URLs, and embedded JSON is `<`-escaped. The live server binds to loopback and rejects foreign `Host` headers.
-- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 65 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Typical pages are 110–160 KB.
+- **Size.** The engine, eight themes, inspector, route tours, exports and live reload live in about 78 KB of inlined CSS and JS per page. Brand paths are emitted once per page as a `<symbol>` sprite. Pages without a lesson are typically 110–160 KB. A page with a lesson is roughly 300–410 KB: it also carries the lesson player (about 36 KB of CSS and JS) and the stage, drawn as one SVG.
 
 ## License
 

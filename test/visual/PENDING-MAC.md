@@ -2,6 +2,8 @@
 
 The lesson block added four screenshot scenarios: `lesson-light`, `lesson-dark`, `lesson-mobile` and `lesson-fail`. Their baselines must come from the Mac that made the 13 existing ones, because screenshots depend on the machine's fonts. PNGs made on Windows are kept out of `test/visual/baselines/` on purpose.
 
+On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/out`, never plain `npm run visual`: that compares against these Mac baselines (fonts differ, so it fails) and writes the four lesson PNGs into `test/visual/baselines/` as untracked files.
+
 On the Mac, once:
 
 1. Run `npm run visual`. Do **not** use `npm run visual:update`: it would overwrite the 13 existing baselines and hide regressions.
