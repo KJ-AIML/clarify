@@ -80,6 +80,7 @@ test("lesson text is escaped", () => {
   )));
   assert.ok(!html.includes("<img src=x"), "a raw tag must not appear");
   assert.ok(html.includes('aria-label="Lesson: &lt;img src=x onerror=alert(1)&gt;"'));
+  assert.ok(html.includes('data-step="0" aria-label="Step 1: &lt;img src=x onerror=alert(1)&gt;"'), "the timeline button's name");
   for (const where of ['<h3 class="l-title">', '<span class="l-tag-t">', '<h4 class="l-step-title">', '<div class="l-tip is-warn" role="note"><b>', '<button type="button" class="l-option" data-correct="true"><span>']) {
     assert.ok(html.includes(`${where}&lt;img src=x onerror=alert(1)&gt;`), where);
   }
@@ -142,9 +143,11 @@ test("the lesson HTML follows the contract", () => {
   assert.match(html, /<ol class="l-key" hidden aria-label="Places">/);
   assert.equal(count(html, /<li data-place="[^"]+"><b>\d<\/b><i class="l-swatch" data-tint="\w+"><\/i>/g), 5);
   assert.match(html, /<ul class="l-legend" aria-label="Legend"><li><i class="l-dot" data-kind="change"><\/i>your change<\/li><li><i class="l-dot" data-kind="reply"><\/i>teammate&#39;s change<\/li><li><i class="l-dot" data-kind="fail"><\/i>refused<\/li><\/ul>/);
-  // timeline: one button per step, the quiz last
-  const steps = [...html.matchAll(/<button type="button" data-step="(\d+)"><b>(\d+)<\/b><span>([^<]*)<\/span><\/button>/g)];
-  assert.deepEqual(steps.map((m) => m.slice(1)), [["0", "1", "Save"], ["1", "2", "Stage"], ["2", "3", "Rejected"], ["3", "4", "Quiz"]]);
+  // timeline: one button per step, the quiz last, each named in full (narrow lessons hide the short name)
+  const steps = [...html.matchAll(/<button type="button" data-step="(\d+)" aria-label="([^"]*)"><b>(\d+)<\/b><span>([^<]*)<\/span><\/button>/g)];
+  assert.deepEqual(steps.map((m) => m.slice(1)), [
+    ["0", "Step 1: Save", "1", "Save"], ["1", "Step 2: Stage", "2", "Stage"], ["2", "Step 3: Rejected", "3", "Rejected"], ["3", "Step 4: Quiz", "4", "Quiz"]
+  ]);
   // guide: count, chapter, comment, then one article per step with its draft line, then the quiz
   assert.match(html, /<span class="l-count">Step 1 \/ 4<\/span><span class="l-chapter" data-chapter="problem">Problem<\/span><button type="button" class="l-icon" data-l="comment" aria-label="Comment on this step">/);
   const articles = [...html.matchAll(/<article class="(l-step(?: l-quiz)?)" data-step="(\d+)" data-line="(\d+)" data-chapter="(\w+)">/g)];

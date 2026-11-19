@@ -11,7 +11,7 @@
 //     .l-body > .l-main: .l-counters (.l-chip[data-counter][data-level] > .l-chip-k + .l-chip-v,
 //                                     .l-tools > button[data-l=replay], button[data-l=pause][aria-pressed])
 //                        .l-stage (svg.l-svg, .l-tags > span.l-tag[data-place][data-n]), ol.l-key[hidden],
-//                        ul.l-legend, ol.l-timeline > li > button[data-step]
+//                        ul.l-legend, ol.l-timeline > li > button[data-step][aria-label="Step N: short"]
 //             > aside.l-guide: .l-top (.l-count, .l-chapter, button[data-l=comment]),
 //                        article.l-step[data-step][data-line][data-chapter] per step, article.l-step.l-quiz,
 //                        .l-nav (button[data-l=back], button[data-l=next]), p.l-keys, .l-goals li[data-at],
@@ -68,8 +68,9 @@ export function renderLesson(block, n) {
   const legend = used.length
     ? `<ul class="l-legend" aria-label="Legend">${used.map((kind) => `<li><i class="l-dot" data-kind="${kind}"></i>${inline(lesson.pucks[kind] || kind)}</li>`).join("")}</ul>`
     : "";
+  // Each button is named in full: a narrow lesson hides the short name and shows only the number.
   const timeline = shorts
-    .map((short, i) => `<li><button type="button" data-step="${i}"><b>${i + 1}</b><span>${escapeHtml(short)}</span></button></li>`)
+    .map((short, i) => `<li><button type="button" data-step="${i}" aria-label="${escapeHtml(`Step ${i + 1}: ${short}`)}"><b>${i + 1}</b><span>${escapeHtml(short)}</span></button></li>`)
     .join("");
 
   const main =
