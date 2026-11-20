@@ -162,7 +162,7 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `page error` | an exception or a `console.error`; `fx NAME: …` is your script. On the page (`⚠ page @…`), it may also say that a view could not finish: a step ran out of time (it names which: the load, the checks, a picture), or the browser stopped | fix the script; for a time limit, a script that never ends or a page too big to measure |
 | `half-empty` | at 1440, the panel's content fills under half of its height; it suggests a `span` | that `span`, or a neighbour panel of similar length |
 | `low contrast` | text too faint on its background (it needs 4.5:1, or 3:1 for large text) | `--text` or `--title` for the text, or a lighter fill under it |
-| `missing` | a panel of the draft is not on the page: a free section above it left a comment, `<style>`, `<script>` or another tag that swallows the rest of the page open | fix that section; its lint line names what is open, except for `<plaintext>`, `<noembed>` and `<noframes>`, which also swallow the rest of the page and which the lint does not know: with a `missing` panel and no lint line, look in the sections above it for one of those |
+| `missing` | a panel of the draft is not on the page: a free section above it left a comment, `<style>`, `<script>` or a tag such as `<textarea>` open | fix that section; its lint line names what is open, except for `<plaintext>`, `<noembed>` and `<noframes>`, which also swallow the rest of the page and which the lint does not know: with a `missing` panel and no lint line, look in the sections above it for one of those |
 
 ## The check loop
 

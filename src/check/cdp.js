@@ -136,7 +136,11 @@ export async function launchBrowser(executable = findChrome(), { startTimeout = 
   let gone = null;
   /** Each is called once, with the reason, when the browser goes: it ends a wait that no command answers. */
   const onGone = new Set();
-  /** The pipe can close a moment before the process exits; this waits for the exit, and its code. */
+  /**
+   * The pipe can close a moment before the process exits; this waits 1 s for the exit, and its code. When the
+   * exit is slower (a busy machine, 3 s and more seen), the reason is the closed pipe instead: either one
+   * means that the browser stopped, and no wait can promise which comes first.
+   */
   let pipeTimer;
   const exited = new Promise((resolve) => { proc.once("exit", resolve); proc.once("error", resolve); });
   const fail = (reason) => {

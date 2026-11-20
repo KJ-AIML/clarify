@@ -10,6 +10,8 @@ import { checkPage, formatReport, VIEWS } from "../src/check/index.js";
 // The browser tests need Chrome or Edge; without one they are skipped, not failed.
 const inBrowser = { skip: !findChrome() && "no Chrome or Edge", timeout: 60000 };
 const FIXTURE = new URL("./fixtures/check-broken.md", import.meta.url);
+/** What the check says of a panel that a free section swallowed (written out here, so a change to it is seen). */
+const MISSING_MSG = "not on the page; a free section above it may leave a comment, <style>, <script> or a tag such as <textarea> open";
 
 /** Runs `fn` with a fresh temp folder, and removes the folder after. */
 async function withTemp(fn) {
@@ -229,7 +231,9 @@ test("a browser that stops mid-run keeps the views that finished", inBrowser, ()
   assert.equal(report.browser, true);
   assert.deepEqual(report.pictures.map((p) => `${p.panel} ${p.view}`), ["A 1440 light", "A 1440 dark"]);
   assert.deepEqual(report.problems.map((p) => [p.panel, p.view, p.kind]), [[null, "390 light", "page error"]], JSON.stringify(report.problems));
-  assert.match(report.problems[0].msg, /^the browser stopped \(the browser exited \(.+\)\); this view and the ones after it were not checked$/);
+  // The browser's pipe closes a moment before its process exits. On a busy machine the exit can come after the
+  // 1 s that cdp.js waits for it, and then the reason is the closed pipe. Both mean that the browser stopped.
+  assert.match(report.problems[0].msg, /^the browser stopped \(the browser (exited \(.+\)|closed its pipe)\); this view and the ones after it were not checked$/);
   assert.match(formatReport(report).at(-1), /^⚠ check: 1 problem on the page · /);
 }));
 
@@ -246,9 +250,27 @@ test("a panel that a free section swallows is reported missing", inBrowser, () =
   assert.deepEqual(report.panels, ["A", "B", "C", "D"]);
   const missing = report.problems.filter((p) => p.kind === "missing");
   assert.deepEqual(missing.map((p) => [p.panel, p.view]), [["C", "1440 light"], ["D", "1440 light"]], formatReport(report).join("\n"));
-  assert.equal(missing[0].msg, "not on the page; a free section above it may leave a comment, <style> or <script> open");
-  assert.ok(formatReport(report).includes("⚠ panel C @1440 light: missing: not on the page; a free section above it may leave a comment, <style> or <script> open"));
+  assert.equal(missing[0].msg, MISSING_MSG);
+  assert.ok(formatReport(report).includes(`⚠ panel C @1440 light: missing: ${MISSING_MSG}`));
   assert.match(formatReport(report).at(-1), /^⚠ check: \d+ problems? in \d+ panels/);
+}));
+
+test("a panel that a text tag left open swallows is reported missing, and the lint names the tag", inBrowser, () => withTemp(async (tmp) => {
+  // B leaves a <textarea> open: the browser reads everything after it, C and the page's own script included, as its text.
+  const draft = path.join(tmp, "open-textarea.md");
+  fs.writeFileSync(draft, [
+    "---", "title: Open textarea", "cols: 3", "---", "Lead: The free section in B leaves a textarea open.", "",
+    "## A First {span=3}", "Plain text in A.", "",
+    "## B Section {span=3}", "```free open", '<p class="fx-how"><b>How to read this:</b> a note.</p><textarea>a field the author forgot to close', "```", "",
+    "## C Third {span=3}", "Text in C.", ""
+  ].join("\n"));
+  const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });
+  assert.deepEqual(report.panels, ["A", "B", "C"]);
+  assert.equal(report.lint.length, 1, report.lint.join("\n"));
+  assert.match(report.lint[0], /"<textarea>" is left open/);
+  const missing = report.problems.filter((p) => p.kind === "missing");
+  assert.deepEqual(missing.map((p) => [p.panel, p.view]), [["C", "1440 light"]], formatReport(report).join("\n"));
+  assert.equal(missing[0].msg, MISSING_MSG);
 }));
 
 test("text written straight into an svg is not checked as text", inBrowser, () => withTemp(async (tmp) => {

@@ -98,7 +98,7 @@ export async function checkPage({ input, outDir, findChrome = findInstalledChrom
 }
 
 /** Said of a draft panel that the browser did not find on the page. */
-const MISSING = "not on the page; a free section above it may leave a comment, <style> or <script> open";
+const MISSING = "not on the page; a free section above it may leave a comment, <style>, <script> or a tag such as <textarea> open";
 
 /**
  * One view in a fresh tab: the checks, the page errors and a picture of every panel. Whatever goes wrong
