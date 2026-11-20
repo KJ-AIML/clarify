@@ -186,8 +186,10 @@ export async function launchBrowser(executable = findChrome(), { startTimeout = 
   try {
     await within(send("Browser.getVersion"), startTimeout, "the browser to start");
   } catch {
+    // Read before shutDown(): its kill makes the browser "exit", and that would set `gone` to "signal SIGTERM".
+    const reason = gone;
     await shutDown();
-    throw new Error(gone || `the browser did not answer in ${startTimeout / 1000} s`);
+    throw new Error(reason || `the browser did not answer in ${startTimeout / 1000} s`);
   }
 
   async function newPage({ width = 1280, height = 900, colorScheme = "light", reducedMotion = true } = {}) {

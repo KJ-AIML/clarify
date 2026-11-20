@@ -140,7 +140,7 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `free "NAME": the name "hatch" belongs to the kit: its hatch patterns are fx-hatch-ROLE; choose another name` | Rename the section. |
 | `free "NAME": "<!--" is never closed, so the rest of the page disappears into the comment; close it with "-->"` | Close the comment with `-->`. Until then every panel after it, and the page's own script (theme, replies, Copy as Markdown), is gone; `check` reports those panels as `missing`. |
 | `free "NAME": "<script>" is never closed, so the rest of the page disappears into it; close it with "</script>"` (or `"<style>"`) | Close it with its end tag. |
-| `free "NAME": "<textarea>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</textarea>"` (or `title`, `template`, `xmp`, `iframe`, `noscript`) | Take it out, and draw that part with other tags. A `<title>` inside an `<svg>` is the drawing's own and is fine. |
+| `free "NAME": "<textarea>" is left open, so the page shows everything after it as text, or hides it; close it with "</textarea>"` (or `title`, `template`, `xmp`, `iframe`, `noscript`) | Close the tag you left open with its end tag; a closed one is fine, and so is a `<title>` inside an `<svg>` (the drawing's own). Until it is closed, every panel after it is gone and `check` reports them as `missing`. |
 | `free "NAME": a "{" in a <style> is never closed: the rules after it in that <style> are lost; add the "}"` | Add the missing `}`. Each `<style>` is its own sheet, so the other sections keep their style. |
 | `free "NAME": selectors must start with .fx-NAME: …` | Start every rule with `.fx-NAME`: `.fx-NAME .row`, `.fx-NAME.is-on`. Rules inside `@media` and `@container` too; rules nested inside a scoped rule are fine. |
 | `free "NAME": @keyframes "X" must start with fx-NAME-` | Rename it `fx-NAME-X`, in `animation` too. |
@@ -162,7 +162,7 @@ An SVG `<use>` copies a shape drawn once in `<defs>`. A selector that needs an a
 | `page error` | an exception or a `console.error`; `fx NAME: …` is your script. On the page (`⚠ page @…`), it may also say that a view could not finish: a step ran out of time (it names which: the load, the checks, a picture), or the browser stopped | fix the script; for a time limit, a script that never ends or a page too big to measure |
 | `half-empty` | at 1440, the panel's content fills under half of its height; it suggests a `span` | that `span`, or a neighbour panel of similar length |
 | `low contrast` | text too faint on its background (it needs 4.5:1, or 3:1 for large text) | `--text` or `--title` for the text, or a lighter fill under it |
-| `missing` | a panel of the draft is not on the page: a free section above it left a comment, `<style>` or `<script>` open | fix that section; its lint line names what is open |
+| `missing` | a panel of the draft is not on the page: a free section above it left a comment, `<style>`, `<script>` or another tag that swallows the rest of the page open | fix that section; its lint line names what is open, except for `<plaintext>`, `<noembed>` and `<noframes>`, which also swallow the rest of the page and which the lint does not know: with a `missing` panel and no lint line, look in the sections above it for one of those |
 
 ## The check loop
 

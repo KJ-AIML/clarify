@@ -169,22 +169,40 @@ test("a comment left open warns: the rest of the page would disappear into it", 
   assert.deepEqual(lint("a", "", "<p>a</p><!-- closed --><p>b</p>"), []);
 });
 
-test("a <script> or <style> left open, or a tag that holds text, warns", () => {
+test("a <script> or <style> left open warns", () => {
   // splitFragment takes out every closed <style> and <script>, so one that is left is never closed.
   assert.deepEqual(lint("a", "", "<p>a</p><script>root.x = 1;"), ['"<script>" is never closed, so the rest of the page disappears into it; close it with "</script>"']);
   assert.deepEqual(lint("a", "", '<STYLE media="x">.fx-a { }'), ['"<style>" is never closed, so the rest of the page disappears into it; close it with "</style>"']);
-  const html = "<textarea>t</textarea><title>t</title><template><p>t</p></template><xmp>x</xmp><iframe></iframe><noscript>n</noscript><textarea>again</textarea>";
-  assert.deepEqual(lint("a", "", html), ["textarea", "title", "template", "xmp", "iframe", "noscript"].map((t) =>
-    `"<${t}>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</${t}>"`));
+});
+
+const TEXT_TAGS = ["textarea", "title", "template", "xmp", "iframe", "noscript"];
+const leftOpenMsg = (t) => `"<${t}>" is left open, so the page shows everything after it as text, or hides it; close it with "</${t}>"`;
+
+test("a tag that holds text warns only when it is left open; a closed one is correct markup", () => {
+  const closed = "<textarea>t</textarea><title>t</title><template><p>t</p></template><xmp>x</xmp><iframe></iframe><noscript>n</noscript><textarea>again</textarea>";
+  assert.deepEqual(lint("a", "", closed), []);
+  assert.deepEqual(lint("a", "", "<TEXTAREA rows=2>t</TextArea >"), []);
+  for (const t of TEXT_TAGS) assert.deepEqual(lint("a", "", `<p>a</p><${t}>and the rest`), [leftOpenMsg(t)], t);
+});
+
+test("a text tag is left open when no end tag of its own name comes after it", () => {
+  // The end tag must come after the start tag, and be the tag's own.
+  assert.deepEqual(lint("a", "", "<textarea>a</textarea><textarea>b"), [leftOpenMsg("textarea")]);
+  assert.deepEqual(lint("a", "", "</textarea><textarea>b"), [leftOpenMsg("textarea")]);
+  assert.deepEqual(lint("a", "", "<textarea>b</title>"), [leftOpenMsg("textarea")]);
+  assert.deepEqual(lint("a", "", "<textarea>b</textareas>"), [leftOpenMsg("textarea")]);
+  // One warning for each name, in the order the tags open.
+  assert.deepEqual(lint("a", "", "<xmp>x<title>t<xmp>y<textarea>b"), [leftOpenMsg("xmp"), leftOpenMsg("title"), leftOpenMsg("textarea")]);
 });
 
 test("a <title> inside an svg is the drawing's own, and a tag in a comment is no tag", () => {
   const html = '<svg viewBox="0 0 10 10" role="img"><title>a tooltip</title><foreignObject><p>x</p></foreignObject><g><title>t</title></g></svg>'
     + "<!-- <textarea> <script> --><svg/><p>after</p>";
   assert.deepEqual(lint("a", "", html), []);
-  assert.deepEqual(lint("a", "", '<svg><foreignObject><textarea>x</textarea></foreignObject></svg>'), [
-    '"<textarea>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</textarea>"'
-  ]);
+  // In an svg these are SVG elements, closed or not; in its foreignObject they are HTML again.
+  assert.deepEqual(lint("a", "", "<svg><title>t</svg>"), []);
+  assert.deepEqual(lint("a", "", "<svg><foreignObject><textarea>x</textarea></foreignObject></svg>"), []);
+  assert.deepEqual(lint("a", "", "<svg><foreignObject><textarea>x</foreignObject></svg>"), [leftOpenMsg("textarea")]);
 });
 
 test("a { never closed warns, and each <style> of a section is read on its own", () => {

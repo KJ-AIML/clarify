@@ -3,7 +3,7 @@
 // the page's own styles, so it has to keep to the house rules: selectors, ids and keyframes carry the
 // section's prefix, colours come from tokens, nothing loads from the network, and the section stays small.
 // It also finds what would spoil the rest of the page: a comment, `<script>` or `<style>` left open, a tag
-// whose content the browser does not read as markup, and a `{` never closed.
+// whose content the browser does not read as markup, left open, and a `{` never closed.
 // It reads text only (no browser) and never looks at scripts. `clarify check` finds what the eye must judge.
 
 import fs from "node:fs";
@@ -48,8 +48,9 @@ const CSS_URL = /@import\s*["']\s*([^"']*)|url\(\s*["']?\s*([^"')\s]*)/gi;
 const LINK_ELEMENTS = new Set(["a", "area"]);
 
 // Elements whose content the browser does not read as markup, or never shows: what follows one, up to its end
-// tag, is text or hidden, and the rest of the page with it when the end tag is missing. Inside an <svg> (but not
-// in its <foreignObject>) they are SVG elements instead: a <title> there is the drawing's tooltip.
+// tag, is text or hidden, and the rest of the page with it when the end tag is missing. Closed, they are
+// correct markup; only one left open is a fault. Inside an <svg> (but not in its <foreignObject>) they are
+// SVG elements instead: a <title> there is the drawing's tooltip.
 const TEXT_TAGS = new Set(["textarea", "title", "template", "xmp", "iframe", "noscript"]);
 
 // A start tag (its name, then its attribute text), and one attribute (`name`, `name=value`, `name="value"`) inside it.
@@ -86,7 +87,8 @@ export function idsOf(html) {
 
 /**
  * What in a fragment would spoil the rest of the page, as warnings: a comment left open, a `<script>` or
- * `<style>` left open (every closed one was taken out before), and the elements of TEXT_TAGS outside a drawing.
+ * `<style>` left open (every closed one was taken out before), and an element of TEXT_TAGS, outside a drawing,
+ * with no end tag after it.
  * @param {string} html the fragment without its closed `<style>` and `<script>` elements
  * @returns {string[]}
  */
@@ -103,14 +105,18 @@ function leftOpen(html) {
   const found = new Set();
   /** "svg" or "html" for each <svg> and <foreignObject> still open, the innermost last. */
   const space = [];
-  for (const [, end, written, rest] of markup.matchAll(ANY_TAG)) {
+  for (const tag of markup.matchAll(ANY_TAG)) {
+    const [whole, end, written, rest] = tag;
     const name = written.toLowerCase();
     if (name === "svg" || name === "math" || name === "foreignobject") {
       if (end) space.pop();
       else if (!rest.trim().endsWith("/")) space.push(name === "foreignobject" ? "html" : "svg");
-    } else if (!end && TEXT_TAGS.has(name) && space.at(-1) !== "svg") found.add(name);
+    } else if (!end && TEXT_TAGS.has(name) && space.at(-1) !== "svg") {
+      // Left open when no end tag of its name comes after it.
+      if (!new RegExp(`</${name}(?=[\\s/>]|$)`, "i").test(markup.slice(tag.index + whole.length))) found.add(name);
+    }
   }
-  for (const name of found) out.push(`"<${name}>" does not belong in a section: the page shows what follows it as text, or hides it, up to "</${name}>"`);
+  for (const name of found) out.push(`"<${name}>" is left open, so the page shows everything after it as text, or hides it; close it with "</${name}>"`);
   return out;
 }
 

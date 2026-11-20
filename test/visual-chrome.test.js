@@ -1,10 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chromeCandidates, launchBrowser, browserArgs } from "../src/check/cdp.js";
+import { chromeCandidates, findChrome, launchBrowser, browserArgs } from "../src/check/cdp.js";
 
 test("a browser that exits at once rejects with the reason", { timeout: 20000 }, async () => {
   // Node is no browser: it exits at once on the browser's flags, and nothing may wait on it forever.
   await assert.rejects(launchBrowser(process.execPath), /the browser exited \(code \d+\)/);
+});
+
+test("a browser that starts but never answers is reported as not answering", { skip: !findChrome() && "no Chrome or Edge", timeout: 20000 }, async () => {
+  // Chrome needs far longer than 1 ms to answer. The shutdown that follows the timeout ends the process with
+  // SIGTERM, and that must not become the reason: the browser was alive when the wait ran out.
+  await assert.rejects(launchBrowser(undefined, { startTimeout: 1 }), (err) => {
+    assert.match(err.message, /^the browser did not answer in [\d.]+ s$/);
+    return true;
+  });
 });
 
 test("the browser runs without its sandbox only as root", () => {
