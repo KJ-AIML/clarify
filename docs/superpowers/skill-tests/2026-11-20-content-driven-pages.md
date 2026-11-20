@@ -1,5 +1,7 @@
 # Skill test: content-driven pages
 
+Local paths are shortened to `<repo>`; the runs used the full path.
+
 This tests the change to `SKILL.md` described in `docs/superpowers/specs/2026-11-19-content-driven-pages-design.md` ("How we test the skill change"). Fresh agents get the same three contents. Each content runs in Quick, once with today's `SKILL.md` (before) and once with the new one (after). Every run is timed. One extra Designed run of the device content is timed and reported.
 
 The briefs and the agent prompt below are used word for word in every run, before and after.
@@ -45,7 +47,7 @@ Open decision: do we hold the next release, planned for 21 October, until B is d
 `tour`
 
 ```text
-Use the clarify skill to give a new contributor a tour of the clarify codebase at C:\Users\KongphopJamreansuk\Documents\clarify.
+Use the clarify skill to give a new contributor a tour of the clarify codebase at <repo>.
 ```
 
 `device-designed` (the Designed run, after the change only)
@@ -59,9 +61,9 @@ Make it good: use the clarify skill to make a designed explainer of how an elect
 Fill in `<phase>` (`before` or `after`), `<brief>` (one brief above) and `<id>` (`device`, `postmortem`, `tour` or `device-designed`).
 
 ```text
-The clarify skill is at C:\Users\KongphopJamreansuk\Documents\clarify. Read its SKILL.md and do what it says. Run its CLI as: node C:/Users/KongphopJamreansuk/Documents/clarify/bin/clarify.mjs
+The clarify skill is at <repo>. Read its SKILL.md and do what it says. Run its CLI as: node <repo>/bin/clarify.mjs
 Task: <brief>
-Save your draft as C:/Users/KongphopJamreansuk/Documents/clarify/.tmp/skill-test/<phase>/<id>.md and render it with --out C:/Users/KongphopJamreansuk/Documents/clarify/.tmp/skill-test/<phase>/<id>.html --no-open. Do not change any other file in that repo.
+Save your draft as <repo>/.tmp/skill-test/<phase>/<id>.md and render it with --out <repo>/.tmp/skill-test/<phase>/<id>.html --no-open. Do not change any other file in that repo.
 Run `date -u +%FT%TZ` as your very first and your very last command. Report both times, how many times you rendered, and the output of your last render.
 ```
 

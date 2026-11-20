@@ -189,8 +189,10 @@ A new fenced block, `free`, in two forms:
 
 What the renderer does:
 1. Wraps the fragment in `<div class="fx fx-<name>" data-fx="<name>">`.
-2. Moves every `<style>` into one style element in the page head, after the kit.
+2. Moves every `<style>` into the page head, after the kit, each into its own `<style data-fx-css="<name>">` element, in the order written. A browser stops reading a style element at its end tag, so a `{` left open in one `<style>` spoils only the rest of that `<style>`, not the next section's.
 3. Moves every `<script>` to the end of the body. Each one is wrapped so that `root` is the section element, and an error is caught and logged with `console.error("fx <name>: …")`. One broken section never stops the others. (`build.mjs` in the spike does exactly this.)
+
+Amended 2026-11-20 after the final review: step 2 first said that every `<style>` went into one style element. With one element, a `{` left open in one section's CSS swallowed the CSS of every section after it, and one section unstyled the others. The code gives each `<style>` its own element (`freeStyles` in `src/render.js`), and the static lint warns about a `{` that is never closed.
 
 A short check that reads the section without a browser, the **static lint**, runs inside `render`. It prints the usual `⚠ panel X: line N: …` warnings (as `bin/clarify.mjs` line 82 does today) for:
 - a selector that does not start with `.fx-<name>`;

@@ -19,7 +19,7 @@
 - Existing drafts render exactly as now: a page without a free section is byte-identical to `main`. **The byte-identical check**, after every task that touches `src/`, prints six `✓` lines and no diff: `mkdir -p .tmp/s1-after-html && for f in checkout-sequence codebase-tour ecommerce-architecture git-commit-lesson mermaid-compat platform-topology; do node bin/clarify.mjs render examples/$f.md --out .tmp/s1-after-html/$f.html --no-open --quiet; done; git diff --no-index --stat .tmp/s1-before-html .tmp/s1-after-html`
 - Free section names: `/^[a-z0-9][a-z0-9-]*$/`. At most 40 KB per section. No text under 10.5px on screen.
 - Warning lines: `render` prints `⚠ panel X: line N: …`; `check` prints `⚠ panel D @390 light: …`.
-- Run every `npm test` and `node --test` with `TEMP` and `TMP` set to `C:\Users\KongphopJamreansuk\AppData\Local\Temp` (Git Bash: `TEMP='C:\Users\KongphopJamreansuk\AppData\Local\Temp' TMP='C:\Users\KongphopJamreansuk\AppData\Local\Temp' npm test`); without them a known, unrelated test fails. 162 tests pass on `main`; every existing test stays green.
+- Run every `npm test` and `node --test` with `TEMP` and `TMP` set to `%LOCALAPPDATA%\Temp` (Git Bash: `TEMP='%LOCALAPPDATA%\Temp' TMP='%LOCALAPPDATA%\Temp' npm test`); without them a known, unrelated test fails. 162 tests pass on `main`; every existing test stays green.
 - Visual baselines in `test/visual/baselines/` come from the owner's Mac only. Never write PNGs there, never run `npm run visual` or `visual:update` on Windows. Compare with `node test/visual/run.mjs --baselines .tmp/s1-before --output .tmp/s1-out` (Task 1 fills `.tmp/s1-before`; a new scenario gets its PNG there on its first run). A change to how an existing page looks adds a line to `test/visual/PENDING-MAC.md`.
 - `.tmp/` is git-ignored and throwaway. Task 2 copies the spike material Stage 1 needs into `docs/superpowers/specs/content-driven-spike/`; later tasks read only that copy.
 - One local commit per task on `feat/content-driven-pages`. Never push, never switch branches, never `rm -rf`. Version 0.3.0 only in Task 12.
@@ -64,7 +64,7 @@ Tasks 1 and 11 are **controller tasks**: the session that runs this plan does th
 - [ ] **Step 2: Visual before set.** `node test/visual/run.mjs --baselines .tmp/s1-before --output .tmp/s1-before-out` → 27 lines. Record any `✗` as already failing on `main`.
 - [ ] **Step 3: HTML before set.** `mkdir -p .tmp/s1-before-html`, then the byte-identical check's `for` loop with `--out .tmp/s1-before-html/$f.html` (no `git diff`) → six `✓`.
 - [ ] **Step 4: Write the skill-test file:**
-  - Briefs, exact. `device`: "Use the clarify skill to explain how an electric kettle boils water and switches itself off." `postmortem`: "Use the clarify skill to write up this incident as a post-mortem page:" + the input. `tour`: "Use the clarify skill to give a new contributor a tour of the clarify codebase at C:\Users\KongphopJamreansuk\Documents\clarify." `device-designed` (Task 11 only): "Make it good: use the clarify skill to make a designed explainer of how an electric kettle boils water and switches itself off."
+  - Briefs, exact. `device`: "Use the clarify skill to explain how an electric kettle boils water and switches itself off." `postmortem`: "Use the clarify skill to write up this incident as a post-mortem page:" + the input. `tour`: "Use the clarify skill to give a new contributor a tour of the clarify codebase at <repo>." `device-designed` (Task 11 only): "Make it good: use the clarify skill to make a designed explainer of how an electric kettle boils water and switches itself off."
   - The post-mortem input, written once now: made up, internally consistent, 200–300 words. An online shop's orders stay "paid, not shipped" for about three hours after a deploy changed a queue consumer. It has 6–8 timestamped events (noticed, paged, mitigated, fixed), the cause, two fixes compared with a reason each, and one decision left open. Every time and count agrees.
   - The pass line (spec Part 1); "much slower" means more than 1.5× the before time.
   - Results table: `content | skill | start (UTC) | end (UTC) | minutes | renders | warnings | check | shape (panel titles in order, with each one's block or form) | picture`.
@@ -72,9 +72,9 @@ Tasks 1 and 11 are **controller tasks**: the session that runs this plan does th
 - [ ] **Step 6: Dispatch three fresh Opus agents at once** (`device`, `postmortem`, `tour`), each with this prompt, `<phase>` = `before`:
 
 ```text
-The clarify skill is at C:\Users\KongphopJamreansuk\Documents\clarify. Read its SKILL.md and do what it says. Run its CLI as: node C:/Users/KongphopJamreansuk/Documents/clarify/bin/clarify.mjs
+The clarify skill is at <repo>. Read its SKILL.md and do what it says. Run its CLI as: node <repo>/bin/clarify.mjs
 Task: <brief>
-Save your draft as C:/Users/KongphopJamreansuk/Documents/clarify/.tmp/skill-test/<phase>/<id>.md and render it with --out C:/Users/KongphopJamreansuk/Documents/clarify/.tmp/skill-test/<phase>/<id>.html --no-open. Do not change any other file in that repo.
+Save your draft as <repo>/.tmp/skill-test/<phase>/<id>.md and render it with --out <repo>/.tmp/skill-test/<phase>/<id>.html --no-open. Do not change any other file in that repo.
 Run `date -u +%FT%TZ` as your very first and your very last command. Report both times, how many times you rendered, and the output of your last render.
 ```
 
