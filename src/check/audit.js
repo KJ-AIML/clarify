@@ -13,12 +13,6 @@
 // - .c-suggested: the "Suggested" tag on an option of an ask is 9.5px by design (page.css).
 // - .c-route-play, for small text and for contrast: the ▶ on a route button is an 8.5px icon made of one glyph,
 //   hidden from screen readers, not words to read (page.css). On a route's own colour it measures 4.44:1.
-// - .c-table th code, for small text only: page.css sets inline code in a table header to 0.92em of the
-//   header's 10.5px, which is 9.7px. To be lifted in page.css together with the hero fix below.
-// - figure.c-diagram.is-hero, for overflow by at most 4px, on a page under 560px wide: a known bug in
-//   page.css. The rule for every width (margin-inline: -18px, near line 188) comes after the phone rule
-//   (-14px, near line 119) and overrides it, so the first diagram on a full-row panel sticks out 3px on each
-//   side at phone width. Remove this skip when page.css is fixed. More than 4px, or a wider page, is reported.
 // - :disabled, for contrast only: WCAG 2 does not ask for contrast on a control that is turned off.
 // - text-overflow: ellipsis, for clipped only: the "…" tells the reader that the text goes on.
 // - position: sticky: a part that sticks to the window while the reader scrolls covers the text under it on
@@ -30,11 +24,9 @@
 /** Left out of every check, with everything inside. */
 const SKIP_ALL = [".c-sr", ".c-diagram .c-viewport"];
 /** Left out of the small-text check only. */
-const SKIP_SMALL = [".c-suggested", ".c-route-play", ".c-table th code"];
+const SKIP_SMALL = [".c-suggested", ".c-route-play"];
 /** Left out of the contrast check only (a control that is turned off is left out too, see below). */
 const SKIP_CONTRAST = [".c-route-play"];
-/** The hero diagram sticks out of its panel by 3px at phone width (page.css); this much is left out there. */
-const HERO_OVERFLOW = { selector: "figure.c-diagram.is-hero", maxPx: 4, belowWidth: 560 };
 /** The smallest text allowed on screen, in CSS px. */
 const MIN_TEXT = 10.5;
 
@@ -81,7 +73,7 @@ export function contrastRatio(fg, bg) {
  * @returns {string}
  */
 export function auditScript({ halfEmpty }) {
-  const opts = { halfEmpty, skipAll: SKIP_ALL.join(", "), skipSmall: SKIP_SMALL.join(", "), skipContrast: SKIP_CONTRAST.join(", "), heroOverflow: HERO_OVERFLOW, minText: MIN_TEXT };
+  const opts = { halfEmpty, skipAll: SKIP_ALL.join(", "), skipSmall: SKIP_SMALL.join(", "), skipContrast: SKIP_CONTRAST.join(", "), minText: MIN_TEXT };
   return `(${audit.toString()})(${JSON.stringify(opts)}, ${parseColor.toString()}, ${contrastRatio.toString()})`;
 }
 
@@ -227,8 +219,6 @@ function audit(opts, parseColor, contrastRatio) {
       const [side, px] = sides.reduce((a, b) => (b[1] > a[1] ? b : a));
       if (px <= 1 || clippedInside(el) || !shown(el)) continue;
       out.push(el);
-      const hero = opts.heroOverflow;
-      if (px <= hero.maxPx && innerWidth < hero.belowWidth && el.matches(hero.selector)) continue; // known, see the list at the top
       add("overflow", label(el) + " sticks out " + Math.round(px) + "px on the " + side + " of the panel");
     }
 

@@ -177,7 +177,8 @@ test("every check fires on the panel that has it", inBrowser, () => withTemp(asy
 }));
 
 test("clarify's own blocks check clean", inBrowser, () => withTemp(async (tmp) => {
-  // The hero diagram (3px out at 390), the ▶ of a route button (4.44:1) and code in a table (9.7px) are clarify's own.
+  // The hero diagram at 390 and code in a table header are here to prove page.css right: nothing is left out for them.
+  // Only the ▶ of a route button (4.44:1, an icon) is skipped by the check, see audit.js.
   const draft = path.join(tmp, "check-own.md");
   fs.copyFileSync(new URL("./fixtures/check-own.md", import.meta.url), draft);
   const report = await checkPage({ input: draft, outDir: path.join(tmp, "out") });

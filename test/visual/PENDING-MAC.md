@@ -6,6 +6,8 @@ On Windows, run `node test/visual/run.mjs --baselines .tmp/before --output .tmp/
 
 Also new: `wireless-light` and `wireless-mobile` (`examples/wireless-mouse.md`, free sections). The same `npm run visual:update` creates them, so there are 6 new PNGs in all: the 4 lesson ones and these 2. Check them like the others and commit them with the rest.
 
+Also changed, on purpose, by `fix/polish-0.3.0`: on a page 560px wide or narrower the first diagram on a full-row panel (the hero diagram) now stays inside its panel instead of sticking out 3px on each side, and inline `code` in a table header is 10.5px instead of 9.7px. Against the baselines of the branch before this fix, two phone-width scenarios differ and nothing else does: `ecommerce-mobile` (0.65% of the pixels) and `codebase-tour-mobile` (3.29%), where only the diagram, its tools and its route strip moved in by a few pixels. No scenario has code in a table header, so that change shows in none of them. The same `npm run visual:update` regenerates these two baselines from the Mac, so there is nothing more to do for them.
+
 On the Mac, once, on the branch that has the course look:
 
 1. Run `npm test`. It must pass.
