@@ -41,7 +41,8 @@ const PICTURE = /^[A-Za-z0-9]+-\d+-(?:light|dark)\.png$/;
  * Check a page, or a draft (rendered first into `<outDir>/page.html`), in every view.
  * @param {{ input: string, outDir?: string, findChrome?: () => string | null, loadTimeout?: number, launch?: typeof launchBrowser }} opts
  *   `outDir` defaults to ~/.clarify/checks/<folder>/ (see checkFolder); `loadTimeout` (ms) bounds the load and
- *   each step after it; `launch` starts the browser (the tests wrap it).
+ *   each step after it (opening a tab has its own limit, never under 10 s); `launch` starts the browser (the
+ *   tests wrap it).
  * @returns {Promise<CheckReport>}
  */
 export async function checkPage({ input, outDir, findChrome = findInstalledChrome, loadTimeout = 10000, launch = launchBrowser }) {
@@ -108,11 +109,13 @@ const MISSING = "not on the page; a free section above it may leave a comment, <
 async function checkView(browser, url, view, report, loadTimeout) {
   const name = viewName(view);
   const s = `${loadTimeout / 1000} s`;
+  // Opening a tab is the browser's work, not the page's, and a busy machine is slow at it: it has its own limit.
+  const openLimit = Math.max(loadTimeout, 10000);
   /** What the view is waiting for, as said when its time runs out. */
-  let waiting = `the browser did not open a tab in ${s}`;
+  let waiting = `the browser did not open a tab in ${openLimit / 1000} s`;
   let tab = null;
   try {
-    tab = await within(browser.newPage({ width: view.width, height: view.height, colorScheme: view.scheme, reducedMotion: true }), loadTimeout, "a tab");
+    tab = await within(browser.newPage({ width: view.width, height: view.height, colorScheme: view.scheme, reducedMotion: true }), openLimit, "a tab");
     waiting = `the page did not finish loading in ${s} (a script that never ends?)`;
     await tab.goto(url, { timeout: loadTimeout });
     waiting = `the checks did not finish in ${s} (a script that never ends, or a page too big to measure?)`;
