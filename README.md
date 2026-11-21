@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/emblem.png" width="160" height="160" alt="clarify isometric blueprint emblem">
+  <img src="docs/assets/logo.svg" width="168" height="168" alt="clarify logo — code draft flowing along an orange route rail to a verified sage component and isometric 3D block on warm dot-grid paper">
 </p>
 
 <h1 align="center">clarify</h1>
