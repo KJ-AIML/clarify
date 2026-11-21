@@ -44,9 +44,9 @@ complete with Sugiyama auto-layout, narrated route tours, crafted 3D object less
 </table>
 
 <p align="center">
-  <img src="docs/demo.gif" width="840" alt="Clarify page for examples/ecommerce-architecture.md: hover card, narrated route tour, then answering the decision and copying the reply for the agent">
+  <img src="docs/assets/clarify-demo-v2.gif" width="840" alt="Clarify explaining itself via examples/codebase-tour.md: architecture overview, Draft Parser hover card, inspector with live review comment, narrated Render path route tour, and Copy reply for agent">
   <br>
-  <sub>Interactive board compiled from <a href="examples/ecommerce-architecture.md"><code>examples/ecommerce-architecture.md</code></a>: hover cards, inspector, narrated route tours, and structured agent replies.</sub>
+  <sub>Clarify explaining itself (<a href="examples/codebase-tour.md"><code>examples/codebase-tour.md</code></a>): hover cards, inspector + review comments, narrated route tours, and structured agent replies.</sub>
 </p>
 
 ## Quick start
@@ -93,12 +93,9 @@ cat draft.md | node bin/clarify.mjs render - --out page.html --no-open
 When explaining **how something moves between places over time** — a Git change, a network packet, a background job, or a layered command pipeline — a ```` ```lesson ```` block draws crafted isometric 3D objects on a bench, animates colored pucks along rails, updates live counters, illustrates failure cuts, and finishes with an interactive quiz:
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lesson-3d-dark.gif">
-    <img src="docs/assets/lesson-3d-light.gif" width="820" alt="Clarify 3D isometric lesson walkthrough from examples/git-commit-lesson.md showing laptop, staging tray, local repo cabinet, origin server, teammate laptop, failure cut, and live counters">
-  </picture>
+  <img src="docs/assets/clarify-3d-light.gif" width="820" alt="Clarify 3D isometric lesson in light theme showing how Clarify compiles a brief: Coding agent, Parser and lint, Layout and SVG, clarify check with overflow catch, HTML page, and Reply loop">
   <br>
-  <sub>Compiled directly from <a href="examples/git-commit-lesson.md"><code>examples/git-commit-lesson.md</code></a> — 15 built-in 3D object kinds (<code>laptop</code>, <code>server</code>, <code>database</code>, <code>gate</code>, <code>queue</code>, <code>tray</code>, <code>cabinet</code>, <code>router</code>, <code>cloud</code>, and more).</sub>
+  <sub>Clarify's own compile &amp; check pipeline drawn with its <code>lesson</code> 3D object bench (light theme) — 15 built-in 3D object kinds (<code>laptop</code>, <code>tray</code>, <code>server</code>, <code>gate</code>, <code>monitor</code>, <code>mailbox</code>, <code>database</code>, <code>queue</code>, <code>router</code>, <code>cloud</code>, and more). Try <a href="examples/git-commit-lesson.md"><code>examples/git-commit-lesson.md</code></a>.</sub>
 </p>
 
 ## Core capabilities
