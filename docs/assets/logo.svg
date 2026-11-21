@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" fill="none" role="img" aria-label="Clarify logo: code block connected by an orange route rail to a sage-green component card and isometric 3D block on warm dot-grid paper">
   <defs>
-    <!-- Subtle dot-grid pattern matching Clarify's canvas (--grid-dot) -->
+    <!-- Subtle dot-grid pattern matching Clarify canvas grid dots -->
     <pattern id="clarify-dots" width="16" height="16" patternUnits="userSpaceOnUse">
       <circle cx="8" cy="8" r="1.35" fill="#d9cbb6" />
     </pattern>
@@ -8,17 +8,17 @@
     <clipPath id="clarify-tile-clip">
       <rect x="14" y="12" width="222" height="222" rx="50" />
     </clipPath>
-    <!-- Soft top sheen matching --sheen -->
+    <!-- Soft top sheen -->
     <linearGradient id="clarify-sheen" x1="125" y1="12" x2="125" y2="120" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65" />
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
     </linearGradient>
   </defs>
 
-  <!-- Signature Clarify hard offset shadow (--drop) -->
+  <!-- Signature Clarify hard offset shadow -->
   <rect x="21" y="20" width="222" height="222" rx="50" fill="#1d1b18" />
 
-  <!-- Outer warm-paper tile (--canvas + --grid-dot + bold --ink stroke) -->
+  <!-- Outer warm-paper tile with dot grid and bold ink stroke -->
   <rect x="14" y="12" width="222" height="222" rx="50" fill="#faf3e9" />
   <g clip-path="url(#clarify-tile-clip)">
     <rect x="14" y="12" width="222" height="222" fill="url(#clarify-dots)" />
@@ -26,64 +26,52 @@
   </g>
   <rect x="14" y="12" width="222" height="222" rx="50" stroke="#1d1b18" stroke-width="4.5" />
 
-  <!-- Subtle async dashed branch: Code Card -> Top-Right Node -->
+  <!-- Subtle async dashed branch from Code Card to Top-Right Node -->
   <path d="M 134 78 H 164" stroke="#5d564e" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="5 5" />
 
-  <!-- Signature Clarify active route rail (--trace-0 orange): Code Card -> Visual Component -->
+  <!-- Signature Clarify active terracotta-orange route rail -->
   <path d="M 86 116 V 150 Q 86 164 100 164 H 130" stroke="#1d1b18" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.12" />
   <path d="M 86 116 V 150 Q 86 164 100 164 H 130" stroke="#e8742a" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
 
   <!-- Route arrow head entering Bottom-Right Component -->
   <path d="M 123 156 L 133 164 L 123 172" stroke="#e8742a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- ══ COMPONENT 1 (Top-Left): Coding / Markdown Draft Card ══ -->
-  <!-- Hard offset shadow -->
+  <!-- Component 1 (Top-Left): Coding / Markdown Draft Card -->
   <rect x="44" y="51" width="94" height="68" rx="14" fill="#1d1b18" />
-  <!-- Card body (dark ink code canvas inside crisp frame) -->
   <rect x="40" y="47" width="94" height="68" rx="14" fill="#23201c" stroke="#1d1b18" stroke-width="3.5" />
-  <!-- Mini window bar dots -->
   <circle cx="53" cy="60" r="3" fill="#e8742a" />
   <circle cx="64" cy="60" r="3" fill="#e8a33a" />
   <circle cx="75" cy="60" r="3" fill="#5cc47e" />
-  <!-- Syntax code lines (mirroring Clarify's laptop.js screen + edited orange line) -->
   <path d="M 52 74 H 96" stroke="#c4b8ef" stroke-width="4.5" stroke-linecap="round" />
   <path d="M 58 86 H 114" stroke="#e8742a" stroke-width="4.5" stroke-linecap="round" />
   <path d="M 58 98 H 88" stroke="#cfe3b2" stroke-width="4.5" stroke-linecap="round" />
   <path d="M 97 98 H 118" stroke="#f4ebe0" stroke-width="4.5" stroke-linecap="round" opacity="0.55" />
 
-  <!-- ══ COMPONENT 2 (Top-Right): Compact Spec / Status Node ══ -->
-  <!-- Hard offset shadow -->
+  <!-- Component 2 (Top-Right): Compact Spec / Code Node -->
   <rect x="167" y="57" width="44" height="44" rx="12" fill="#1d1b18" />
-  <!-- Node body (warm amber --warn-bg) -->
   <rect x="163" y="53" width="44" height="44" rx="12" fill="#f8dfb0" stroke="#1d1b18" stroke-width="3.5" />
-  <!-- Minimal </> code chevrons inside node -->
   <path d="M 178 69 L 171 75 L 178 81" stroke="#1d1b18" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
   <path d="M 192 69 L 199 75 L 192 81" stroke="#1d1b18" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
   <path d="M 187 67 L 183 83" stroke="#e8742a" stroke-width="3.2" stroke-linecap="round" />
 
-  <!-- ══ ROUTE PUCK riding the orange rail ══ -->
+  <!-- Route puck riding the orange rail -->
   <circle cx="86" cy="146" r="10.5" fill="#fffaf2" stroke="#1d1b18" stroke-width="3.2" />
   <circle cx="86" cy="146" r="5.2" fill="#e8742a" />
 
-  <!-- ══ COMPONENT 3 (Bottom-Right): Active Sage Component Card with Isometric 3D Cube ══ -->
-  <!-- Hard offset shadow -->
+  <!-- Component 3 (Bottom-Right): Active Sage Component Card with Isometric 3D Cube -->
   <rect x="142" y="128" width="72" height="76" rx="16" fill="#1d1b18" />
-  <!-- Card body (--accent sage green) -->
   <rect x="138" y="124" width="72" height="76" rx="16" fill="#cfe3b2" stroke="#1d1b18" stroke-width="3.5" />
 
-  <!-- Crisp Isometric 3D Cube centered in the active sage component -->
-  <!-- Top face (warm cream) -->
+  <!-- Isometric 3D Cube centered in the active sage component -->
   <polygon points="174,138 197,151 174,164 151,151" fill="#fffaf2" stroke="#1d1b18" stroke-width="3" stroke-linejoin="round" />
-  <!-- Left face (Clarify violet) -->
   <polygon points="151,151 174,164 174,189 151,176" fill="#c4b8ef" stroke="#1d1b18" stroke-width="3" stroke-linejoin="round" />
-  <!-- Right face (Clarify terracotta/amber) -->
   <polygon points="197,151 174,164 174,189 197,176" fill="#f09a56" stroke="#1d1b18" stroke-width="3" stroke-linejoin="round" />
 
-  <!-- Verified 'ok' status badge dot overlapping top-right corner of the active card -->
+  <!-- Verified status badge dot overlapping top-right corner of the active card -->
   <circle cx="206" cy="126" r="11" fill="#3f9a5a" stroke="#1d1b18" stroke-width="3.2" />
   <path d="M 201 126 L 204.5 129.5 L 211.5 122.5" stroke="#fffaf2" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Small Clarify panel-letter tag [C] tucked cleanly in bottom-left corner -->
+  <!-- Clarify panel-letter tag [C] tucked in bottom-left corner -->
   <rect x="44.5" y="178.5" width="28" height="26" rx="7" fill="#1d1b18" />
   <rect x="42" y="176" width="28" height="26" rx="7" fill="#fffaf2" stroke="#1d1b18" stroke-width="3" />
   <path d="M 60 185 A 6.5 6.5 0 1 0 60 193" stroke="#1d1b18" stroke-width="3.2" stroke-linecap="round" />
