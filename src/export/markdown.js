@@ -65,7 +65,7 @@ function tableToMarkdown(rows, align) {
 }
 
 function fenceToMarkdown(b, source) {
-  if (b.lang === "lesson") return lessonToMarkdown(b);
+  if (b.lang === "lesson" || b.lang === "isokit" || b.lang === "iso") return lessonToMarkdown(b);
   if (b.lang === "free") return freeToMarkdown(b, source);
   const diagram = diagramFromFence(b);
   if (diagram) {

@@ -1,23 +1,13 @@
-/* clarify/src/runtime/lesson.css — the lesson player in style C ("Bold"): warm cream ground,
-   dark outlines, one tint per place (docs/superpowers/specs/lesson-mockup, build-lesson.mjs
-   PLAYER_CSS and build-styles.mjs .sk-c). Inlined after src/iso/kit.css, and only into pages that
-   contain a lesson, so the bare l-* / iso-* class selectors below never reach other pages.
-
-   Two rules shape this file:
-   - Objects are drawn once in <defs> and placed with <use>. Selectors that need an ancestor
-     outside a drawing do not match inside its <use> copy, so everything inside a drawing is
-     styled with bare class selectors that read custom properties, and tints are custom
-     properties set on .l-obj[data-tint] (they inherit into the copy).
-   - Each colour token is written once as color-mix(light value var(--l-day), dark value).
-     --l-day is 100% in light themes; the dark themes set it to 0% (end of file). */
+/* clarify/src/runtime/lesson.css — the lesson player powered by isokit's animated isometric Stage.
+   Matches Clarify's warm paper & hard-shadow design system in light and dark themes.
+   Inlined only into pages that contain a `lesson` / `isokit` / `iso` block. */
 
 .c-lesson {
   --l-day: 100%;
-  --l-mix: calc(var(--l-day) * .38 + 62%); /* how much of a tint survives: all of it in light, 62% in dark */
-  --l-base: #1a1815;                     /* what tints are mixed towards in dark */
   --l-page: color-mix(in srgb, #f4ebe0 var(--l-day), #1a1815);
   --l-panel: color-mix(in srgb, #fbf7f1 var(--l-day), #23201c);
   --l-card: color-mix(in srgb, #fffaf2 var(--l-day), #2b2722);
+  --l-stage-bg: color-mix(in srgb, #faf3e9 var(--l-day), #1e1b17);
   --l-ink: color-mix(in srgb, #1d1b18 var(--l-day), #e8dfd1);
   --l-text: color-mix(in srgb, #1d1b18 var(--l-day), #f2ebe0);
   --l-soft: color-mix(in srgb, #34302b var(--l-day), #d6cdbf);
@@ -33,42 +23,9 @@
   --l-next: color-mix(in srgb, #cfe3b2 var(--l-day), #36502a);
   --l-wrong: color-mix(in srgb, #fbe1de var(--l-day), #4a2522);
   --l-shadow: color-mix(in srgb, #1d1b18 var(--l-day), #000000);
-  --l-on-accent: #1d1b18; /* digits on the orange "now" disc, in both modes */
-  --l-red: #e5484d;
+  --l-on-accent: #1d1b18;
   --l-green: #3f9a5a;
-
-  /* the anatomy kit's tokens, style C (src/iso/kit.css reads them) */
-  --anatomy-top: color-mix(in srgb, #fffaf2 var(--l-day), #3d3730);
-  --anatomy-paper: color-mix(in srgb, #f1e8db var(--l-day), #2f2a24);
-  --anatomy-face: color-mix(in srgb, #ffffff var(--l-day), #3d3730);
-  --anatomy-shade-0: color-mix(in srgb, #d9cbb6 var(--l-day), #1f1b17);
-  --anatomy-shade-1: color-mix(in srgb, #e2d6c4 var(--l-day), #25211c);
-  --anatomy-shade-2: color-mix(in srgb, #ebe1d2 var(--l-day), #2b2621);
-  --anatomy-shade-3: color-mix(in srgb, #f3ebdf var(--l-day), #322c26);
-  --anatomy-lit-top: color-mix(in srgb, #ffffff var(--l-day), #3d3730);
-  --anatomy-lit-shade: color-mix(in srgb, #eeeeeb var(--l-day), #2f2a24);
-  --anatomy-hi: var(--l-ink);
-  --anatomy-mid: var(--l-ink);
-  --anatomy-lit: var(--l-ink);
-  --anatomy-lo: color-mix(in srgb, #6f6961 var(--l-day), #a0968a);
-  --anatomy-faint: color-mix(in srgb, #b8ad9d var(--l-day), #5c544a);
-  --anatomy-halo: color-mix(in srgb, #5a4630 var(--l-day), #000000);
-  --anatomy-halo-opacity: calc(55% - var(--l-day) * .27); /* 28% in light, 55% in dark */
-  --anatomy-dot: color-mix(in srgb, #3a3a3e var(--l-day), #e8dfd1);
-  --anatomy-weight: .6px;
   --route: #e8742a;
-  --route-dark: #b9541a;
-  --route-w: 2.4px;
-  --screen: color-mix(in srgb, #d9d0f5 var(--l-day), #3b3466);
-  --scrbar: color-mix(in srgb, #c4b8ef var(--l-day), #4d4485);
-  --code: color-mix(in srgb, #7d6fc0 var(--l-day), #b3a6f2);
-  --cavity: color-mix(in srgb, #3a332b var(--l-day), #0d0c0a);
-  --plate: color-mix(in srgb, #fffaf2 var(--l-day), #a39988);
-  --led-off: color-mix(in srgb, #b8ad9d var(--l-day), #5d554b);
-  --led-ok: color-mix(in srgb, #3f9a5a var(--l-day), #5cc47e);
-  --paper-top: color-mix(in srgb, #ffffff var(--l-day), #cfc6b8);
-  --paper-s0: color-mix(in srgb, #e9e1d4 var(--l-day), #9b9183);
-  --paper-s1: color-mix(in srgb, #f2ece2 var(--l-day), #b3a99b);
 
   container-type: inline-size;
   padding: 24px;
@@ -84,12 +41,12 @@
 
 /* ── header ─────────────────────────────────────────────────────────────────── */
 .c-lesson .l-head { margin-bottom: 20px; }
-.c-lesson .l-title { margin: 0; font: 700 36px/1.1 var(--font-display); letter-spacing: -.005em; text-transform: none; color: var(--l-text); text-wrap: balance; }
-.c-lesson .l-sub { margin: 10px 0 0; max-width: 62ch; font-size: 18px; line-height: 1.5; color: var(--l-soft); }
+.c-lesson .l-title { margin: 0; font: 700 34px/1.12 var(--font-display); letter-spacing: -.005em; text-transform: none; color: var(--l-text); text-wrap: balance; }
+.c-lesson .l-sub { margin: 10px 0 0; max-width: 64ch; font-size: 17px; line-height: 1.5; color: var(--l-soft); }
 .c-lesson .l-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; padding: 0; list-style: none; }
 .c-lesson .l-meta li { padding: 5px 9px; border: 1.5px solid var(--l-rule); border-radius: 999px; font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--l-muted); }
 
-/* ── two panels: the machine on the left, the guide on the right ───────────── */
+/* ── two panels: the isometric stage on the left, the guide on the right ───── */
 .c-lesson .l-body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
 .c-lesson .l-main, .c-lesson .l-guide { min-width: 0; background: var(--l-panel); border: 1.5px solid var(--l-ink); border-radius: 12px; }
 .c-lesson .l-main { padding: 14px; }
@@ -105,7 +62,7 @@
 .c-lesson .l-chip[data-level="bad"] .l-chip-v { color: var(--l-bad); }
 .c-lesson .l-chip[data-changed] { background: var(--l-changed); border-color: var(--route); box-shadow: 3px 3px 0 var(--l-shadow); }
 .c-lesson .l-tools { display: flex; gap: 8px; align-items: center; margin-left: auto; }
-.c-lesson .l-btn { padding: 10px 14px; border: 1.5px solid var(--l-ink); border-radius: 8px; background: var(--l-card); box-shadow: 2px 2px 0 var(--l-shadow); font: 600 14px/1 var(--font); color: var(--l-text); white-space: nowrap; }
+.c-lesson .l-btn { padding: 10px 14px; border: 1.5px solid var(--l-ink); border-radius: 8px; background: var(--l-card); box-shadow: 2px 2px 0 var(--l-shadow); font: 600 14px/1 var(--font); color: var(--l-text); white-space: nowrap; cursor: pointer; }
 .c-lesson .l-btn:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--l-shadow); }
 .c-lesson .l-btn:disabled { opacity: .45; box-shadow: none; cursor: default; }
 .c-lesson [data-l="replay"]::before { content: "↻ " / ""; }
@@ -114,32 +71,29 @@
 .c-lesson [data-l="back"]::before { content: "← " / ""; }
 .c-lesson [data-l="next"]::after { content: " →" / ""; }
 
-/* stage: the SVG, with the name tags laid over it in % of the drawing */
-.c-lesson .l-stage { position: relative; margin: 12px 0 4px; }
-.c-lesson .l-tags { position: absolute; inset: 0; pointer-events: none; }
-.c-lesson .l-tag { position: absolute; transform: translate(-50%, -30%); padding: 3px 8px; border: 1.5px solid var(--l-ink); border-radius: 999px; background: var(--l-card); box-shadow: 1.5px 2px 0 var(--l-shadow); font: 700 12px/1.2 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--l-text); white-space: nowrap; }
-/* Compact tags: a number on the stage, the names in the key under it. The runtime sets
-   .is-compact when full tags would collide; a narrow lesson always uses them (container query below). */
-.c-lesson.is-compact .l-tag { min-width: 24px; padding: 3px 6px; text-align: center; transform: translate(-50%, -50%); }
-.c-lesson.is-compact .l-tag::before { content: attr(data-n); }
-.c-lesson.is-compact .l-tag-t { display: none; }
-.c-lesson.is-compact .l-key { display: flex; }
+/* stage: clipped warm frame housing isokit's live Stage SVG */
+.c-lesson .l-stage {
+  position: relative;
+  margin: 12px 0 8px;
+  height: 480px;
+  border-radius: 10px;
+  background: var(--l-stage-bg);
+  border: 1px solid var(--l-rule);
+  overflow: hidden;
+}
+.c-lesson .l-iso-host {
+  position: absolute;
+  inset: 12px;
+}
 
-/* the place key (shown with compact tags) and the puck legend */
-.c-lesson .l-key, .c-lesson .l-legend { flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 6px 4px 10px; list-style: none; font: 600 12px/1.3 var(--mono); color: var(--l-muted); }
-.c-lesson .l-legend { display: flex; }
-.c-lesson .l-key li, .c-lesson .l-legend li { display: inline-flex; align-items: center; gap: 6px; }
-.c-lesson .l-key b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border: 1.5px solid var(--l-ink); border-radius: 999px; background: var(--l-card); color: var(--l-text); font-size: 12px; }
-.c-lesson .l-swatch { width: 12px; height: 12px; border: 1.5px solid var(--l-ink); border-radius: 3px; background: var(--anatomy-paper); }
-.c-lesson .l-dot { width: 10px; height: 10px; border: 1.5px solid var(--l-ink); border-radius: 50%; background: var(--route); }
-.c-lesson .l-dot[data-kind="reply"] { background: #3f9a5a; }
-.c-lesson .l-dot[data-kind="fail"] { background: #e5484d; }
-.c-lesson .l-dot[data-kind="store"] { background: #7b61d1; }
-.c-lesson .l-dot[data-kind="slow"] { background: #d4951c; }
+/* packet legend */
+.c-lesson .l-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 6px 4px 10px; list-style: none; font: 600 12px/1.3 var(--mono); color: var(--l-muted); }
+.c-lesson .l-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.c-lesson .l-pkt-swatch { flex: none; overflow: visible; }
 
 /* timeline */
 .c-lesson .l-timeline { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); margin: 0; padding: 12px 0 2px; list-style: none; border-top: 1.5px dashed var(--l-rule); }
-.c-lesson .l-timeline button { display: grid; justify-items: center; gap: 6px; width: 100%; padding: 2px 2px 4px; border: 0; border-radius: 8px; background: none; font: 600 12px/1.25 var(--font); color: var(--l-muted); text-align: center; }
+.c-lesson .l-timeline button { display: grid; justify-items: center; gap: 6px; width: 100%; padding: 2px 2px 4px; border: 0; border-radius: 8px; background: none; font: 600 12px/1.25 var(--font); color: var(--l-muted); text-align: center; cursor: pointer; }
 .c-lesson .l-timeline b { display: grid; place-items: center; width: 28px; height: 28px; border: 1.5px solid var(--l-ink); border-radius: 50%; background: var(--l-card); font: 700 12px/1 var(--mono); color: var(--l-text); }
 .c-lesson .l-timeline button:hover b { box-shadow: 2px 2px 0 var(--l-shadow); }
 .c-lesson .l-timeline .is-done b { background: var(--l-done); }
@@ -150,36 +104,49 @@
 .c-lesson .l-top { display: flex; align-items: center; gap: 10px; font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--l-muted); }
 .c-lesson .l-count { margin-right: auto; }
 .c-lesson .l-chapter { padding: 5px 9px; border: 1.5px solid var(--l-ink); border-radius: 999px; background: color-mix(in srgb, #cfe0fb var(--l-day), #263a5a); color: var(--l-text); }
+.c-lesson .l-chapter[data-chapter="setup"] { background: color-mix(in srgb, #ebe5dc var(--l-day), #36322c); }
 .c-lesson .l-chapter[data-chapter="problem"] { background: color-mix(in srgb, #f9d6d3 var(--l-day), #4d2b2c); }
-.c-lesson .l-chapter[data-chapter="why"] { background: var(--l-done); }
-.c-lesson .l-chapter[data-chapter="case"] { background: color-mix(in srgb, #fbe2a0 var(--l-day), #4d3c1b); }
-.c-lesson .l-chapter[data-chapter="recap"] { background: color-mix(in srgb, #e7defc var(--l-day), #3a3159); }
+.c-lesson .l-chapter[data-chapter="why"], .c-lesson .l-chapter[data-chapter="solution"] { background: var(--l-done); }
+.c-lesson .l-chapter[data-chapter="technique"] { background: color-mix(in srgb, #cfe0fb var(--l-day), #263a5a); }
+.c-lesson .l-chapter[data-chapter="case"], .c-lesson .l-chapter[data-chapter="tradeoff"] { background: color-mix(in srgb, #fbe2a0 var(--l-day), #4d3c1b); }
+.c-lesson .l-chapter[data-chapter="recap"], .c-lesson .l-chapter[data-chapter="insight"] { background: color-mix(in srgb, #e7defc var(--l-day), #3a3159); }
 .c-lesson .l-chapter[data-chapter="quiz"] { background: var(--l-mark); }
-.c-lesson .l-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1.5px solid var(--l-ink); border-radius: 8px; background: var(--l-card); color: var(--l-text); }
+.c-lesson .l-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1.5px solid var(--l-ink); border-radius: 8px; background: var(--l-card); color: var(--l-text); cursor: pointer; }
 .c-lesson .l-icon svg { width: 15px; height: 15px; }
 
 .c-lesson .l-step:not([hidden]) { display: grid; gap: 12px; }
 .c-lesson .l-step-k { font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--l-muted); }
-.c-lesson .l-step-title { margin: 0; font: 700 24px/1.2 var(--font-display); letter-spacing: 0; text-transform: none; color: var(--l-text); text-wrap: balance; }
-.c-lesson .l-step p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--l-text); }
+.c-lesson .l-step-title { margin: 0; font: 700 23px/1.22 var(--font-display); letter-spacing: 0; text-transform: none; color: var(--l-text); text-wrap: balance; }
+.c-lesson .l-step p { margin: 0; font-size: 15.5px; line-height: 1.6; color: var(--l-text); }
 .c-lesson .l-tip { padding: 12px 14px; border: 1.5px solid var(--l-ink); border-radius: 10px; background: color-mix(in srgb, #efe9fe var(--l-day), #2f2947); }
 .c-lesson .l-tip.is-try { background: color-mix(in srgb, #e4f2dc var(--l-day), #263a28); }
 .c-lesson .l-tip.is-warn { background: color-mix(in srgb, #fde7d6 var(--l-day), #43301f); }
 .c-lesson .l-tip b { display: block; margin-bottom: 6px; font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+/* what changed list (isokit native steps) */
+.c-lesson .l-changes { padding-top: 8px; border-top: 1.5px dashed var(--l-rule); }
+.c-lesson .l-changes > b { display: block; margin-bottom: 8px; font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--l-muted); }
+.c-lesson .l-changes ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.45; }
+.c-lesson .l-changes li { display: flex; gap: 8px; align-items: flex-start; }
+.c-lesson .l-mk { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border: 1.5px solid var(--l-ink); border-radius: 5px; font: 700 12px/1 var(--mono); background: var(--l-card); }
+.c-lesson .l-changes .is-add .l-mk { background: var(--l-done); color: var(--l-good); }
+.c-lesson .l-changes .is-mod .l-mk { background: var(--l-mark); color: var(--l-warn); }
+.c-lesson .l-changes .is-del .l-mk { background: var(--l-wrong); color: var(--l-bad); }
+
 .c-lesson .l-takeaways { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .c-lesson .l-takeaways li { position: relative; padding-left: 26px; }
 .c-lesson .l-takeaways li::before { content: ""; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border: 1.5px solid var(--l-ink); border-radius: 4px; background: var(--l-green); box-shadow: inset 0 0 0 3px var(--l-card); }
 
-/* the quiz: picking an option marks it right or wrong and shows every reason */
+/* quiz */
 .c-lesson .l-options { display: grid; gap: 8px; }
-.c-lesson .l-option { display: grid; gap: 4px; padding: 12px 14px; border: 1.5px solid var(--l-ink); border-radius: 10px; background: var(--l-card); box-shadow: 2px 2px 0 var(--l-shadow); font: 600 16px/1.4 var(--font); color: var(--l-text); text-align: left; }
+.c-lesson .l-option { display: grid; gap: 4px; padding: 12px 14px; border: 1.5px solid var(--l-ink); border-radius: 10px; background: var(--l-card); box-shadow: 2px 2px 0 var(--l-shadow); font: 600 15.5px/1.4 var(--font); color: var(--l-text); text-align: left; cursor: pointer; }
 .c-lesson .l-option.is-right { background: var(--l-done); }
 .c-lesson .l-option.is-wrong { background: var(--l-wrong); }
 .c-lesson .l-option.is-picked { box-shadow: 3px 3px 0 var(--route); }
 .c-lesson .l-option.is-right::after, .c-lesson .l-option.is-wrong::after { font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .c-lesson .l-option.is-right::after { content: "Right"; color: var(--l-good); }
 .c-lesson .l-option.is-wrong::after { content: "Not quite"; color: var(--l-bad); }
-.c-lesson .l-why:not([hidden]) { display: block; font-weight: 400; font-size: 16px; line-height: 1.5; color: var(--l-soft); }
+.c-lesson .l-why:not([hidden]) { display: block; font-weight: 400; font-size: 14.5px; line-height: 1.5; color: var(--l-soft); }
 .c-lesson .l-why:empty { display: none; }
 
 .c-lesson .l-nav { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 4px; }
@@ -192,113 +159,41 @@
 .c-lesson .l-goals li { display: flex; gap: 8px; align-items: flex-start; }
 .c-lesson .l-goals i { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1.5px solid var(--l-ink); border-radius: 4px; background: var(--l-card); }
 .c-lesson .l-goals .is-hit i { background: var(--l-green); box-shadow: inset 0 0 0 3px var(--l-card); }
+.c-lesson .l-error { margin: 0; padding: 12px 14px; border: 1.5px solid var(--l-bad); border-radius: 8px; background: var(--l-wrong); color: var(--l-bad); font: 600 14px/1.5 var(--mono); }
 
-/* Without the runtime every article shows, as a list: hide the controls that need it (the
-   timeline too, whose buttons would do nothing), show each quiz reason and mark the right
-   answer. The runtime marks the root .is-ready. */
-.c-lesson:not(.is-ready) :is(.l-tools, .l-top, .l-nav, .l-keys, .l-timeline) { display: none; }
+/* progressive enhancement when JS is off */
+.c-lesson:not(.is-ready) :is(.l-tools, .l-top, .l-nav, .l-keys, .l-timeline, .l-stage) { display: none; }
 .c-lesson:not(.is-ready) .l-why { display: block; }
 .c-lesson:not(.is-ready) .l-option[data-correct="true"] { background: var(--l-done); }
 .c-lesson:not(.is-ready) .l-option[data-correct="true"]::after { content: "Right"; color: var(--l-good); font: 700 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .c-lesson.is-ready .l-step-k { display: none; }
 
-/* ── inside the stage SVG (bare selectors: they also reach the <use> copies) ── */
-.l-svg { display: block; width: 100%; height: auto; overflow: visible; }
-/* lines keep their width when the stage scales down on a phone (kit.css's .iso-svg rule does not apply) */
-.l-svg path, .l-svg circle, .iso-solid path, .iso-line, .l-code, .l-route, .tb-ring { vector-effect: non-scaling-stroke; }
-.iso-edge { stroke-width: 1.25px; }
-.l-screen { fill: var(--screen); }
-.l-scrbar { fill: var(--scrbar); }
-.l-code { fill: none; stroke: var(--code); stroke-width: 1.3px; stroke-linecap: round; }
-.l-code.is-edit { stroke: var(--route); stroke-width: 2px; }
-.l-cavity { fill: var(--cavity); }
-.l-plate { fill: var(--plate); }
-.l-sheetbar { fill: var(--route); opacity: .9; stroke: none; }
-.l-led { fill: var(--led-off); }
-.l-led.is-ok { fill: var(--led-ok); }
-.l-cam { fill: var(--anatomy-lo); }
-.l-paper { --anatomy-top: var(--paper-top); --anatomy-paper: var(--paper-top); --anatomy-shade-0: var(--paper-s0); --anatomy-shade-1: var(--paper-s1); --anatomy-shade-2: var(--paper-s1); --anatomy-shade-3: var(--paper-s0); --anatomy-lit-top: var(--paper-top); --anatomy-lit-shade: var(--paper-s1); }
-.l-puck { --anatomy-top: var(--route); --anatomy-lit-top: var(--route); --anatomy-lit-shade: var(--route-dark); --anatomy-face: var(--route-dark); --anatomy-paper: var(--route-dark); }
-
-/* tints: objects only (pads keep the bench colour), plus the key's swatches; dark themes keep
-   62% of each tone (--l-mix) */
-.l-obj[data-tint], .l-swatch[data-tint] {
-  --anatomy-top: color-mix(in oklab, var(--t-top) var(--l-mix), var(--l-base));
-  --anatomy-paper: color-mix(in oklab, var(--t-paper) var(--l-mix), var(--l-base));
-  --anatomy-shade-0: color-mix(in oklab, var(--t-s0) var(--l-mix), var(--l-base));
-  --anatomy-shade-1: color-mix(in oklab, var(--t-s1) var(--l-mix), var(--l-base));
-  --anatomy-shade-2: color-mix(in oklab, var(--t-s2) var(--l-mix), var(--l-base));
-  --anatomy-shade-3: color-mix(in oklab, var(--t-s3) var(--l-mix), var(--l-base));
-}
-:is(.l-obj, .l-swatch)[data-tint="neutral"] { --t-top: #f6f1e9; --t-paper: #e3d9ca; --t-s0: #c4b6a2; --t-s1: #cfc3b1; --t-s2: #dad0c0; --t-s3: #e5ddcf; }
-:is(.l-obj, .l-swatch)[data-tint="amber"] { --t-top: #fbe2a0; --t-paper: #f3cd6d; --t-s0: #d9a63c; --t-s1: #e3b44f; --t-s2: #ecc260; --t-s3: #f3cd6d; }
-:is(.l-obj, .l-swatch)[data-tint="violet"] { --t-top: #e7defc; --t-paper: #cbbcf4; --t-s0: #a28ddf; --t-s1: #b09ee8; --t-s2: #beaeef; --t-s3: #cbbcf4; }
-:is(.l-obj, .l-swatch)[data-tint="blue"] { --t-top: #dbe8fc; --t-paper: #b7cff6; --t-s0: #86a7e2; --t-s1: #97b4ea; --t-s2: #a8c1f0; --t-s3: #b7cff6; }
-:is(.l-obj, .l-swatch)[data-tint="green"] { --t-top: #dcf2df; --t-paper: #bfe5c6; --t-s0: #8cc79a; --t-s1: #9dd1aa; --t-s2: #aedbb9; --t-s3: #bfe5c6; }
-/* rose and teal: the same six-tone steps (lightness and saturation of violet, blue and green) */
-:is(.l-obj, .l-swatch)[data-tint="rose"] { --t-top: #f9dce3; --t-paper: #f0bbc7; --t-s0: #d98a9c; --t-s1: #e29bab; --t-s2: #e9abba; --t-s3: #f0bbc7; }
-:is(.l-obj, .l-swatch)[data-tint="teal"] { --t-top: #d3f3f1; --t-paper: #b5e7e4; --t-s0: #87ccc8; --t-s1: #97d6d2; --t-s2: #a6dfdb; --t-s3: #b5e7e4; }
-
-/* step states, set by the runtime */
-.c-lesson .is-dim { opacity: .3; filter: grayscale(1); }
-.l-focus, .l-bad, .l-route { display: none; }
-.l-focus.is-on, .l-bad.is-on, .l-route.is-on { display: inline; }
-.l-focus { fill: rgba(232, 116, 42, .09); stroke: var(--route); stroke-width: 2.2px; stroke-dasharray: 7 5; }
-.l-bad circle { fill: var(--l-red); stroke: var(--l-ink); stroke-width: 1.6px; }
-.l-bad path { fill: none; stroke: #fff; stroke-width: 2.6px; stroke-linecap: round; }
-.l-route { fill: none; stroke: var(--route); stroke-width: var(--route-w); stroke-linecap: round; stroke-dasharray: 2 6; animation: l-flow 1.3s linear infinite; }
-.l-route.is-cut { stroke: var(--l-red); stroke-dasharray: 6 5; animation: none; }
-/* Pause holds the dash; so does a stage scrolled off screen (the runtime sets .is-offscreen) */
-.c-lesson:is(.is-paused, .is-offscreen) .l-route { animation-play-state: paused; }
-@keyframes l-flow { to { stroke-dashoffset: -16; } }
-.l-rail.is-cut { --t-top: #f6c9c6; --t-paper: #f2b3ae; --anatomy-top: color-mix(in oklab, var(--t-top) var(--l-mix), var(--l-base)); --anatomy-paper: color-mix(in oklab, var(--t-paper) var(--l-mix), var(--l-base)); --anatomy-shade-0: color-mix(in oklab, #d9827b var(--l-mix), var(--l-base)); --anatomy-shade-1: color-mix(in oklab, #e3958f var(--l-mix), var(--l-base)); --anatomy-shade-2: color-mix(in oklab, #eba8a2 var(--l-mix), var(--l-base)); --anatomy-shade-3: var(--anatomy-paper); }
-/* pucks (cloned <use> elements): the colour goes on the <use> and inherits into the copy */
-.l-pucks use.is-reply { --route: #3f9a5a; --route-dark: #2b6e3f; }
-.l-pucks use.is-fail { --route: #e5484d; --route-dark: #b3261e; }
-.l-pucks use.is-store { --route: #7b61d1; --route-dark: #5a43a8; }
-.l-pucks use.is-slow { --route: #d4951c; --route-dark: #a06c0b; }
-
-/* ── a narrow lesson (a phone, or a narrow card): one column ─────────────────
-   header, counters (wrapping), stage, key, legend, guide, then a compact timeline;
-   Back/Next stick to the bottom of the screen while the guide is in view. */
+/* narrow / phone layout */
 @container (max-width: 760px) {
-  .c-lesson .l-title { font-size: 28px; }
-  .c-lesson .l-sub { font-size: 16px; }
+  .c-lesson .l-title { font-size: 26px; }
+  .c-lesson .l-sub { font-size: 15.5px; }
   .c-lesson .l-body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
   .c-lesson .l-main { display: contents; }
-  /* every chip stays in view: they wrap into equal columns (a long value wraps inside its chip),
-     and Replay/Pause take their own row under them */
   .c-lesson .l-counters { order: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); }
   .c-lesson .l-chip { min-width: 0; padding: 7px 8px; }
   .c-lesson .l-chip-v { font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
   .c-lesson .l-tools { grid-column: 1 / -1; }
-  .c-lesson .l-stage { order: 2; margin: 0; background: var(--l-panel); border: 1.5px solid var(--l-ink); border-radius: 12px; }
-  .c-lesson .l-key { order: 3; }
-  .c-lesson .l-legend { order: 4; padding-top: 0; }
-  .c-lesson .l-guide { order: 5; }
-  .c-lesson .l-timeline { order: 6; position: relative; display: flex; justify-content: space-between; padding: 12px 2px 30px; }
+  .c-lesson .l-stage { order: 2; margin: 0; height: 320px; border: 1.5px solid var(--l-ink); border-radius: 12px; }
+  .c-lesson .l-legend { order: 3; padding-top: 0; }
+  .c-lesson .l-guide { order: 4; }
+  .c-lesson .l-timeline { order: 5; position: relative; display: flex; justify-content: space-between; padding: 12px 2px 30px; }
   .c-lesson .l-timeline button { width: auto; padding: 2px; }
   .c-lesson .l-timeline b { width: 24px; height: 24px; }
   .c-lesson .l-timeline span { display: none; }
   .c-lesson .l-timeline .is-now span { display: block; position: absolute; left: 0; right: 0; bottom: 6px; font-size: 13px; }
   .c-lesson .l-nav { position: sticky; bottom: 0; z-index: 2; margin: 0 -18px; padding: 10px 18px; background: var(--l-panel); border-top: 1.5px dashed var(--l-rule); }
 }
-@container (max-width: 520px) {
-  .c-lesson .l-tag { min-width: 24px; padding: 3px 6px; text-align: center; transform: translate(-50%, -50%); }
-  .c-lesson .l-tag::before { content: attr(data-n); }
-  .c-lesson .l-tag-t { display: none; }
-  .c-lesson .l-key { display: flex; }
-}
 @media (max-width: 560px) {
   .c-lesson { margin-inline: -8px; padding: 16px 12px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .l-route { animation: none; }
-}
 
-/* ── dark themes: same hues, darker values, light outlines ───────────────── */
-:root[data-theme="dark"] .c-lesson, :root[data-theme="tokyo-night"] .c-lesson, :root[data-theme="nord"] .c-lesson,
-:root[data-theme="catppuccin"] .c-lesson, :root[data-theme="blueprint"] .c-lesson { --l-day: 0%; }
+/* dark themes: all Clarify dark presets + auto under OS dark mode */
+:root:is([data-theme="dark"], [data-theme="tokyo-night"], [data-theme="nord"], [data-theme="catppuccin"], [data-theme="blueprint"]) .c-lesson { --l-day: 0%; }
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] .c-lesson { --l-day: 0%; }
 }

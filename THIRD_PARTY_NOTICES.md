@@ -93,23 +93,42 @@ path data. Pages may render a mark in its brand color or, for near-black marks
 on dark themes, in the theme's text color. The Paper theme shows marks in
 grayscale.
 
-## anatomy isometric kit
+## isokit & Lucide icons
 
-The lesson block draws its isometric objects with the anatomy kit by Ryan.
-Two files are vendored, unchanged apart from a short header:
+The interactive isometric lesson stage (`src/isokit/`, bundled to `src/runtime/isokit.js`) uses
+the `isokit` isometric drawing core, animated stage and motion modules.
 
-- `src/iso/kit.js` (from `kit/iso-kit.mjs`)
-- `src/iso/kit.css` (from `kit/iso.css`)
-
-Source: https://github.com/wheresryan22/anatomy
-Commit: 1482e8469b0a9e0d8cc18ea2740a01423d29ae80
-
-The kit is MIT licensed. Its license text, as published in the repository:
+125 of the 127 diagram icons in `src/isokit/icons/icons.js` (and inside `src/runtime/isokit.js`)
+come from [Lucide](https://lucide.dev) (<https://github.com/lucide-icons/lucide>), licensed under
+the ISC License:
 
 ```text
-MIT License
+ISC License
 
-Copyright (c) 2026 Ryan
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+```
+
+24 of those icons derive from Feather (`alert-triangle`, `arrow-left`, `arrow-right`, `check`,
+`chevron-down`, `chevron-left`, `chevron-right`, `clock`, `code`, `database`, `hash`, `info`,
+`lock`, `minimize-2`, `moon`, `power`, `radio`, `search`, `server`, `smartphone`, `target`, `x`,
+`zoom-in`, `zoom-out`) and carry the MIT License:
+
+```text
+The MIT License (MIT)
+
+Copyright (c) 2013-present Cole Bemis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

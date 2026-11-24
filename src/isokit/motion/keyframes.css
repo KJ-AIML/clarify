@@ -1,0 +1,178 @@
+/*
+ * isokit keyframes: all fourteen @keyframes of the original stylesheet, renamed with the ik- prefix.
+ *
+ * A keyframes block that gives only a "from" state animates toward whatever the element's own style
+ * is, which is why most entrances below have a single stop. The ui/ files attach these by name;
+ * durations and easings come from motion-tokens.css.
+ *
+ * Original name -> kit name, and where the original defines it (index.pretty.css):
+ *   value-in 1152      -> ik-value-in        fresh-in 1161   -> ik-fresh-in
+ *   chip-flash 1176    -> ik-chip-flash      chip-in 1847    -> ik-chip-in
+ *   guide-in 1898      -> ik-guide-in        guide-out 1916  -> ik-guide-out
+ *   speak-wave 1686    -> ik-speak-wave      held 1385       -> ik-held
+ *   fx-burst 1432      -> ik-fx-burst        fx-fade 1446    -> ik-fx-fade
+ *   fx-pop 1455        -> ik-fx-pop          spot 1471       -> ik-spot
+ *   moved 1492         -> ik-moved           pulse 1502      -> ik-pulse
+ */
+
+/* ---------- Page chrome ---------- */
+
+/* A value that was replaced rises 4px into place while fading in. Used by .ik-chip__value.is-swap. */
+@keyframes ik-value-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--ik-rise, 4px));
+  }
+}
+
+/* The same move for whole panels that were re-rendered (.is-fresh) and for the Fit tool.
+   The original keeps two names for one motion; the kit keeps both so the mapping stays mechanical. */
+@keyframes ik-fresh-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--ik-rise, 4px));
+  }
+}
+
+/* A HUD chip whose number changed hops 2px and throws a green ring that widens from 0 to 10px
+   while fading: "look here, this moved". */
+@keyframes ik-chip-flash {
+  0% {
+    box-shadow: 0 0 0 0 var(--ik-flash-0);
+    transform: translateY(0);
+  }
+  15% {
+    box-shadow: 0 0 0 4px var(--ik-flash);
+    transform: translateY(-2px);
+  }
+  100% {
+    box-shadow: 0 0 0 10px var(--ik-flash-0);
+    transform: translateY(0);
+  }
+}
+
+/* The chapter badge slides in sideways from --slide (set by script: +14px when stepping forward,
+   -14px when stepping back, mirrored in RTL). */
+@keyframes ik-chip-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide, 0));
+  }
+}
+
+/* Guide text arriving: each block slides in from --slide (script sets +/-36px) and fades in. */
+@keyframes ik-guide-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide, 0));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Guide text leaving: the frozen copy of the old text slides to --slide (the opposite side) and fades. */
+@keyframes ik-guide-out {
+  to {
+    opacity: 0;
+    transform: translateX(var(--slide, 0));
+  }
+}
+
+/* One sound wave of the narrator icon dimming at mid-cycle. */
+@keyframes ik-speak-wave {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* ---------- Inside the diagram SVG ---------- */
+
+/* A packet that waits at a node: its outline swells from 1.5px to 3.4px and back. */
+@keyframes ik-held {
+  0%,
+  100% {
+    stroke-width: 1.5px;
+  }
+  50% {
+    stroke-width: 3.4px;
+  }
+}
+
+/* A request that failed: the red disc swells past its size, then blows up to 2.3x while fading. */
+@keyframes ik-fx-burst {
+  0% {
+    opacity: 1;
+    transform: scale(0.7);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.3);
+  }
+}
+
+/* The white x on that disc: stays solid for the first 45%, then fades with the disc. */
+@keyframes ik-fx-fade {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* A request that was delivered: a green ring opens from 0.8x to 2x and fades. */
+@keyframes ik-fx-pop {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+/* Spotlight on the floor under a new entity: appears within the first 20%, grows 0.75x -> 1.4x, fades. */
+@keyframes ik-spot {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* "This key moved": a red ring that keeps radiating from 0.6x to 1.5x. */
+@keyframes ik-moved {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* The heat glow of an overloaded block breathing between 40% and 100% opacity. */
+@keyframes ik-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}

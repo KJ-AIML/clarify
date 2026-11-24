@@ -28,7 +28,34 @@ const label = (s) => String(s ?? "").replace(/\s+/g, " ").trim().replace(/"/g, "
  * @returns {string} Markdown with single blank lines between its blocks and no trailing newline
  */
 export function lessonToMarkdown(block) {
+  const rawBody = typeof block?.body === "string" ? block.body.trim() : "";
+  if (block?.lang === "isokit" || block?.lang === "iso" || rawBody.startsWith("{")) {
+    return isokitJsonToMarkdown(block);
+  }
   return lessonModelToMarkdown(parseLesson(block).lesson);
+}
+
+function isokitJsonToMarkdown(block) {
+  let data;
+  try { data = JSON.parse(block.body || "{}"); } catch { return ""; }
+  const out = [];
+  if (data.title) out.push(`### ${text(data.title, false)}`);
+  if (data.subtitle) out.push(`_${text(data.subtitle)}_`);
+  const steps = Array.isArray(data.steps) ? data.steps : [];
+  if (steps.length) {
+    out.push(steps.map((s, i) => {
+      const body = Array.isArray(s.body) ? s.body : s.body ? [s.body] : [];
+      const head = [`**${text(s.title || `Step ${i + 1}`, false)}**`, ...body.map((p) => text(p))].join(" ");
+      const lines = [`${i + 1}. ${head}`];
+      if (s.callout?.text) lines.push(`   > **${text(s.callout.title || "Note", false)}:** ${text(s.callout.text)}`);
+      return lines.join("\n");
+    }).join("\n"));
+  }
+  if (data.quiz?.question && Array.isArray(data.quiz.options)) {
+    const opts = data.quiz.options.map((o) => `- [${o.correct ? "x" : " "}] ${[text(o.text), o.why && text(o.why)].filter(Boolean).join(" — ")}`);
+    out.push([`**Quiz: ${text(data.quiz.question, false)}**`, "", ...opts].join("\n"));
+  }
+  return out.join("\n\n");
 }
 
 /**

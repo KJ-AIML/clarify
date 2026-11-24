@@ -21,7 +21,7 @@ test("every example compiles without warnings and within the size budget", () =>
     assert.ok(stats.bytes < budget, `${f}: ${stats.bytes} bytes`);
     assert.match(html, /^<!DOCTYPE html>/);
     // Scripts and the font's base64 (which can spell "NaN" by chance) are not template text.
-    const text = html.replace(/<script>[\s\S]*?<\/script>/g, "").replace(/<style id="c-font">[\s\S]*?<\/style>/, "");
+    const text = html.replace(/<script(?:\s+id="c-(?:isokit|lesson)-js")?>[\s\S]*?<\/script>/g, "").replace(/<style id="c-font">[\s\S]*?<\/style>/, "");
     assert.ok(!/\{\{|undefined|NaN/.test(text), `${f}: template leak`);
   }
 });

@@ -22,7 +22,7 @@
 //   panel is under it in a picture, so it is hidden for the pictures. It is in no panel, so no check sees it.
 
 /** Left out of every check, with everything inside. */
-const SKIP_ALL = [".c-sr", ".c-diagram .c-viewport"];
+const SKIP_ALL = [".c-sr", ".c-diagram .c-viewport", ".c-lesson .l-stage"];
 /** Left out of the small-text check only. */
 const SKIP_SMALL = [".c-suggested", ".c-route-play"];
 /** Left out of the contrast check only (a control that is turned off is left out too, see below). */

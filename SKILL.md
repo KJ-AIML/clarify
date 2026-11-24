@@ -49,7 +49,7 @@ A page is its content's parts, each shown in the form that fits it, in the order
 1. **Gather.** Write the facts down first, as a short list: names, numbers, causes, times. Only these facts go on the page.
 2. **Split.** Cut the content into its parts. Each part becomes a panel, titled with what it is ("Inside the keyboard", "What happened, and when").
 3. **Name the kind.** Say in a few words what kind of thing each part is. Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; events in order; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu: a part may be a kind nobody listed.
-4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `lesson` for something moving between places over time, when every main thing in the story is one of the ready-made place kinds (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
+4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `isokit` (preferred) or `lesson` for something moving between places over time (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
 5. **Order as a story.** The answer first (`Lead:`). The whole before its parts. What to do next comes last. In between, follow the content's own order: the clock, the path, the steps.
 6. **Check.** Render and fix every `⚠`. Then run `check` once on every page and read its pictures, as the depth says ("The check loop", under Free sections).
 
@@ -145,20 +145,21 @@ The name: lowercase letters, digits and dashes, once per page. `file=` reads the
 - Quick: run it once on every page. Read the pictures of every panel with a `⚠`, and of the free section's panel when the page has one. Fix in one round, then render again.
 - Designed: read every panel's pictures. Up to three rounds of fix and check.
 
-## Lessons
+## Lessons (powered by isokit)
 
-Use a ```` ```lesson ```` block to teach **how something moves between places over time**: a change through Git, a request through a network, a job through a pipeline. The page draws one machine of crafted 3D objects, and each step moves pucks along its rails, lights up places and changes counters, beside a guide with Back and Next. When the reader only needs to follow one path through a map, a `trace` route tour is enough.
+Use an ```` ```isokit ```` block (**preferred**) or the compact ```` ```lesson ```` Markdown shorthand to teach **how something moves between places over time**: a request through a system, a change through Git, a job through a pipeline, a failure and its fix. Both render on the live animated **isokit** isometric stage (`IsoDiagram.Stage`) with smooth drop-in/exit transitions, dynamic camera framing, pan/zoom gestures, animated traffic packets, count-up metrics, and a synced guide with Back/Next, timeline, goals, and optional quiz. When the reader only needs to follow one path through a map, a `trace` route tour is enough.
 
-**Story shape:** 6–12 steps, then one quiz. A `[problem]` step in plain words, `[how]` steps that add one idea each, a `[why]` step, one or two `[case]` steps that show what goes wrong, and a `[recap]` step.
+### Preferred: Native ```` ```isokit ```` (JSON)
+Prefer ```` ```isokit ```` whenever the story benefits from rich isometric primitives (`block`, `db` with tank fill, `device`, `crowd`, `zone`, `queue`, docked `panel` with `bars`/`hockey` charts, `note`, `ring`, `ghost`), elbow links with labels, CPU/load meters, tags, heat/failure states, `changes` lists, and 127 Lucide icons. Full spec, placement rules, and copy-paste example: `references/isokit.md`.
 
-**Writing rules:**
-- Plain words first, then the term: "a waiting tray for your next snapshot, the ==staging area==".
-- One idea per step: a title of at most 32 characters, one or two paragraphs (a blank line between them) of at most 45 words each, and one `tip`.
-- Every step changes the machine: it moves a puck, focuses or fails a place, or sets a counter.
-- Show a failure and its fix: a `fail` puck, `fail:` on the place, `cut:` on the rail, and the fix in the text.
-- End with a `[recap]` step (takeaways as `- ` lines) and one `quiz`: one right answer marked `*`, and a reason after `|` on every option.
+**Story & placement essentials:**
+- **4–10 steps**, one change per step, ending with `recap` and an optional `quiz`.
+- **Keep entity ids stable** across steps so entities glide and morph; new ids drop in with a floor spotlight; removed ids sink away.
+- **Space size-4 blocks ≥ 7–10 units apart** centre-to-centre, keep total scene width under ~28 units, and use `"pills": "below"` on front-edge blocks so pills never cover blocks behind them.
+- Clarify validates `isokit` JSON at compile time (types, icons, overlaps, spacing, zone-label crossings, route hops). Fix every `⚠` warning, then run `clarify check`.
 
-A lesson page needs only a `Lead:`, a short panel on why the topic matters, and the lesson in its own panel. The skeleton shows two steps of a full lesson. `step` and `quiz` lines start at column 0; indent the lines under them.
+### Shorthand option: Markdown ```` ```lesson ````
+For quick linear step-throughs without coordinates, Clarify's Markdown `lesson` syntax still compiles directly onto the isokit stage:
 
 ````markdown
 ```lesson How a Background Job Runs
@@ -178,7 +179,7 @@ step Hand off: The app queues the job [how]
   set: Account = created good | Waiting = 1 job warn
 
 step Down: The mail server is down [case]
-  The worker takes the job and looks up your address, but the mail server does not answer. The job goes back in the queue to try again later.
+  The worker takes the job and looks up your address, but the mail server does not answer.
   move: queue -> worker, worker <-> db, worker -> mail fail
   fail: mail
   cut: worker - mail
@@ -190,13 +191,9 @@ quiz Why does the app queue the email?
 ```
 ````
 
-- **Objects** (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor` (a browser), `server`, `database`, `cabinet` (history, an archive), `tray` (staging, pending work), `queue`, `cache`, `gate` (auth, a firewall), `router` (a gateway, DNS, a load balancer), `mailbox` (email, notifications), `folder` (files), `cloud` (a provider, a datacenter), `box` (a real box, never a stand-in: a thing with no kind of its own gets a free section).
-- **Pucks:** `change` (orange, the default), `reply` (green), `fail` (red, stops short), `store` (violet), `slow` (amber). `a <-> b` sends a green `reply` back.
-- **Layout** is automatic: places follow the first rail chain in a zigzag, and a place on a later chain (`| worker - db`) stands next to the place it joins. A rail runs straight along a row or column of the grid, so a place can have at most 4 rails (one per side), and a rail that closes a loop usually warns `can't be drawn straight`. Prefer one main chain plus short branches; `at=x,y` pins a place to a cell.
-- **Counters:** `set: Label = value level | Label = value`. The level word (`good`, `warn`, `bad` or `none`) is optional and goes after the value; it colours the chip and is never shown, so never use one of those words as a value or as its last word (`Status = all good` shows `all`).
-- **Lessons about code:** places are the modules, files or services a request passes through: `router` for a CLI, an entry point or a gateway, `server` for a service, `database` for a store, `queue` for a queue, `tray` for a parse or staging step, `folder` for files, `monitor` for the output page. Rails are the calls along the main path. Pucks are what moves: `change` the data or request, `reply` what a call returns, `store` output being written, `fail` an error or a rejection, `slow` a warning or a slow path.
-
-Full syntax and every warning with its fix: the Lessons section of `references/syntax.md`.
+- **Objects** (`id = kind "Label"`, at most 7 places): `laptop`, `phone`, `monitor`, `server`, `database`, `cabinet`, `tray`, `queue`, `cache`, `gate`, `router`, `mailbox`, `folder`, `cloud`, `box` (a real box, never a stand-in: a thing with no kind of its own gets a free section).
+- **Pucks:** `change` (orange), `reply` (green), `fail` (red), `store` (violet), `slow` (amber). `a <-> b` bounces a green reply back.
+- Full Markdown lesson syntax: `references/syntax.md`. Full native isokit spec: `references/isokit.md`.
 
 ## Rules
 

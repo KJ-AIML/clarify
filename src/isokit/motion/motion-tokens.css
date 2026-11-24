@@ -1,0 +1,75 @@
+/*
+ * isokit motion tokens: every easing curve and duration the page chrome uses.
+ *
+ * Values are read from the original stylesheet; the comment gives the place they come from
+ * (css:LINE = designed-to-scale-study/snapshot/index.pretty.css). The ui/ files and keyframes.css
+ * use these names, so retiming the whole kit is a matter of overriding a few properties:
+ *
+ *   :root { --ik-ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ik-dur-fold: 0.5s; }
+ *
+ * This file is part of the foundation every ui/ file expects: tokens/tokens.css, motion/motion-tokens.css,
+ * motion/keyframes.css, ui/base.css. Without it the transitions fall back to "no transition".
+ *
+ * The JavaScript side (tweens of the SVG stage, number roll-ups) has its own timings in motion/*.js.
+ */
+
+:root {
+  /* ---- Easing curves ---- */
+  --ik-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+    /* the house curve: quick start, long soft landing. 18 uses: chevrons, folds, menus, dialog, toast,
+       drawer, entrances (css:646 … 2834) */
+  --ik-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* overshoots by about 10% and settles: tick marks, the theme icon, the credit tile
+       (css:938, 2706, 2758) */
+  --ik-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    /* symmetric: the timeline rail filling up (css:1542) */
+  --ik-ease-theme: cubic-bezier(0.4, 0, 0.2, 1);
+    /* the circular theme reveal, applied from JavaScript (js:22212) */
+  --ik-ease-fx: ease-out;
+    /* one-shot effects in the diagram: bursts, spotlight, chip flash (css:1174 … 1490) */
+  --ik-ease-loop: ease-in-out;
+    /* loops that breathe: held packet, heat pulse, sound waves (css:1383, 1485, 1681) */
+  --ik-ease-exit: ease-in;
+    /* the outgoing guide text (css:1912) */
+
+  /* ---- Durations: hover and state changes (transitions) ---- */
+  --ik-dur-hover: 0.15s;   /* field background and outline on hover (css:566, 2571, 2748) */
+  --ik-dur-fade: 0.16s;    /* opacity of dialog, backdrop and menus (css:1705, 2222, 2237, 2601) */
+  --ik-dur-quick: 0.2s;    /* tick opacity, toast opacity, narrator button, credit tile (css:936, 1651, 2523, 2706) */
+  --ik-dur-pop: 0.22s;     /* dialog and menu slide-in; list fade in an accordion (css:735, 876, 1705, 2237, 2601) */
+  --ik-dur-chev: 0.25s;    /* small chevrons flipping; packet fade; drawer backdrop (css:1324, 1675, 2583, 2842) */
+  --ik-dur-state: 0.3s;    /* colour/outline of rows, checks, dots, goals; 90 degree chevrons (css:646, 783, 860, 929, 1568, 2194) */
+  --ik-dur-tick: 0.32s;    /* tick mark springing in; toast sliding in (css:938, 2523) */
+  --ik-dur-fold: 0.34s;    /* accordion open/close, drawer slide (css:653, 735, 867, 2826) */
+  --ik-dur-level: 0.4s;    /* HUD chip level bar and value colour (css:1113, 1142) */
+  --ik-dur-theme-icon: 0.45s; /* theme icon rotating on hover (css:2758) */
+  --ik-dur-link: 0.5s;     /* diagram link changing colour (css:1303) */
+  --ik-dur-bar: 0.6s;      /* progress bar width (css:908) */
+  --ik-dur-rail: 0.7s;     /* timeline rail width (css:1542) */
+
+  /* ---- Durations: entrances and effects (animations) ---- */
+  --ik-dur-fit-in: 0.3s;     /* the Fit tool appearing (css:1072) */
+  --ik-dur-enter: 0.36s;     /* guide text and chapter badge sliding in (css:1845, 1887) */
+  --ik-dur-exit: 0.15s;      /* guide text sliding out (css:1912) */
+  --ik-dur-swap: 0.42s;      /* HUD value replaced by another text (css:1150) */
+  --ik-dur-fresh: 0.45s;     /* panels refreshed for a new lesson (css:1159) */
+  --ik-dur-flash: 1.5s;      /* HUD chip flash (css:1174) */
+  --ik-dur-spot: 1.5s;       /* spotlight under an entity (css:1469) */
+  --ik-dur-burst: 0.65s;     /* failed-packet burst (css:1417, 1424) */
+  --ik-dur-pop-ring: 0.45s;  /* delivered-packet ring (css:1430) */
+  --ik-dur-held: 0.8s;       /* held packet breathing, one cycle (css:1383) */
+  --ik-dur-pulse: 1.3s;      /* heat glow, one cycle (css:1485) */
+  --ik-dur-moved: 1.4s;      /* "this key moved" ring, one cycle (css:1490) */
+  --ik-dur-speak: 1.1s;      /* sound waves of the narrator icon, one cycle (css:1681) */
+
+  /* ---- Delays ---- */
+  --ik-delay-fold-list: 40ms;   /* lesson list starts fading in after its module starts opening (css:743) */
+  --ik-delay-chapter: 80ms;     /* chapter badge (css:1845) */
+  --ik-delay-enter: 0.13s;      /* first guide block; the old text has 0.15s to leave (css:1887) */
+  --ik-stagger-enter: 0.03s;    /* each further guide block: 0.16s, 0.19s, 0.22s (css:1889-1897) */
+  --ik-delay-speak-2: 0.2s;     /* second sound wave (css:1684) */
+
+  /* ---- Distances ---- */
+  --ik-rise: 4px;          /* how far "fresh" and "value" entrances travel upward (css:1155, 1164) */
+  --ik-fold-shift: -6px;   /* lesson list offset while its module is closed (css:739) */
+}

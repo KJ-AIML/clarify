@@ -44,8 +44,9 @@ export const FONT_BYTES = Buffer.byteLength(FONT_CSS);
 const CSS = minifyCss(asset("./runtime/themes.css") + asset("./runtime/page.css"));
 const SVG_CSS = minifyCss(asset("./runtime/svg.css"));
 const CLIENT_JS = minifyJs(asset("./runtime/client.js"));
-// Only pages that contain a lesson carry these (the anatomy kit's shading CSS + the lesson player).
-const LESSON_CSS = minifyCss(asset("./iso/kit.css") + asset("./runtime/lesson.css"));
+// Only pages that contain a lesson / isokit block carry these (isokit Stage engine + lesson player).
+const LESSON_CSS = minifyCss(asset("./runtime/lesson.css"));
+const ISOKIT_JS = asset("./runtime/isokit.js").replace(/<\/(script)/gi, "<\\/$1");
 const LESSON_JS = minifyJs(asset("./runtime/lesson.js"));
 // Only pages that contain a free section carry the kit; each section's own CSS follows it as written.
 const FX_CSS = minifyCss(asset("./runtime/fx.css"));
@@ -170,7 +171,7 @@ ${cards.join("\n")}
 <div class="c-toast" role="status" aria-live="polite"></div>
 <script type="application/json" id="c-page-meta">${jsonForScript(pageMeta)}</script>
 <script type="application/json" id="c-markdown">${jsonForScript(markdown)}</script>
-<script>${CLIENT_JS}</script>${ctx.lessons ? `\n<script id="c-lesson-js">${LESSON_JS}</script>` : ""}${freeScripts(ctx.free)}
+<script>${CLIENT_JS}</script>${ctx.lessons ? `\n<script id="c-isokit-js">${ISOKIT_JS}</script>\n<script id="c-lesson-js">${LESSON_JS}</script>` : ""}${freeScripts(ctx.free)}
 </body>
 </html>
 `;
@@ -281,7 +282,7 @@ function renderTable(rows, align, ctx) {
 
 function renderFence(b, ctx) {
   if (DIAGRAM_LANGS.has(b.lang)) return renderDiagramFigure(b, ctx);
-  if (b.lang === "lesson") {
+  if (b.lang === "lesson" || b.lang === "isokit" || b.lang === "iso") {
     const lesson = renderLesson(b, ctx.lessons++);
     lesson.warnings.forEach(w => ctx.warnings.push(`panel ${ctx.panel.id}: ${w}`));
     ctx.wide = ctx.roomy = true;

@@ -61,6 +61,15 @@ test("the free-section examples compile cleanly", () => {
   }
 });
 
+test("the isokit reference example compiles cleanly", () => {
+  const blocks = markdownBlocks(read("references/isokit.md")).filter((b) => b.includes("```isokit"));
+  assert.ok(blocks.length >= 1);
+  for (const block of blocks) {
+    const { warnings } = compile(parseDraft(block));
+    assert.deepEqual(warnings, [], block.slice(0, 80));
+  }
+});
+
 test("every form in references/forms.md compiles cleanly", () => {
   const blocks = markdownBlocks(read("references/forms.md"));
   assert.ok(blocks.length >= 12, `${blocks.length} snippets`);
