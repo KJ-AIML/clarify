@@ -2,7 +2,7 @@
 
 These are examples, not a list to pick from. Each one is a form that fit one part of one page. Name your part's kind first, in your own words (`SKILL.md`, "Think before you draw"). If a form here shows that kind, adapt it to your facts. If none does, draw the form your part needs: the kit and the rules are in `references/free-sections.md`.
 
-Each free form names its **nearest block**: in a Quick page, use that block when the drawing does not fit the time, and say in your reply which part deserves the drawing.
+Each free form also names its **nearest block** for brief, single-question briefs where a compact block is all the reader asked for. For full explainers, draw the form the content genuinely needs rather than downgrading it to a table.
 
 Every snippet below compiles without a warning and passes `clarify check` at 1440px and 390px. Seven of the free ones are cut down from `examples/wireless-mouse.md`, which has the full sections; "a thing with parts" and the incident timeline are new.
 

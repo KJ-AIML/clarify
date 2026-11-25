@@ -183,10 +183,10 @@ node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" check draft.md --out dir  # pictures 
 
 When a problem belongs to the page and not to a panel, the summary says so: `⚠ check: 1 problem on the page · …`, or `⚠ check: 5 problems in 2 panels and the page · …`.
 
-How far to go follows the depth (`SKILL.md`, "Depth and time"):
+How far to iterate follows the page scope (`SKILL.md`, "Scope by content"):
 
-- **Quick:** one run, on every page. Read the pictures of every panel with a `⚠`, and of the free section's panel when the page has one. Fix what you see in one round, then render again.
-- **Designed:** read every panel's pictures. Up to three rounds of fix and check.
+- **Focused (brief asks):** run `check` once, inspect every `⚠` panel's pictures, fix, and re-render.
+- **Full (the default):** inspect every `⚠` and `free` panel's pictures (plus key block panels) and iterate up to 3 rounds of fix and check until clean.
 
 Look at the pictures for what the checks cannot see: a leader line that crosses a label, a drawing that says something the facts do not, two sections that look like different products.
 

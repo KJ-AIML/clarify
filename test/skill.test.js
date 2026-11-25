@@ -40,7 +40,7 @@ test("the description lists triggers only", () => {
 test("the checklist and the skeleton are gone", () => {
   assert.ok(!skill.includes("Context checklist"));
   assert.ok(!skill.includes("Draft skeleton"));
-  for (const part of ["## Depth and time", "## Think before you draw", "## Two page shapes", "## Free sections",
+  for (const part of ["## Scope by content", "## Think before you draw", "## Two page shapes", "## Free sections",
     'bin/clarify.mjs" check', "references/forms.md", "references/free-sections.md"]) {
     assert.ok(skill.includes(part), part);
   }

@@ -29,18 +29,17 @@ node "${CLAUDE_SKILL_DIR}/bin/clarify.mjs" md draft.md          # GitHub Markdow
 
 In hosts without `CLAUDE_SKILL_DIR`, use the absolute path of this skill directory. Save a page with a free section as a draft file: `check` reads it, and `file=` paths start from its folder. A page rendered from stdin has no draft file, so run `check` on the `.html` path that `render` printed: a draft file gets the lint and the browser check, a rendered page is checked as it is, without the lint.
 
-## Depth and time
+## Scope by content
 
-Pick the depth from the request. Before you start, tell the user which depth and a rough time, in one line ("A quick page, about 10 minutes.").
+Match depth to what the content and request genuinely need — never cut corners to chase an arbitrary clock limit.
 
-| | **Quick** (the default) | **Designed** |
+| | **Focused** (brief asks) | **Full** (the default) |
 | --- | --- | --- |
-| When | most requests, including "explain how X works" | the user asks for it in words: a course, a designed page or a designed explainer, "make it good", "take your time" |
-| Time | about 10 minutes | about 20 to 35 minutes |
-| The page | blocks, chosen and ordered by the steps below; at most one small free section, when it fits the time | as many free sections as the content needs, drawn in parallel by subagents when the host has them |
-| The check | on every page: one run, one fix round | every panel's pictures, up to three rounds |
+| When | the user explicitly asks for a quick map, brief overview, or single-question check | explainers, codebase tours, post-mortems, architecture reviews, lessons, design briefs, or "how X works" |
+| The page | built-in blocks chosen by the steps below (typically 1–3 concise panels); skip custom drawings unless essential | every part gets the form it genuinely earns — built-in blocks where they fit cleanly, and as many `free` sections as the content needs (drawn in parallel by subagents when the host has them) |
+| The check | run `check` once; inspect any `⚠` panel and fix until clean | run `check`, inspect all `⚠` and `free` panels (plus key block panels), and iterate up to 3 fix rounds until 0 warnings and visually clean |
 
-In Quick, the time is the hard rule: everything else gives way to it. A part that deserves a drawing that does not fit the time gets the nearest block; your reply names that part and offers the designed page.
+Never downgrade a part that genuinely needs a custom drawing into a plain table just to finish faster. Conversely, never draw a `free` section when a built-in block (`arch`, `sequence`, `isokit`, `tree`, `table`, `ask`) already shows that part clearly.
 
 ## Think before you draw
 
@@ -49,9 +48,9 @@ A page is its content's parts, each shown in the form that fits it, in the order
 1. **Gather.** Write the facts down first, as a short list: names, numbers, causes, times. Only these facts go on the page.
 2. **Split.** Cut the content into its parts. Each part becomes a panel, titled with what it is ("Inside the keyboard", "What happened, and when").
 3. **Name the kind.** Say in a few words what kind of thing each part is. Kinds to think with: a thing with parts; a hidden mechanism; something moving between places over time; a length of time; events in order; a choice between two; a shared space; a lookup; a structure; a failure and its fix; a number that matters; a decision for the reader. This list is a prompt for thinking, not a menu: a part may be a kind nobody listed.
-4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `isokit` (preferred) or `lesson` for something moving between places over time (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a free section, within the depth's limit. When the content needs a form nobody listed, draw it. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
+4. **Choose the form.** Use a block when it truly shows that kind: `arch` for a structure (with a `trace` for the path that matters), `sequence` for messages between parts, `isokit` (preferred) or `lesson` for something moving between places over time (see Lessons), `tree` for nesting, a table for rows that share columns, `kv` for named values, `ask` for a decision. Otherwise draw a `free` section whenever the content genuinely needs a bespoke visual — never force a diagram-worthy mechanism into a table. Worked forms, each with when it fits and its nearest block: `references/forms.md`.
 5. **Order as a story.** The answer first (`Lead:`). The whole before its parts. What to do next comes last. In between, follow the content's own order: the clock, the path, the steps.
-6. **Check.** Render and fix every `⚠`. Then run `check` once on every page and read its pictures, as the depth says ("The check loop", under Free sections).
+6. **Check.** Render and fix every `⚠`. Then run `check` on every page and inspect its pictures until clean (up to 3 fix rounds; see "The check loop", under Free sections).
 
 Steps 1 to 5 give a plan: one line per part, `part: kind → form`, in page order. Write it before the draft; the draft follows it.
 
@@ -141,9 +140,9 @@ A **free section** is a part you draw by hand when no block shows it: an HTML fr
 
 The name: lowercase letters, digits and dashes, once per page. `file=` reads the fragment from a file; the path starts from the draft's folder (from stdin, the working directory).
 
-**The check loop** (on every page, not only one with a free section). `check` opens the page at 1440px and 390px, light and dark, checks every panel and saves one picture per panel and view. A check takes about 15 seconds. It prints the pictures of the panels with a problem first, then one `⚠ panel D @390 light: …` line per problem.
-- Quick: run it once on every page. Read the pictures of every panel with a `⚠`, and of the free section's panel when the page has one. Fix in one round, then render again.
-- Designed: read every panel's pictures. Up to three rounds of fix and check.
+**The check loop** (on every page, not only one with a free section). `check` opens the page at 1440px and 390px, light and dark, checks every panel and saves one picture per panel and view. It prints the pictures of the panels with a problem first, then one `⚠ panel D @390 light: …` line per problem.
+- **Focused** (brief block-only pages): run `check` once, inspect any `⚠` panel's pictures, fix, and re-render.
+- **Full** (the default): inspect every `⚠` panel and every `free` section's pictures (plus key block panels) and iterate up to 3 fix-and-check rounds until 0 warnings and clean visual alignment.
 
 ## Lessons (powered by isokit)
 

@@ -168,7 +168,7 @@ The visual suite drives headless Chromium over `--remote-debugging-pipe` (findin
 
 ## Learn more
 
-- [SKILL.md](SKILL.md): lean agent workflow, depth rules (Quick vs. Designed), and lesson guidelines
+- [SKILL.md](SKILL.md): lean agent workflow, content-driven scope rules, and lesson guidelines
 - [references/syntax.md](references/syntax.md): complete draft, diagram, lesson, check, and reply-loop grammar
 - [references/forms.md](references/forms.md): visual forms matched to content kinds, each with its nearest block
 - [references/free-sections.md](references/free-sections.md): custom HTML/SVG kit, tokens, panel widths, and lint fixes
