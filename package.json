@@ -1,6 +1,6 @@
 {
   "name": "@clarify/skill",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Interactive architecture and decision briefs for AI coding agents. Markdown in, one zero-dependency HTML page out.",
   "type": "module",
   "main": "src/render.js",
